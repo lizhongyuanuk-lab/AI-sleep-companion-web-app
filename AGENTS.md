@@ -27,6 +27,7 @@
    - `docs/ACCEPTANCE.md`
    - `docs/TRACKING.md`
    - `docs/HANDOFF.md`
+   `docs/SPEC.md` is the locked V1 product baseline and the primary document for route, layout, visual, and interaction decisions.
 5. When changing Next.js application code, read the relevant guide under `node_modules/next/dist/docs/` first because this repo may depend on mainline-specific behavior.
 
 ## 3. Rule Priority
@@ -38,6 +39,7 @@
 5. Local inference
 
 If two sources conflict, follow the higher-priority source and call out the conflict in the final report.
+Do not use external copies of the spec as an ongoing runtime source; vendor approved spec updates back into `docs/SPEC.md`.
 
 ## 4. Change Rules
 
@@ -45,13 +47,14 @@ If two sources conflict, follow the higher-priority source and call out the conf
 2. Do not delete or rewrite existing page skeletons unless the task explicitly asks for it.
 3. Shared navigation, placeholder shells, and common layout must be reused instead of duplicated.
 4. If a shared component changes, report the affected routes and likely regression areas.
+5. Do not change locked V1 information architecture, route structure, layout structure, visual system, or base interaction rules unless the user explicitly approves a spec upgrade.
 
 ## 5. Current Mainline Intent
 
 1. This repository is the active mainline for the web companion shell.
-2. The current implementation target is a stable framework layer with placeholder pages and shared navigation.
-3. Favor structure, consistency, and handoff quality over feature depth.
-4. Avoid premature runtime complexity such as voice pipelines, analytics wiring, background syncing, or duplicated client state.
+2. `docs/SPEC.md` is the core mainline document and the source of truth for V1 product behavior.
+3. The current implementation target is to align the Next.js app to the locked V1 Sleep Companion spec in a controlled way.
+4. Favor structure, consistency, and handoff quality over speculative feature expansion.
 
 ## 6. Verification Rules
 
@@ -78,5 +81,6 @@ Each implementation summary should state:
 
 1. Prefer this repository's code, config, and docs over assumptions.
 2. Use `package.json`, `next.config.*`, and current source files as the technical baseline.
-3. Use the docs in this repository as the project-process baseline.
-4. Do not treat placeholder content as permission to remove project rules.
+3. Use `docs/SPEC.md` as the product baseline and the other docs as process and delivery support.
+4. Keep the authoritative spec inside this repository rather than depending on `Downloads` or other external paths.
+5. Do not treat placeholder content as permission to remove project rules.
