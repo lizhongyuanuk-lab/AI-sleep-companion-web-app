@@ -1,81 +1,82 @@
-# AGENTS.md — ai-companion-web 执行规则
+# AGENTS.md -- ai-companion-web execution rules
 
-## 0. 适用范围
+## 0. Scope
 
-1. 本规则适用于当前 Git 仓库根目录及其子目录。
-2. 当前阶段页面范围仅限：`/talk`、`/room`、`/memory`、`/sleep-monitoring`。
-3. 除非任务明确要求，不扩展新页面、新域模型、新后端集成。
+1. These rules apply to the current Git repository root and all child paths.
+2. The current mainline scope is limited to:
+   - `/`
+   - `/talk`
+   - `/room`
+   - `/memory`
+   - `/sleep-monitoring`
+3. Unless a task explicitly requires it, do not expand into new product areas, backend integrations, or unrelated pages.
 
-## 1. 仓库边界规则（强制）
+## 1. Repository Boundary Rules
 
-1. 所有文件读写、创建、移动、删除操作，必须限制在当前 Git 仓库根目录内。
-2. 禁止在仓库外创建任何副本、镜像目录、临时同名项目。
-3. 禁止将任务产物写入仓库外路径（包括上级目录和相邻目录）。
+1. All reads, writes, creates, moves, and deletes must stay inside this repository root.
+2. Do not use the parent `Playground` directory as an implementation source of truth.
+3. Do not create shadow copies, mirrored projects, or parallel worktrees outside this repository unless the user explicitly asks.
 
-## 2. 任务开始前（强制）
+## 2. Task Startup Checklist
 
-1. 必须先执行并确认：`pwd`。
-2. 必须先执行并确认：`git rev-parse --show-toplevel`。
-3. 仅当两者均指向当前仓库根目录时，才允许继续任务。
-4. 然后按固定顺序阅读：
-   1. `docs/SPEC.md`
-   2. `docs/ACCEPTANCE.md`
-   3. `docs/TRACKING.md`
-   4. `docs/HANDOFF.md`
-5. 未完成路径确认或文档阅读，不得开始编码或改文件。
+1. Confirm `pwd`.
+2. Confirm `git rev-parse --show-toplevel`.
+3. Only continue when both point to this repository root.
+4. Read the current project rule docs before implementation:
+   - `docs/SPEC.md`
+   - `docs/ACCEPTANCE.md`
+   - `docs/TRACKING.md`
+   - `docs/HANDOFF.md`
+5. When changing Next.js application code, read the relevant guide under `node_modules/next/dist/docs/` first because this repo may depend on mainline-specific behavior.
 
-## 3. 规则冲突优先级（强制）
+## 3. Rule Priority
 
-1. `SPEC` > `ACCEPTANCE` > `TRACKING` > `HANDOFF` > 本地推断。
-2. 规则冲突时，必须按上述优先级决策，不得反向覆盖。
-3. 若同级信息仍冲突，停止实现并先澄清需求。
+1. `docs/SPEC.md`
+2. `docs/ACCEPTANCE.md`
+3. `docs/TRACKING.md`
+4. `docs/HANDOFF.md`
+5. Local inference
 
-## 4. 修改规则（强制）
+If two sources conflict, follow the higher-priority source and call out the conflict in the final report.
 
-1. 只允许与当前任务直接相关的改动，禁止无关改动。
-2. 禁止擅自修改未被当前任务要求影响的页面。
-3. 共享组件必须优先复用，禁止复制出第二套相同或近似组件。
-4. 若修改共享组件，任务汇报必须明确影响范围：
-   - 改动的共享组件
-   - 受影响页面/路由
-   - 主要回归风险点
+## 4. Change Rules
 
-## 5. 页面与状态规则（强制）
+1. Keep changes tightly scoped to the active task.
+2. Do not delete or rewrite existing page skeletons unless the task explicitly asks for it.
+3. Shared navigation, placeholder shells, and common layout must be reused instead of duplicated.
+4. If a shared component changes, report the affected routes and likely regression areas.
 
-1. 视觉结果优先；禁止擅自增加“聪明但不稳定”的 runtime 判断。
-2. 所有状态必须有单一 source of truth，禁止同一状态在多个位置并行维护。
-3. 禁止在不同页面各自实现一套相同逻辑；共性逻辑必须提取到共享层。
+## 5. Current Mainline Intent
 
-## 6. 任务完成检查（强制）
+1. This repository is the active mainline for the web companion shell.
+2. The current implementation target is a stable framework layer with placeholder pages and shared navigation.
+3. Favor structure, consistency, and handoff quality over feature depth.
+4. Avoid premature runtime complexity such as voice pipelines, analytics wiring, background syncing, or duplicated client state.
 
-每次任务完成后，必须运行并记录以下命令结果：
+## 6. Verification Rules
+
+Every implementation task should finish by running:
 
 1. `npm run build`
 2. `npm run lint`
 3. `npm run type-check`
 
-任一检查失败，不得标记任务完成。  
-若 `type-check` 脚本不存在，先补齐脚本，再执行检查。
+If any check fails, do not present the task as complete without calling out the failure.
 
-## 7. 任务汇报格式（强制）
+## 7. Reporting Rules
 
-每次任务汇报必须包含以下 6 项，缺一不可：
+Each implementation summary should state:
 
-1. 修改了哪些文件
-2. 新增了哪些文件
-3. 哪些检查通过（build/lint/type-check）
-4. 哪些假设尚未验证
-5. 是否存在回归风险
-6. 是否影响其他页面或共享组件（如有，写清影响范围）
+1. Modified files
+2. Added files
+3. Verification results for build, lint, and type-check
+4. Any unverified assumptions
+5. Any regression risk
+6. Any impact to shared components or other routes
 
-## 8. 当前阶段目标
+## 8. Source of Truth
 
-1. 先建立稳定的项目结构、规则、占位页面和基础交互。
-2. 不要过早接入复杂后端或语音服务。
-3. 当前优先保证：结构清晰、可测试、可交接。
-
-## 9. 技术依据规则
-
-1. 优先依据 `package.json`、`next.config.*`、现有项目代码和当前版本官方文档。
-2. 不要优先依赖 `node_modules` 内部 docs 路径作为第一信息源。
-3. 若官方文档与项目现状冲突，以项目可运行性和仓库约束为先，并在汇报中注明。
+1. Prefer this repository's code, config, and docs over assumptions.
+2. Use `package.json`, `next.config.*`, and current source files as the technical baseline.
+3. Use the docs in this repository as the project-process baseline.
+4. Do not treat placeholder content as permission to remove project rules.
