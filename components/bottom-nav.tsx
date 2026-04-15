@@ -7,11 +7,15 @@ const navItems = [
   { href: "/talk", label: "Talk" },
   { href: "/room", label: "Room" },
   { href: "/memory", label: "Memory" },
-  { href: "/sleep-monitoring", label: "Sleep" },
+  { href: "/sleep-monitoring", label: "Sleep Monitoring" },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
+
+  if (pathname === "/talk") {
+    return null;
+  }
 
   return (
     <nav
@@ -26,8 +30,9 @@ export function BottomNav() {
             <li key={item.href}>
               <Link
                 href={item.href}
+                aria-label={item.label}
                 className={[
-                  "flex min-h-14 items-center justify-center rounded-2xl px-3 text-sm font-medium transition-colors",
+                  "flex min-h-14 items-center justify-center rounded-2xl px-2 text-center text-[0.8rem] leading-tight font-medium transition-colors",
                   isActive
                     ? "bg-slate-900 text-white shadow-[0_12px_24px_rgba(15,23,42,0.18)]"
                     : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900",

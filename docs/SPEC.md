@@ -1,17 +1,26 @@
-# Codex UI Spec — Sleep Companion App V1
+# Sleep Companion Codex Spec — V1.1
 
 ## Status
 
-Locked baseline spec for **V1**.  
-This document is the source of truth for Codex implementation.
+Locked baseline spec for **V1.1**.  
+This document is the source of truth for implementation in `ai-companion-web`.
 
 Unless explicitly upgraded to V2, do not change:
 - information architecture
 - route structure
-- layout structure
-- visual system
-- base interaction rules
+- page responsibilities
+- Talk content rule
 - scene-to-overlay mapping
+- one UI shell + two overlay modes
+- base interaction model
+- V1 state machine semantics
+
+This V1.1 keeps the original product structure and interaction baseline, while refining:
+- layout composition
+- focal hierarchy
+- responsive control token ranges
+- bounded implementation freedom
+- UI acceptance quality
 
 ---
 
@@ -20,13 +29,36 @@ Unless explicitly upgraded to V2, do not change:
 This is a mobile-first AI sleep companion product.
 
 Core goals:
-- calm, minimal, low-stimulation
-- scene background as the emotional container
+- calm
+- minimal
+- low-stimulation
+- immersive
+- scene-led emotional atmosphere
 - speak-first interaction
-- image upload as a secondary input
-- AI replies with voice first
-- the main live page should feel immersive, not like a standard messaging app
-- one UI system must work across multiple background scenes
+- optional image upload as a secondary input
+- AI voice reply first
+- one UI system that works across multiple scene backgrounds
+- the main live page should feel spacious and emotionally contained, not crowded
+
+### Visual direction
+
+Target direction:
+- soft
+- sparse
+- breathable
+- low component density
+- one focal center
+- stable vertical rhythm
+
+The product should feel closer to:
+- an immersive companion app
+- a quiet sleep/safe-space interface
+
+The product should feel farther from:
+- a dashboard
+- a standard threaded chat app
+- a card-heavy tool UI
+- a SaaS/admin interface
 
 ---
 
@@ -65,11 +97,12 @@ Purpose:
 - optional image upload
 - AI voice reply
 - whisper text
-- immersive background scene
+- immersive scene background
 
 Important:
 - **Talk does not display the full message history in V1**
 - no full chat bubble stream on the Talk screen
+- no timeline UI
 - Talk is about the present interaction only
 
 ### `/room`
@@ -77,11 +110,12 @@ Sleep scene selection page.
 
 Purpose:
 - users browse and switch between different sleep spaces
-- example scenes:
-  - seaside night
-  - seaside day
-  - rainforest day
-  - snow mountain day
+
+Example scenes:
+- seaside night
+- seaside day
+- rainforest day
+- snow mountain day
 
 ### `/memory`
 Memory page.
@@ -122,6 +156,11 @@ V1 minimum skeleton:
 - `/talk` may preserve unsent typed text in memory during the same session
 - selecting a scene in `/room` should apply the new scene and return to `/talk`
 
+### Talk-specific navigation rule
+- Talk uses **top navigation only**
+- Talk must **not** render a bottom tab bar
+- the bottom area on Talk belongs to the input bar, not route navigation
+
 ---
 
 ## 5. Screen model
@@ -131,16 +170,14 @@ V1 minimum skeleton:
 - reference design viewport: `393 x 852`
 
 Important:
-- treat `393 x 852` as a **design baseline**, not a hardcoded device size
+- treat `393 x 852` as a design baseline, not a hardcoded device size
 - implementation must be responsive for H5/mobile web
 
 Responsive rules:
 - use full available mobile width
-- preserve side margins at `20px`
-- preserve top nav height at `44px`
-- preserve input bar height at `54px`
-- use safe-area aware top and bottom spacing
-- allow center scene area to flex vertically
+- preserve side margins at approximately `20px`
+- preserve safe-area aware top and bottom spacing
+- allow the center scene area to flex vertically
 - background image should cover the viewport and be slightly oversized
 - prefer `100svh` over legacy `100vh`
 
@@ -150,39 +187,187 @@ Safe area rules:
 
 ---
 
-## 6. Fixed layout
+## 6. Rule layers
 
-### 6.1 Top navigation bar
+### 6.1 Locked rules
+
+These must not change in V1:
+- top-level IA
+- route structure
+- route labels
+- `/talk` as default route
+- `/talk` does not show full message history
+- `/memory` stores history and insights
+- one UI shell + two overlay modes
+- speak-first input model
+- manual scene-to-overlay mapping
+- state machine semantics
+
+### 6.2 Bounded rules
+
+These may be tuned within a restrained responsive range:
+- top nav height
+- top nav horizontal padding
+- top nav item spacing
+- top nav icon size
+- icon-text gap
+- active pill width/padding
+- input bar height
+- input bar internal padding
+- shell opacity
+- border strength
+- shadow strength
+- blur strength
+- whisper spacing
+- scene frame scale
+
+### 6.3 Forbidden freedom
+
+Implementation must not:
+- add a bottom tab bar to Talk
+- add a full message thread to Talk
+- create extra default floating panels
+- recolor UI by sampling background hues
+- create multiple themed shells
+- globally shrink all typography to make layout fit
+- solve layout pressure with arbitrary margin pushing
+- make the page feel like SaaS/dashboard UI
+- compensate for visual problems by adding more default components
+
+---
+
+## 7. Layout composition principles
+
+### 7.1 Talk page layer model
+
+Talk page must be composed as exactly 4 major layers:
+
+1. top navigation layer
+2. main scene layer
+3. whisper / micro-status layer
+4. bottom input layer
+
+Rules:
+- top nav stays at the top
+- input bar stays at the bottom
+- whisper text stays close to the input bar
+- main scene occupies the largest visible vertical area
+- these layers must not collapse into one crowded stack
+
+### 7.2 Default-state density rule
+
+Talk default state should not contain more than 4 meaningful visual layers.
+
+Do not keep these visible by default unless required by state:
+- extra demo chips
+- horizontal floating bars
+- helper blocks
+- detached mini cards
+- empty decorative pills
+- detached secondary surfaces in the middle of the scene
+
+### 7.3 Focal priority
+
+Default focus order on Talk:
+
+1. main scene
+2. bottom input bar
+3. top navigation
+4. whisper / micro-status text
+
+Rules:
+- decorative elements must not compete with the scene
+- helper surfaces must not compete with the input bar
+- whisper text is informative, not dominant
+- top nav must be visually lighter than the scene and input bar
+
+### 7.4 Vertical rhythm
+
+The vertical flow must read as:
+
+top nav  
+↓  
+breathing space  
+↓  
+main scene  
+↓  
+whisper line  
+↓  
+bottom input bar
+
+Rules:
+- top nav must not hug the scene too tightly
+- scene is the dominant middle section
+- whisper text must stay close to the input bar
+- input bar is always the lowest main control
+- large empty space is acceptable
+- component crowding is not acceptable
+
+---
+
+## 8. Fixed layout
+
+### 8.1 Top navigation
 
 Purpose:
 - persistent primary navigation
 - floating capsule style
-- visually light and scene-adaptive
+- visually light
+- secondary to the scene
 
 Placement:
 - left: `20px`
 - right: `20px`
 - top: `max(20px, env(safe-area-inset-top))`
-- height: `44px`
-- radius: `22px`
 
-Internal layout:
-- horizontal row
-- item gap: `14px`
-- internal horizontal padding: `14px`
-- align center vertically
+Responsive control range:
+- height: `44px–52px`
+- radius: `22px–26px`
+- internal horizontal padding: `10px–14px`
+- item gap: `8px–14px`
 
 Nav item:
-- icon size: `18px`
+- icon size: `16px–18px`
 - label size: `15px`
 - label weight: `600`
 - label line-height: `20px`
-- icon-text gap: `8px`
-- active pill height: `36px`
-- active pill radius: `18px`
-- active pill horizontal padding: `12px`
+- icon-text gap: `6px–8px`
 
-### 6.2 Scene background area
+Active pill:
+- height: `34px–38px`
+- radius: `17px–19px`
+- horizontal padding: `8px–12px`
+
+#### Long-label handling
+`Sleep Monitoring` is the longest top-level label.
+
+Handle width pressure in this order:
+1. reduce item gap
+2. reduce icon-text gap
+3. reduce active pill horizontal padding
+4. allow a compact two-line label treatment if needed
+
+Do not:
+- rename the label
+- globally shrink all nav text
+- make all icons tiny
+- allow the nav to overflow or visually break
+
+#### Top nav visual weight
+Top nav must read as:
+- neutral
+- softly blurred
+- semi-transparent
+- calm
+- readable
+
+It must not read as:
+- solid gray bar
+- hard opaque toolbar
+- visually heavier than the input bar
+- the main visual focus
+
+### 8.2 Scene background area
 
 Purpose:
 - main emotional scene container
@@ -199,7 +384,28 @@ Rules:
 - no dramatic parallax
 - no game-like camera movement
 
-### 6.3 Bottom input bar
+### 8.3 Main scene rules
+
+The scene is the primary emotional container and the largest visual focus.
+
+Rules:
+- scene should occupy the largest vertical share
+- scene must remain visually clean
+- scene frame may exist, but must not feel like a dashboard card
+- avoid clutter in the center of the scene
+
+By default, the scene should not have multiple detached overlay surfaces.
+
+Allowed:
+- one subtle whisper line near the bottom zone
+- state-driven minimal feedback
+
+Not allowed in default state:
+- extra bars crossing the scene
+- detached floating pills with no state purpose
+- decorative blocks that split the scene into fragments
+
+### 8.4 Bottom input bar
 
 Purpose:
 - primary input entry
@@ -210,19 +416,17 @@ Placement:
 - left: `20px`
 - right: `20px`
 - bottom: `max(24px, env(safe-area-inset-bottom) + 8px)`
-- height: `54px`
-- radius: `27px`
 
-Internal layout:
-- left icon padding: `16px`
-- right icon padding: `16px`
-- icon-text gap: `12px`
-- main content vertically centered
+Responsive control range:
+- height: `54px–60px`
+- radius: `27px–30px`
+- left/right icon padding: `14px–16px`
+- icon hit area: `32px–36px`
+- icon-text gap: `10px–12px`
 
 Icons:
-- mic icon: `20px`
+- mic icon: `18px–20px`
 - image icon: `18px`
-- icon hit area: `32 x 32`
 
 Text:
 - default label: `Tap to speak`
@@ -231,24 +435,67 @@ Text:
 - font size: `15px`
 - font weight: `500`
 - line-height: `20px`
-- tracking: `0`
 
-### 6.4 Whisper text
+#### Structural rule
+The input bar must be fixed to the bottom safe area.
+
+It must:
+- remain anchored to the bottom
+- not participate in normal document flow
+- not be pushed upward by content growth
+- not float in the middle
+
+#### Visual balance
+The input bar must feel:
+- stable
+- readable
+- calm
+- slightly more grounded than the top nav
+
+It must not feel:
+- too dark
+- too thick
+- too glossy
+- too busy
+
+#### Internal balance
+Inside the input bar, visual hierarchy should be:
+1. main label
+2. microphone
+3. image button
+
+Rules:
+- label stays centered and readable
+- icons support, not dominate
+- image button must not overpower the label
+- icon circles must not become the strongest contrast point on screen
+
+### 8.5 Whisper text
+
+Role:
+- lightweight emotional cue
+- secondary to scene and input bar
 
 Placement:
-- centered
-- `16px` above the input bar
+- centered horizontally
+- approximately `12px–20px` above the input bar
+- remains in the lower third
+- should not float into the middle of the screen
 
 Typography:
 - font size: `17px`
 - weight: `500`
 - line-height: `24px`
 
+Visual rule:
+- readable but quiet
+- lower emphasis than input bar text
+- should not become the main focus
+- any surface treatment must remain subtle
+
 ---
 
-## 7. Talk screen content rule
-
-The Talk screen must **not** display the full message history in V1.
+## 9. Talk screen content rule
 
 Allowed on Talk:
 - scene background
@@ -267,13 +514,11 @@ Full records belong in `/memory`.
 
 ---
 
-## 8. Visual system
+## 10. Visual system
 
 ### Core principle
 
-```text
-ONE UI SHELL + TWO OVERLAY MODES
-```
+`ONE UI SHELL + TWO OVERLAY MODES`
 
 Do not create multiple colored UI themes.  
 Do not recolor the nav and input shell based on scene hue.
@@ -283,244 +528,90 @@ Instead:
 - normalize the background with an adaptive overlay
 - only switch overlay mode between bright and dark scenes
 
-### 8.1 Layer structure
+### 10.1 Layer structure
 
-```text
-Background Image
-↓
-Adaptive Overlay
-↓
+Background Image  
+↓  
+Adaptive Overlay  
+↓  
 UI Shell
-```
 
-### 8.2 Adaptive overlay
+### 10.2 Adaptive overlay
 
-#### Dark Scene
+#### Dark scene
 Use when the scene is dark / night / low-light.
-
-```css
-linear-gradient(
-  to bottom,
-  rgba(10,12,20,0.35),
-  rgba(10,12,20,0.15),
-  rgba(10,12,20,0.35)
-)
-```
 
 Purpose:
 - compress contrast
 - stabilize dark backgrounds
 - help white text remain clear
 
-#### Light Scene
+#### Light scene
 Use when the scene is bright / daytime / high-light.
-
-```css
-linear-gradient(
-  to bottom,
-  rgba(255,255,255,0.35),
-  rgba(255,255,255,0.15),
-  rgba(255,255,255,0.35)
-)
-```
 
 Purpose:
 - soften brightness
 - reduce glare
 - create contrast space for the UI
 
-#### Optional bottom support gradient
-
-Dark scene version:
-
-```css
-rgba(10,12,20,0.22) → transparent
-```
-
-Light scene version:
-
-```css
-rgba(255,255,255,0.18) → transparent
-```
-
-Purpose:
-- give the bottom bar more stability
-- improve readability near the lower third
-
-### 8.3 Neutral adaptive glass UI shell
+### 10.3 Neutral adaptive glass UI shell
 
 Use for:
 - top navigation container
 - bottom input bar container
 
-```css
-background: rgba(40,44,52,0.55);
-backdrop-filter: blur(16px);
-border: 1px solid rgba(255,255,255,0.12);
-box-shadow: 0 8px 24px rgba(0,0,0,0.18);
-```
-
 Visual intent:
 - neutral glass
-- no strong blue, purple, or green tint
-- scene-adaptive by overlay, not by hue switching
+- softly blurred
+- semi-transparent
+- calm
+- readable
+- not a solid gray block
+- not neon
+- not SaaS-style
 
-Secondary surface:
-- for image button container and small secondary pills
+### 10.4 Shared shell tuning
 
-```css
-background: rgba(255,255,255,0.08);
-border: 1px solid rgba(255,255,255,0.10);
-border-radius: 16px;
-```
+Top nav and input bar belong to the same shell family.
 
-### 8.4 Top navigation visual spec
+They should feel related but not identical in dominance:
+- top nav = lighter
+- input bar = slightly stronger anchor
 
-#### Container
-- same as neutral glass UI shell
-- radius: `22px`
+Allowed tuning:
+- opacity
+- border strength
+- shadow strength
+- blur strength
 
-#### Inactive item
+Goal:
+- improve readability
+- reduce heaviness
+- preserve calmness
+- preserve neutrality
 
-```css
-text: rgba(255,255,255,0.65);
-icon: rgba(255,255,255,0.60);
-```
+Do not produce:
+- deep gray solid blocks
+- neon glow
+- sci-fi pulse
+- blue/purple/green tinted shell
+- bright white overexposed shell
+- corporate SaaS cards
 
-#### Active pill
+### 10.5 Adaptation rule
 
-```css
-background: rgba(255,255,255,0.12);
-border: 1px solid rgba(255,255,255,0.18);
-border-radius: 18px;
-box-shadow: 0 4px 12px rgba(0,0,0,0.10);
-```
+Do not:
+- sample background colors
+- recolor UI
+- switch shell themes by scene hue
 
-#### Active item
-
-```css
-text: rgba(255,255,255,0.92);
-icon: rgba(255,255,255,0.90);
-```
-
-### 8.5 Bottom input bar visual spec
-
-#### Container
-- same as neutral glass UI shell
-- radius: `27px`
-
-#### Text
-
-```css
-primary: rgba(255,255,255,0.92);
-secondary: rgba(255,255,255,0.65);
-```
-
-#### Mic
-
-```css
-color: rgba(255,255,255,0.90);
-```
-
-#### Image icon
-
-```css
-color: rgba(255,255,255,0.60);
-```
-
-#### Image button container
-
-```css
-background: rgba(255,255,255,0.08);
-border: 1px solid rgba(255,255,255,0.10);
-border-radius: 16px;
-```
-
-### 8.6 Listening state visual spec
-
-#### Label
-
-```css
-Listening...
-color: rgba(255,255,255,0.96);
-```
-
-#### Bar glow
-
-```css
-box-shadow: 0 0 20px rgba(255,255,255,0.15);
-```
-
-#### Mic glow
-
-```css
-0 0 12px rgba(255,255,255,0.16),
-0 0 20px rgba(255,255,255,0.08);
-```
-
-#### Internal pulse
-
-```css
-linear-gradient(
-  90deg,
-  transparent,
-  rgba(255,255,255,0.08),
-  transparent
-);
-opacity: 0.03–0.06;
-```
-
-Rules:
-- animation must remain slow and calm
-- no neon effect
-- no cyber or sci-fi glow
-
-### 8.7 Whisper text visual spec
-
-Default:
-
-```css
-color: rgba(255,255,255,0.92);
-```
-
-Optional whisper surface:
-
-```css
-background: rgba(40,44,52,0.24);
-border: 1px solid rgba(255,255,255,0.10);
-backdrop-filter: blur(8px);
-border-radius: 16px;
-```
-
-### 8.8 Adaptation rule
-
-```text
-DO NOT sample background colors
-DO NOT recolor UI
-ONLY switch overlay mode
-```
+Only switch overlay mode.
 
 This is the only allowed adaptive behavior in V1.
 
-### 8.9 Forbidden
-
-Do not:
-- use bright white glass UI
-- use blue / purple / green themed shells
-- tint the nav or input shell based on scene hue
-- use neon glow
-- use harsh dark opaque bars
-- use SaaS-style surfaces
-
-The nav and input bar must always remain:
-- neutral
-- semi-transparent
-- softly blurred
-- readable on top of both bright and dark scenes
-
 ---
 
-## 9. State machine and timing
+## 11. State machine and timing
 
 Input area only allows these states:
 - Default
@@ -529,162 +620,160 @@ Input area only allows these states:
 - Typing
 - AI Reply
 
-### 9.1 Default
+### 11.1 Default
 - label: `Tap to speak`
 
-### 9.2 Listening
+### 11.2 Listening
 - entered by tapping the input bar or mic
 - label changes to `Listening...`
-- mic brightens
-- input bar glow starts immediately
 
-### 9.3 Listening Hint
+### 11.3 Listening Hint
 - after `1200ms` in listening state
 - label changes to `Tap to write`
 
-### 9.4 Silence timeout
+### 11.4 Silence timeout
 - if no valid speech is detected for `4 seconds`, return to Default
 - silence timeout is measured from the last detected speech activity
 
-### 9.5 Typing
+### 11.5 Typing
 - entered by tapping the input bar while in listening hint state, or by explicit text-entry action
 - if keyboard is dismissed and input is empty, return to Default
 - if input contains text, remain in Typing until submit or clear
 
-### 9.6 AI Reply
+### 11.6 AI Reply
 - entered after valid voice input or text submit
 - AI responds with voice
 - after playback ends, return to Default
 
 ---
 
-## 10. Voice pipeline rules
+## 12. Voice pipeline rules
 
-### 10.1 Microphone permission
+### 12.1 Microphone permission
 - request microphone permission when user enters listening state
 - if permission is denied, do not enter listening
 - show lightweight message: `Microphone access is off`
 - offer fallback: `Type instead`
 
-### 10.2 Microphone interruption
+### 12.2 Microphone interruption
 - if listening is interrupted by system/browser/device state, stop listening immediately
 - return to Default
 - show: `Microphone interrupted`
 
-### 10.3 ASR display
+### 12.3 ASR display
 - do not show live realtime transcription on the Talk screen
 - do not show full ASR text on the Talk screen
 - optional lightweight state text such as `Processing...` is allowed
 
-### 10.4 ASR failure
+### 12.4 ASR failure
 - if no valid speech is recognized, do not enter AI Reply
 - return to Default
 - show: `I didn’t catch that`
 - allow retry or switch to typing
 
-### 10.5 TTS playback
+### 12.5 TTS playback
 - AI replies with voice
 - TTS playback can always be interrupted by new user action
 
-### 10.6 TTS interruption
+### 12.6 TTS interruption
 - if user taps the input bar, mic, typing entry, or image upload while TTS is playing, stop TTS immediately
 - transition directly into the new input state
 
-### 10.7 Audio concurrency
+### 12.7 Audio concurrency
 - do not allow simultaneous recording and TTS playback in V1
 - entering listening always stops active TTS first
 
 ---
 
-## 11. Input field behavior
+## 13. Input field behavior
 
-### 11.1 Typing field model
+### 13.1 Typing field model
 - single-line input in V1
 - no multi-line expansion in V1
 
-### 11.2 Enter behavior
+### 13.2 Enter behavior
 - pressing Enter submits the text
 - Enter does not create a new line
 
-### 11.3 Maximum input length
+### 13.3 Maximum input length
 - maximum input length: `200 characters`
 
-### 11.4 Keyboard behavior
+### 13.4 Keyboard behavior
 When the keyboard appears:
 - keep the top nav fixed
 - keep the background visually stable
 - move only the bottom interaction layer upward
-- keep whisper text `16px` above the input bar
+- keep whisper text close above the input bar
 
-### 11.5 Background while typing
+### 13.5 Background while typing
 - background panning is disabled while typing
 
-### 11.6 Dismiss keyboard behavior
+### 13.6 Dismiss keyboard behavior
 - if keyboard is dismissed and input is empty, return to Default
 - if keyboard is dismissed and input has content, remain in Typing and preserve content
 
-### 11.7 After successful text submit
+### 13.7 After successful text submit
 - clear input
 - dismiss keyboard
 - enter AI Reply
 
-### 11.8 Image upload in Typing state
+### 13.8 Image upload in Typing state
 - image upload remains available in Typing state
 - selecting an image must preserve typed text
 
 ---
 
-## 12. Image upload rules
+## 14. Image upload rules
 
-### 12.1 Quantity
+### 14.1 Quantity
 - V1 supports only a single image per input turn
 
-### 12.2 Supported formats
+### 14.2 Supported formats
 - jpeg
 - png
 - webp
 
-### 12.3 Maximum original file size
+### 14.3 Maximum original file size
 - `10MB`
 
-### 12.4 Client compression
+### 14.4 Client compression
 Compress before upload:
 - max long edge: `1600px`
 - target upload size: around `1MB` or less
 - quality: `0.78–0.85`
 
-### 12.5 Send behavior
+### 14.5 Send behavior
 - selecting an image does not auto-send it
 - after selection, show a lightweight thumbnail preview
 
-### 12.6 Preview
+### 14.6 Preview
 - thumbnail size: `72x72`
 - corner radius: `14px`
 
-### 12.7 Remove
+### 14.7 Remove
 - the image preview must include a remove action
 - removing the image does not clear typed text
 
-### 12.8 Uploading state
+### 14.8 Uploading state
 - show a subtle loading overlay on the thumbnail
 - optional text: `Uploading...`
 
-### 12.9 Upload failure
+### 14.9 Upload failure
 - keep the thumbnail visible
 - show `Upload failed`
 - allow `Retry` or `Remove`
 
-### 12.10 Listening interaction
+### 14.10 Listening interaction
 - in Listening state, tapping image upload stops listening first
 
-### 12.11 Supported input combinations
+### 14.11 Supported input combinations
 - text only
 - image only
 - text + one image
 
 ---
 
-## 13. Background resources and overlay mapping
+## 15. Background resources and overlay mapping
 
 Use manual mapping.  
 Do not choose overlay mode by runtime pixel analysis in V1.
@@ -695,7 +784,7 @@ Each scene config must include:
 - `image`
 - `overlayMode`
 
-Allowed overlayMode values:
+Allowed `overlayMode` values:
 - `light`
 - `dark`
 
@@ -708,51 +797,9 @@ Initial mapping:
 Default scene:
 - `seaside_day`
 
-### 13.1 Scene config example
-
-```ts
-export type OverlayMode = "light" | "dark";
-
-export type SceneConfig = {
-  id: string;
-  title: string;
-  image: string;
-  overlayMode: OverlayMode;
-};
-
-export const sceneConfigs: SceneConfig[] = [
-  {
-    id: "seaside_night",
-    title: "Seaside Night",
-    image: "/scenes/seaside-night.jpg",
-    overlayMode: "dark",
-  },
-  {
-    id: "seaside_day",
-    title: "Seaside Day",
-    image: "/scenes/seaside-day.jpg",
-    overlayMode: "light",
-  },
-  {
-    id: "rainforest_day",
-    title: "Rainforest Day",
-    image: "/scenes/rainforest-day.jpg",
-    overlayMode: "dark",
-  },
-  {
-    id: "snow_mountain_day",
-    title: "Snow Mountain Day",
-    image: "/scenes/snow-mountain-day.jpg",
-    overlayMode: "light",
-  },
-];
-
-export const defaultSceneId = "seaside_day";
-```
-
 ---
 
-## 14. Exception state copy
+## 16. Exception state copy
 
 ### Microphone
 - `Microphone access is off`
@@ -777,7 +824,7 @@ Rules:
 
 ---
 
-## 15. Typography
+## 17. Typography
 
 Font family:
 - English: `SF Pro`, fallback `Inter`
@@ -792,9 +839,13 @@ Type scale:
 Tracking:
 - use `0` for all base labels
 
+Rules:
+- do not globally shrink typography to solve layout pressure
+- solve layout pressure with spacing, density, and compact-mode adjustments first
+
 ---
 
-## 16. Fixed component behavior
+## 18. Fixed component behavior
 
 ### Top nav
 - always visible
@@ -817,9 +868,53 @@ Tracking:
 
 ---
 
-## 17. Locked baseline summary
+## 19. UI acceptance rules
 
-This product is fixed in V1 as:
+A Talk page implementation fails if:
+- the screen feels crowded
+- too many overlay elements are visible together
+- the scene is no longer the dominant focus
+- the top nav reads as a heavy bar
+- the input bar is not visually anchored to the bottom
+- the input bar moves upward with content
+- the screen resembles a dashboard or threaded chat UI
+- spacing issues are solved by shrinking all type and icons
+
+A Talk page implementation passes when:
+- the scene is the clear focal center
+- top nav is readable but light
+- bottom input bar feels stable and calm
+- whisper text is quiet and secondary
+- the page feels spacious
+- there is a clear vertical rhythm
+- components do not visually fight each other
+
+---
+
+## 20. Implementation workflow requirement
+
+When implementing or refining UI, Codex must follow this order:
+
+1. read `docs/SPEC.md`
+2. identify locked rules
+3. identify bounded token ranges
+4. apply the smallest layout change needed
+5. check visual density and focal hierarchy
+6. run:
+   - `npm run build`
+   - `npm run lint`
+   - `npm run type-check`
+7. report:
+   - modified files
+   - what was aligned to spec
+   - what still remains imperfect
+   - any bounded decisions taken inside allowed ranges
+
+---
+
+## 21. Locked baseline summary
+
+This product remains fixed in V1.1 as:
 - 4-item clickable top nav: Talk / Room / Memory / Sleep Monitoring
 - `/talk` as the default route
 - `/talk` as the live companion screen
@@ -831,5 +926,7 @@ This product is fixed in V1 as:
 - one neutral UI shell
 - two overlay modes: dark scene / light scene
 - manual scene-to-overlay mapping
+- responsive control token ranges
+- explicit layout composition principles
 
 Do not invent additional visual systems outside this document.

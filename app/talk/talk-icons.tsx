@@ -83,14 +83,14 @@ export function MicIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <path
-        d="M12 5.2a2.8 2.8 0 0 1 2.8 2.8v4.4a2.8 2.8 0 0 1-5.6 0V8A2.8 2.8 0 0 1 12 5.2Z"
+        d="M12 4.8a3.1 3.1 0 0 1 3.1 3.1v4.9a3.1 3.1 0 0 1-6.2 0V7.9A3.1 3.1 0 0 1 12 4.8Z"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="2.05"
       />
       <path
-        d="M7.9 11.8a4.1 4.1 0 0 0 8.2 0M12 15.9v2.9M9.7 18.8h4.6"
+        d="M7.6 12.2a4.4 4.4 0 0 0 8.8 0M12 17.1v2.3M9.3 19.4h5.4"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="2.05"
         strokeLinecap="round"
       />
     </svg>
@@ -101,22 +101,22 @@ export function ImageIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <rect
-        x="4.8"
-        y="4.8"
-        width="14.4"
-        height="14.4"
-        rx="3"
+        x="4.4"
+        y="4.4"
+        width="15.2"
+        height="15.2"
+        rx="3.2"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="2"
       />
       <path
-        d="m8.4 15 2.7-2.8 2 2.1 2.5-2.6 1.9 2"
+        d="m8 15.2 3.1-3.2 2.2 2.3 2.7-2.9 2 2.2"
         stroke="currentColor"
-        strokeWidth="1.8"
+        strokeWidth="2.05"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="9.2" cy="9.2" r="1.4" fill="currentColor" />
+      <circle cx="9.4" cy="9.2" r="1.65" fill="currentColor" />
     </svg>
   );
 }

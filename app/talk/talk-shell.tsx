@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import styles from "./talk-page.module.css";
+import { defaultSceneId, sceneConfigs } from "./scene-config";
 import {
   ChatIcon,
   ImageIcon,
@@ -20,68 +21,63 @@ type TalkState =
   | "aiReply";
 
 type StateCopy = {
-  eyebrow: string;
-  title: string;
-  body: string;
-  prompt: string;
+  inputLabel: string;
+  whisper: string;
 };
 
 const topTabs = [
-  { href: "/talk", label: "Chat", icon: ChatIcon, isActive: true },
+  { href: "/talk", label: "Talk", icon: ChatIcon, isActive: true },
+  { href: "/room", label: "Room", icon: RoomIcon, isActive: false },
   { href: "/memory", label: "Memory", icon: MemoryIcon, isActive: false },
   {
     href: "/sleep-monitoring",
     label: "Sleep Monitoring",
     icon: SleepIcon,
     isActive: false,
+    compactLabel: ["Sleep", "Monitoring"],
   },
-  { href: "/room", label: "Room", icon: RoomIcon, isActive: false },
 ] as const;
-
-const demoStates: TalkState[] = [
-  "default",
-  "listening",
-  "listeningHint",
-  "typing",
-  "aiReply",
-];
 
 const stateCopy: Record<TalkState, StateCopy> = {
   default: {
-    eyebrow: "Ready",
-    title: "A quiet opening moment",
-    body: "The page is idle and waiting. Tap the microphone to begin the local demo flow.",
-    prompt: "Tap to speak",
+    inputLabel: "Tap to speak",
+    whisper: "The room is quiet and ready.",
   },
   listening: {
-    eyebrow: "Listening",
-    title: "Holding space for your voice",
-    body: "This is a local shell state only. The room softens and the microphone becomes active while we simulate listening.",
-    prompt: "Listening...",
+    inputLabel: "Listening...",
+    whisper: "I'm listening.",
   },
   listeningHint: {
-    eyebrow: "Hint",
-    title: "A gentle speaking cue",
-    body: "Use this moment for a short hint or prompt. No transcript is stored and no service call is made.",
-    prompt: "Tell me how your day felt",
+    inputLabel: "Tap to write",
+    whisper: "You can switch to text whenever you want.",
   },
   typing: {
-    eyebrow: "Thinking",
-    title: "Companion is composing",
-    body: "The interface is simulating a lightweight thinking state before an eventual reply shell appears.",
-    prompt: "Companion is thinking...",
+    inputLabel: "Tap to write",
+    whisper: "A typing state can live here next.",
   },
   aiReply: {
-    eyebrow: "Reply",
-    title: "Response shell is ready",
-    body: "A future version can render structured reply content here. For now we only surface a calm ready state.",
-    prompt: "Tap to continue",
+    inputLabel: "Tap to speak",
+    whisper: "A gentle voice reply would return here.",
   },
 };
+
+const sceneClassById = {
+  seaside_day: styles.sceneSeasideDay,
+  seaside_night: styles.sceneSeasideNight,
+  rainforest_day: styles.sceneRainforestDay,
+  snow_mountain_day: styles.sceneSnowMountainDay,
+} as const;
+
+const overlayClassByMode = {
+  light: styles.sceneOverlayLight,
+  dark: styles.sceneOverlayDark,
+} as const;
 
 export function TalkShell() {
   const [talkState, setTalkState] = useState<TalkState>("default");
   const timeoutIds = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const activeScene =
+    sceneConfigs.find((scene) => scene.id === defaultSceneId) ?? sceneConfigs[0];
 
   const clearSequence = () => {
     timeoutIds.current.forEach((timeoutId) => {
@@ -104,45 +100,56 @@ export function TalkShell() {
     timeoutIds.current.push(timeoutId);
   };
 
-  const runListeningSequence = () => {
+  const enterListeningFlow = () => {
     clearSequence();
     setTalkState("listening");
-    queueState("listeningHint", 1700);
-    queueState("typing", 3300);
-    queueState("aiReply", 5000);
+    queueState("listeningHint", 1200);
+    queueState("typing", 2800);
+    queueState("aiReply", 4300);
   };
 
-  const setManualState = (nextState: TalkState) => {
-    clearSequence();
-    setTalkState(nextState);
+  const handlePrimaryAction = () => {
+    if (talkState === "listeningHint") {
+      clearSequence();
+      setTalkState("typing");
+      return;
+    }
+
+    enterListeningFlow();
   };
 
   const activeCopy = stateCopy[talkState];
   const isListening = talkState === "listening";
-  const isTyping = talkState === "typing";
-  const isReply = talkState === "aiReply";
 
   return (
     <section className={styles.page}>
       <div
         className={[
           styles.sceneShell,
+          sceneClassById[activeScene.id],
+          overlayClassByMode[activeScene.overlayMode],
           isListening ? styles.sceneListening : "",
-          isTyping ? styles.sceneTyping : "",
-          isReply ? styles.sceneReply : "",
         ].join(" ")}
       >
         <h1 className={styles.srOnly}>Talk</h1>
 
-        <nav aria-label="Talk tabs" className={styles.topTabs}>
+        <nav aria-label="Primary navigation" className={styles.topTabs}>
           <ul className={styles.tabList}>
             {topTabs.map((item) => {
               const Icon = item.icon;
+              const isWide = "compactLabel" in item;
 
               return (
-                <li key={item.href} className={styles.tabItem}>
+                <li
+                  key={item.href}
+                  className={[
+                    styles.tabItem,
+                    isWide ? styles.tabItemWide : "",
+                  ].join(" ")}
+                >
                   <Link
                     href={item.href}
+                    aria-label={item.label}
                     aria-current={item.isActive ? "page" : undefined}
                     className={[
                       styles.tabLink,
@@ -150,7 +157,35 @@ export function TalkShell() {
                     ].join(" ")}
                   >
                     <Icon className={styles.tabIcon} />
-                    <span className={styles.tabLabel}>{item.label}</span>
+                    {isWide ? (
+                      <>
+                        <span
+                          aria-hidden="true"
+                          className={[styles.tabLabel, styles.tabLabelFull].join(
+                            " ",
+                          )}
+                        >
+                          {item.label}
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          className={[
+                            styles.tabLabel,
+                            styles.tabLabelCompact,
+                          ].join(" ")}
+                        >
+                          {item.compactLabel.map((line) => (
+                            <span key={line} className={styles.tabLabelLine}>
+                              {line}
+                            </span>
+                          ))}
+                        </span>
+                      </>
+                    ) : (
+                      <span aria-hidden="true" className={styles.tabLabel}>
+                        {item.label}
+                      </span>
+                    )}
                   </Link>
                 </li>
               );
@@ -158,77 +193,63 @@ export function TalkShell() {
           </ul>
         </nav>
 
-        <div className={styles.statusCard}>
-          <span className={styles.statusEyebrow}>{activeCopy.eyebrow}</span>
-          <div className={styles.statusTextBlock}>
-            <p className={styles.statusTitle}>{activeCopy.title}</p>
-            <p className={styles.statusBody}>{activeCopy.body}</p>
-          </div>
-        </div>
-
         <div className={styles.roomScene} aria-hidden="true">
-          <div className={styles.windowFrame}>
-            <div className={styles.windowInner}>
-              <div className={styles.sky} />
-              <div className={styles.horizonGlow} />
-              <div className={styles.sea} />
-              <div className={styles.waveFront} />
-              <div className={styles.waveBack} />
-              <div className={styles.shoreline} />
+          <div className={styles.roomFrame}>
+            <div className={styles.sceneWindow}>
+              <div className={styles.sceneVista}>
+                <div className={styles.sceneHaze} />
+                <div className={styles.sceneAccentArc} />
+                <div className={styles.sceneMountain} />
+                <div className={styles.sceneWater} />
+                <div className={styles.sceneWaveFront} />
+                <div className={styles.sceneWaveBack} />
+                <div className={styles.sceneForest} />
+                <div className={styles.sceneMist} />
+                <div className={styles.sceneMoonGlow} />
+              </div>
             </div>
-          </div>
 
-          <div className={styles.windowSeat}>
-            <div className={styles.speaker}>
-              <div className={styles.speakerHandle} />
-              <div className={styles.speakerDial} />
+            <div className={styles.sceneBench} />
+            <div className={styles.sceneDaybed} />
+            <div className={styles.sceneSpeaker}>
+              <div className={styles.sceneSpeakerFace} />
             </div>
+            <div className={styles.sceneGlow} />
           </div>
-
-          <div className={styles.floorGlow} />
-          <div className={styles.daybed} />
         </div>
 
         <div className={styles.controlsWrap}>
-          <div className={styles.demoControls}>
-            <span className={styles.demoLabel}>Demo</span>
-            <div className={styles.demoButtons}>
-              {demoStates.map((demoState) => (
-                <button
-                  key={demoState}
-                  type="button"
-                  className={[
-                    styles.demoButton,
-                    talkState === demoState ? styles.demoButtonActive : "",
-                  ].join(" ")}
-                  onClick={() => setManualState(demoState)}
-                >
-                  {demoState}
-                </button>
-              ))}
-            </div>
-          </div>
+          <p className={styles.whisperText}>{activeCopy.whisper}</p>
 
           <div className={styles.promptBar}>
             <button
               type="button"
               className={[
-                styles.promptIconButton,
-                isListening ? styles.promptIconButtonActive : "",
+                styles.micButton,
+                isListening ? styles.micButtonListening : "",
               ].join(" ")}
               aria-label="Start local listening demo"
-              onClick={runListeningSequence}
+              onClick={enterListeningFlow}
             >
-              <MicIcon className={styles.promptIcon} />
+              <MicIcon className={styles.micIcon} />
             </button>
-            <span className={styles.promptText}>{activeCopy.prompt}</span>
+
             <button
               type="button"
-              className={styles.promptIconButton}
-              aria-label="Reset talk state"
-              onClick={() => setManualState("default")}
+              className={styles.promptPrimary}
+              aria-label={activeCopy.inputLabel}
+              onClick={handlePrimaryAction}
             >
-              <ImageIcon className={styles.promptIcon} />
+              <span className={styles.promptText}>{activeCopy.inputLabel}</span>
+            </button>
+
+            <button
+              type="button"
+              className={styles.imageButton}
+              aria-label="Image upload placeholder"
+              title="Image upload placeholder"
+            >
+              <ImageIcon className={styles.imageIcon} />
             </button>
           </div>
         </div>
