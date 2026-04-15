@@ -196,11 +196,7 @@
 
 .tabList {
   display: grid;
-  grid-template-columns:
-    minmax(0, 0.88fr)
-    minmax(0, 0.96fr)
-    minmax(0, 1fr)
-    minmax(0, 1.58fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   align-items: center;
   gap: var(--talk-nav-gap);
   min-height: var(--talk-nav-height);
@@ -215,10 +211,6 @@
 }
 
 .tabItem {
-  min-width: 0;
-}
-
-.tabItemWide {
   min-width: 0;
 }
 
@@ -277,18 +269,6 @@
   letter-spacing: -0.01em;
   text-align: center;
   white-space: nowrap;
-}
-
-.tabLabelFull {
-  display: inline-block;
-}
-
-.tabLabelCompact {
-  display: none;
-}
-
-.tabLabelLine {
-  display: block;
 }
 
 .roomScene {
@@ -755,49 +735,8 @@
 
 @container (max-width: 30rem) {
   .tabList {
-    grid-template-columns:
-      minmax(0, 0.86fr)
-      minmax(0, 0.92fr)
-      minmax(0, 1.02fr)
-      minmax(0, 1.7fr);
-  }
-
-  .tabLabelFull {
-    display: none;
-  }
-
-  .tabLabelCompact {
-    display: inline-grid;
-    flex-direction: column;
-    gap: 1px;
-    align-items: center;
-    line-height: 1;
-    white-space: normal;
-  }
-
-  .tabLabelLine:first-child {
-    font-size: 12.4px;
-    line-height: 1.02;
-    letter-spacing: -0.01em;
-  }
-
-  .tabLabelLine:last-child {
-    font-size: 11.2px;
-    line-height: 1.02;
-    letter-spacing: -0.01em;
-    opacity: 0.88;
-  }
-}
-
-@container (max-width: 26rem) {
-  .tabList {
-    grid-template-columns:
-      minmax(0, 0.82fr)
-      minmax(0, 0.9fr)
-      minmax(0, 0.96fr)
-      minmax(0, 1.82fr);
-    gap: 5px;
-    padding-inline: 8px;
+    gap: 7px;
+    padding-inline: 9px;
   }
 
   .tabLink {
@@ -808,13 +747,21 @@
   .tabLabel {
     font-size: 14px;
   }
+}
 
-  .tabLabelLine:first-child {
-    font-size: 12.1px;
+@container (max-width: 26rem) {
+  .tabList {
+    gap: 5px;
+    padding-inline: 8px;
   }
 
-  .tabLabelLine:last-child {
-    font-size: 10.9px;
+  .tabLink {
+    gap: 5px;
+    padding-inline: 5px;
+  }
+
+  .tabLabel {
+    font-size: 13.5px;
   }
 
   .promptBar {

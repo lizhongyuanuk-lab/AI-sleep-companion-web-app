@@ -69,13 +69,13 @@ Top navigation has exactly 4 items:
 - Talk
 - Room
 - Memory
-- Sleep Monitoring
+- Sleep
 
 Rules:
 - all 4 items are clickable
 - `Talk` is the default route
 - do not add extra top-level items in V1
-- do not rename these labels in V1
+- use these exact display labels in V1
 
 ---
 
@@ -338,17 +338,17 @@ Active pill:
 - radius: `17px–19px`
 - horizontal padding: `8px–12px`
 
-#### Long-label handling
-`Sleep Monitoring` is the longest top-level label.
+#### Width-pressure handling
+The 4 top-level labels are equal-weight navigation items.
 
 Handle width pressure in this order:
 1. reduce item gap
 2. reduce icon-text gap
 3. reduce active pill horizontal padding
-4. allow a compact two-line label treatment if needed
+4. rebalance column distribution if needed
 
 Do not:
-- rename the label
+- create label-specific visual hierarchy
 - globally shrink all nav text
 - make all icons tiny
 - allow the nav to overflow or visually break
@@ -915,7 +915,7 @@ When implementing or refining UI, Codex must follow this order:
 ## 21. Locked baseline summary
 
 This product remains fixed in V1.1 as:
-- 4-item clickable top nav: Talk / Room / Memory / Sleep Monitoring
+- 4-item clickable top nav: Talk / Room / Memory / Sleep
 - `/talk` as the default route
 - `/talk` as the live companion screen
 - `/talk` does not show full message history

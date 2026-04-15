@@ -23,8 +23,9 @@ The repository currently contains:
 1. Confirm the current repository root.
 2. Read `AGENTS.md`.
 3. Read `docs/SPEC.md` first, then the other docs in `docs/`.
-4. Treat the vendored `docs/SPEC.md` copy as authoritative instead of any external file path.
-5. If touching Next.js application code, consult the relevant guide in `node_modules/next/dist/docs/`.
+4. If touching `/talk` or `/room` UI, also read `docs/TALK_UI_DECISIONS.md`.
+5. Treat the vendored `docs/SPEC.md` copy as authoritative instead of any external file path.
+6. If touching Next.js application code, consult the relevant guide in `node_modules/next/dist/docs/`.
 
 ## After Coding
 

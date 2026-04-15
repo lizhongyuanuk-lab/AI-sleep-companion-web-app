@@ -29,13 +29,7 @@ const topTabs = [
   { href: "/talk", label: "Talk", icon: ChatIcon, isActive: true },
   { href: "/room", label: "Room", icon: RoomIcon, isActive: false },
   { href: "/memory", label: "Memory", icon: MemoryIcon, isActive: false },
-  {
-    href: "/sleep-monitoring",
-    label: "Sleep Monitoring",
-    icon: SleepIcon,
-    isActive: false,
-    compactLabel: ["Sleep", "Monitoring"],
-  },
+  { href: "/sleep-monitoring", label: "Sleep", icon: SleepIcon, isActive: false },
 ] as const;
 
 const stateCopy: Record<TalkState, StateCopy> = {
@@ -137,16 +131,9 @@ export function TalkShell() {
           <ul className={styles.tabList}>
             {topTabs.map((item) => {
               const Icon = item.icon;
-              const isWide = "compactLabel" in item;
 
               return (
-                <li
-                  key={item.href}
-                  className={[
-                    styles.tabItem,
-                    isWide ? styles.tabItemWide : "",
-                  ].join(" ")}
-                >
+                <li key={item.href} className={styles.tabItem}>
                   <Link
                     href={item.href}
                     aria-label={item.label}
@@ -157,35 +144,9 @@ export function TalkShell() {
                     ].join(" ")}
                   >
                     <Icon className={styles.tabIcon} />
-                    {isWide ? (
-                      <>
-                        <span
-                          aria-hidden="true"
-                          className={[styles.tabLabel, styles.tabLabelFull].join(
-                            " ",
-                          )}
-                        >
-                          {item.label}
-                        </span>
-                        <span
-                          aria-hidden="true"
-                          className={[
-                            styles.tabLabel,
-                            styles.tabLabelCompact,
-                          ].join(" ")}
-                        >
-                          {item.compactLabel.map((line) => (
-                            <span key={line} className={styles.tabLabelLine}>
-                              {line}
-                            </span>
-                          ))}
-                        </span>
-                      </>
-                    ) : (
-                      <span aria-hidden="true" className={styles.tabLabel}>
-                        {item.label}
-                      </span>
-                    )}
+                    <span aria-hidden="true" className={styles.tabLabel}>
+                      {item.label}
+                    </span>
                   </Link>
                 </li>
               );

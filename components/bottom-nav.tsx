@@ -7,7 +7,7 @@ const navItems = [
   { href: "/talk", label: "Talk" },
   { href: "/room", label: "Room" },
   { href: "/memory", label: "Memory" },
-  { href: "/sleep-monitoring", label: "Sleep Monitoring" },
+  { href: "/sleep-monitoring", label: "Sleep" },
 ];
 
 export function BottomNav() {

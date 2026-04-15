@@ -38,7 +38,7 @@ export default function Home() {
           },
           {
             href: "/sleep-monitoring",
-            title: "Sleep Monitoring",
+            title: "Sleep",
             description: "Night tracking placeholder",
           },
         ].map((item) => (
