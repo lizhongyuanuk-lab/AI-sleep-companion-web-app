@@ -1,0 +1,396 @@
+.page {
+  min-height: 100%;
+  margin: -1.5rem -1.25rem 0;
+  padding: 1rem 1rem 0;
+}
+
+.sceneShell {
+  position: relative;
+  display: flex;
+  min-height: calc(100svh - 12rem);
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border-radius: 2.25rem 2.25rem 1.75rem 1.75rem;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.85), transparent 28%),
+    linear-gradient(180deg, #d9d2c7 0%, #e7e0d7 15%, #efe9df 56%, #f5f0e6 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 30px 80px rgba(167, 154, 134, 0.22);
+  isolation: isolate;
+}
+
+.sceneShell::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 16%),
+    radial-gradient(circle at 50% 82%, rgba(255, 244, 220, 0.38), transparent 26%);
+  content: "";
+  pointer-events: none;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.topTabs {
+  position: relative;
+  z-index: 2;
+  padding: 1.25rem 1rem 0;
+}
+
+.tabList {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: center;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.45rem;
+  list-style: none;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.56);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 12px 30px rgba(190, 182, 167, 0.2);
+  backdrop-filter: blur(18px);
+}
+
+.tabItem {
+  min-width: 0;
+}
+
+.tabLink {
+  display: inline-flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.24rem;
+  padding: 0.45rem 0.1rem;
+  border-radius: 999px;
+  color: rgba(94, 108, 120, 0.72);
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.tabLink:hover {
+  background: rgba(255, 255, 255, 0.36);
+  color: rgba(73, 86, 98, 0.9);
+}
+
+.tabLinkActive {
+  color: rgba(64, 78, 88, 0.96);
+  background: rgba(255, 255, 255, 0.34);
+}
+
+.tabIcon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: none;
+}
+
+.tabLabel {
+  min-width: 0;
+  font-size: 0.53rem;
+  font-weight: 500;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.roomScene {
+  position: relative;
+  flex: 1;
+  margin: 1rem 0 0;
+  padding: 0 1.6rem;
+}
+
+.roomScene::before {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.22), transparent 35%),
+    linear-gradient(180deg, rgba(154, 139, 119, 0.08), transparent 18%);
+  content: "";
+  pointer-events: none;
+}
+
+.windowFrame {
+  position: absolute;
+  top: 1.1rem;
+  left: 50%;
+  width: min(73vw, 16rem);
+  height: min(94vw, 23rem);
+  transform: translateX(-50%);
+  padding: 0.6rem;
+  border-radius: 0.15rem;
+  background: linear-gradient(180deg, #f8f5ef 0%, #f3eee7 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.78),
+    0 0 0 6px rgba(154, 138, 117, 0.08),
+    inset 0 0 0 1px rgba(190, 178, 160, 0.32);
+}
+
+.windowInner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.15)),
+    linear-gradient(180deg, #e8f0f9 0%, #eef4fb 34%, #e7edf0 62%, #dddacc 100%);
+}
+
+.sky,
+.horizonGlow,
+.sea,
+.waveFront,
+.waveBack,
+.shoreline {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+
+.sky {
+  top: 0;
+  bottom: 40%;
+  background:
+    radial-gradient(circle at 50% 26%, rgba(255, 255, 255, 0.7), transparent 35%),
+    linear-gradient(180deg, #edf4fb 0%, #f7fbfe 100%);
+}
+
+.horizonGlow {
+  top: 43%;
+  height: 18%;
+  background: linear-gradient(180deg, rgba(232, 240, 244, 0.1), rgba(234, 238, 234, 0.82));
+}
+
+.sea {
+  top: 55%;
+  bottom: 11%;
+  background:
+    linear-gradient(180deg, rgba(185, 211, 221, 0.75), rgba(228, 236, 236, 0.82)),
+    repeating-linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.18),
+      rgba(255, 255, 255, 0.18) 1px,
+      transparent 1px,
+      transparent 9px
+    );
+}
+
+.waveFront {
+  top: 65%;
+  height: 8%;
+  background:
+    radial-gradient(circle at 16% 45%, rgba(255, 255, 255, 0.9), transparent 11%),
+    radial-gradient(circle at 44% 65%, rgba(255, 255, 255, 0.72), transparent 14%),
+    radial-gradient(circle at 74% 45%, rgba(255, 255, 255, 0.82), transparent 14%);
+  opacity: 0.85;
+}
+
+.waveBack {
+  top: 61%;
+  height: 6%;
+  background:
+    radial-gradient(circle at 32% 50%, rgba(139, 182, 198, 0.72), transparent 13%),
+    radial-gradient(circle at 69% 44%, rgba(133, 178, 196, 0.7), transparent 15%);
+  opacity: 0.75;
+}
+
+.shoreline {
+  bottom: 0;
+  height: 15%;
+  background:
+    linear-gradient(180deg, rgba(248, 245, 237, 0.2), rgba(240, 235, 223, 0.96)),
+    radial-gradient(circle at 50% -80%, rgba(255, 255, 255, 0.65), transparent 60%);
+}
+
+.windowSeat {
+  position: absolute;
+  left: 1.4rem;
+  right: 1.4rem;
+  bottom: 9.2rem;
+  height: 3.4rem;
+  border-radius: 0.18rem;
+  background:
+    linear-gradient(180deg, rgba(216, 206, 191, 0.9), rgba(234, 226, 214, 0.96)),
+    linear-gradient(90deg, rgba(149, 136, 119, 0.18), transparent 28%, transparent 72%, rgba(149, 136, 119, 0.12));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 6px 24px rgba(170, 154, 130, 0.12);
+}
+
+.speaker {
+  position: absolute;
+  left: 1rem;
+  bottom: 0.35rem;
+  width: 2.15rem;
+  height: 1.7rem;
+  border-radius: 0.3rem;
+  background:
+    linear-gradient(180deg, #b69067 0%, #a57d58 100%),
+    #b08a65;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 5px 10px rgba(94, 72, 46, 0.16);
+}
+
+.speakerHandle {
+  position: absolute;
+  left: 0.3rem;
+  top: -0.25rem;
+  width: 1.12rem;
+  height: 0.6rem;
+  border: 2px solid rgba(128, 99, 66, 0.9);
+  border-bottom: 0;
+  border-radius: 0.8rem 0.8rem 0 0;
+}
+
+.speakerDial {
+  position: absolute;
+  left: 0.28rem;
+  right: 0.28rem;
+  bottom: 0.28rem;
+  top: 0.45rem;
+  border-radius: 0.12rem;
+  background:
+    linear-gradient(180deg, rgba(255, 246, 235, 0.65), rgba(255, 235, 211, 0.2)),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255, 244, 225, 0.6),
+      rgba(255, 244, 225, 0.6) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+  opacity: 0.6;
+}
+
+.floorGlow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 2.6rem;
+  height: 8rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 245, 224, 0.5), transparent 68%);
+  filter: blur(10px);
+}
+
+.daybed {
+  position: absolute;
+  right: 0.45rem;
+  bottom: 3.9rem;
+  width: min(33vw, 7rem);
+  height: 2.5rem;
+  border-radius: 1rem 1rem 0.6rem 0.6rem;
+  background:
+    linear-gradient(180deg, rgba(244, 239, 232, 0.98), rgba(226, 217, 206, 0.96)),
+    linear-gradient(90deg, rgba(160, 146, 124, 0.08), transparent 35%, rgba(160, 146, 124, 0.08));
+  box-shadow:
+    0 10px 18px rgba(167, 151, 128, 0.12),
+    inset 0 -4px 8px rgba(146, 129, 107, 0.12);
+}
+
+.daybed::after {
+  position: absolute;
+  inset: auto 0.6rem 0.4rem 0.6rem;
+  height: 0.2rem;
+  border-radius: 999px;
+  background: rgba(175, 161, 140, 0.2);
+  content: "";
+}
+
+.promptBar {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: calc(100% - 2rem);
+  margin: 0 auto 1.4rem;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.44);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 18px 30px rgba(185, 176, 159, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+.promptIconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.05rem;
+  height: 2.05rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(112, 120, 124, 0.12);
+  color: rgba(92, 102, 110, 0.84);
+}
+
+.promptText {
+  text-align: center;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: rgba(81, 93, 104, 0.95);
+}
+
+.promptIcon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+@media (max-width: 360px) {
+  .page {
+    padding-inline: 0.75rem;
+  }
+
+  .sceneShell {
+    min-height: calc(100svh - 11.5rem);
+    border-radius: 2rem 2rem 1.5rem 1.5rem;
+  }
+
+  .topTabs {
+    padding-inline: 0.75rem;
+  }
+
+  .tabList {
+    gap: 0.1rem;
+    padding-inline: 0.25rem;
+  }
+
+  .tabLink {
+    gap: 0.18rem;
+    padding-block: 0.42rem;
+  }
+
+  .tabLabel {
+    font-size: 0.48rem;
+  }
+
+  .promptBar {
+    width: calc(100% - 1.4rem);
+  }
+}
