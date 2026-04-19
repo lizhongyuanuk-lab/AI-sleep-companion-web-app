@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 393 852" fill="none">
+  <defs>
+    <linearGradient id="wall" x1="196.5" x2="196.5" y1="0" y2="852" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#D8D1C4"/>
+      <stop offset="0.62" stop-color="#CDC4B5"/>
+      <stop offset="1" stop-color="#E3DDD2"/>
+    </linearGradient>
+    <linearGradient id="forest" x1="196.5" x2="196.5" y1="132" y2="470" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C9D1BF"/>
+      <stop offset=".45" stop-color="#8C9C82"/>
+      <stop offset="1" stop-color="#4D6555"/>
+    </linearGradient>
+    <radialGradient id="mist" cx="0" cy="0" r="1" gradientTransform="translate(196.5 228) rotate(90) scale(204 146)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity=".52"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="393" height="852" fill="url(#wall)"/>
+  <rect x="83" y="95" width="227" height="438" rx="112" fill="#EFE7DC"/>
+  <rect x="95" y="107" width="203" height="414" rx="102" fill="url(#forest)"/>
+  <rect x="95" y="107" width="203" height="414" rx="102" fill="url(#mist)"/>
+  <path fill="#67806D" d="M104 470c21-58 35-78 72-104 12-8 25-16 40-15 11 1 25 8 37 18 20 18 37 47 45 101H104Z"/>
+  <path fill="#4C6A54" d="M95 428c21-13 40-47 56-73 14-23 23-41 44-57 22-17 39-20 54-44 17 19 22 37 18 61-5 33-30 55-38 88-6 22-5 44 4 97H95v-72Z"/>
+  <path fill="#3E5A46" d="M95 510c0-59 20-88 52-110 27-18 60-18 85-4 42 24 64 74 66 125H95V510Z"/>
+  <path stroke="#E9F4E9" stroke-linecap="round" stroke-opacity=".35" stroke-width="7" d="M168 152c-10 38-4 63 6 91m39-54c-7 30-3 64 9 108m-80 18c-15 18-20 38-24 58"/>
+  <rect x="0" y="559" width="393" height="293" fill="#ECE7DD"/>
+  <rect x="278" y="438" width="56" height="122" rx="16" fill="#D0CABF"/>
+  <rect x="286" y="362" width="44" height="96" rx="14" fill="#7E847A"/>
+</svg>

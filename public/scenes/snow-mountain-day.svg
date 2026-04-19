@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 393 852" fill="none">
+  <defs>
+    <linearGradient id="wall" x1="196.5" x2="196.5" y1="0" y2="852" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2EEE7"/>
+      <stop offset=".62" stop-color="#ECE7DE"/>
+      <stop offset="1" stop-color="#E6E1D7"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="196.5" x2="196.5" y1="106" y2="436" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F8FAFD"/>
+      <stop offset=".4" stop-color="#EEF3F8"/>
+      <stop offset="1" stop-color="#DBE1E7"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(196.5 214) rotate(90) scale(184 128)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF" stop-opacity=".72"/>
+      <stop offset="1" stop-color="#FFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="393" height="852" fill="url(#wall)"/>
+  <rect x="42" y="88" width="309" height="382" rx="14" fill="#E1D8CB"/>
+  <rect x="57" y="103" width="279" height="352" rx="6" fill="url(#sky)"/>
+  <rect x="57" y="103" width="279" height="352" rx="6" fill="url(#glow)"/>
+  <path fill="#C4CED8" d="M57 395c43-10 68-32 112-132 8-19 22-56 34-64 11 9 20 46 28 71 21 66 61 105 105 125v60H57v-60Z"/>
+  <path fill="#AEBCC9" d="M76 434c28-11 56-34 83-86 18-34 30-84 49-116 14 20 16 52 26 79 19 55 48 102 102 123v21H76v-21Z"/>
+  <path fill="#FDFEFF" d="M133 378c17-21 32-62 47-107 10-31 16-60 23-69 9 14 14 39 21 68 16 57 42 98 79 122-54-5-119-9-170-14Z"/>
+  <path stroke="#FDFEFF" stroke-linecap="round" stroke-width="4" d="M151 257c22 13 38 12 58-1m14 49c13 8 26 10 41 8"/>
+  <rect x="0" y="471" width="393" height="381" fill="#F2EEE8"/>
+  <rect x="42" y="454" width="72" height="26" rx="0" fill="#D1C2B0"/>
+  <rect x="46" y="434" width="64" height="36" rx="4" fill="#C1B09A"/>
+  <path stroke="#B6A38B" stroke-linecap="round" stroke-width="3" d="M56 438c6-9 29-9 44 0"/>
+  <rect x="271" y="423" width="51" height="124" rx="4" fill="#C8B7A2"/>
+  <rect x="278" y="349" width="38" height="76" rx="10" fill="#B69D81"/>
+  <path stroke="#A88E74" stroke-width="3" d="M287 424v25m17-25v25"/>
+</svg>

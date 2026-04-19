@@ -5,15 +5,15 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { href: "/talk", label: "Talk" },
-  { href: "/room", label: "Room" },
   { href: "/memory", label: "Memory" },
   { href: "/sleep-monitoring", label: "Sleep" },
+  { href: "/room", label: "Room" },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
 
-  if (pathname === "/talk") {
+  if (pathname === "/talk" || pathname === "/room") {
     return null;
   }
 
