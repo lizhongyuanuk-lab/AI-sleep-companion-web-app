@@ -1,40 +1,39 @@
 # ACCEPTANCE
 
-## Framework Layer Baseline
+## Product Source
 
-The framework layer is acceptable when all of the following remain true:
+当前 `/talk` 的产品与 UI 真源固定为：
 
-1. The Next.js app builds successfully.
-2. Lint passes successfully.
-3. Type-check passes successfully.
-4. The routes `/`, `/talk`, `/room`, `/memory`, and `/sleep-monitoring` all exist in the current app.
-5. Shared navigation remains available from the common layout.
-6. Placeholder routes remain lightweight and do not introduce unrelated business logic.
+1. [docs/SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SPEC.md)
+2. [docs/TALK_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/TALK_UI_SPEC.md)
 
-## Rule Layer Baseline
+旧版 Talk 文档、历史占位说明或过期视觉决策，均不得再作为实现依据。
 
-1. `AGENTS.md` exists and documents repository execution rules.
-2. The `docs/` directory exists.
-3. `docs/SPEC.md`, `docs/ACCEPTANCE.md`, `docs/TRACKING.md`, and `docs/HANDOFF.md` all exist.
-4. `docs/SPEC.md` is the locked V1 source of truth for product structure and UI behavior.
-5. These docs describe the current mainline rather than an external parent directory or a floating file outside the repo.
+## Current Phase
 
-## Spec Alignment Baseline
+当前优先事项是 `/talk` 的 `ui-only` 重写与对齐：
 
-1. Top-level product decisions should follow `docs/SPEC.md`.
-2. New implementation work should not knowingly conflict with the locked V1 route structure, navigation labels, or Talk-screen content rules unless the user approves a spec change.
-3. If the current codebase diverges from `docs/SPEC.md`, the divergence should be called out explicitly rather than silently normalized.
+- 不扩新路由
+- 不改后端契约
+- 不把 Talk 做成普通聊天流
+- 不让 typing 成为默认主态
 
-## Non-Goals For This Phase
+## Framework Baseline
 
-The task is not required to deliver:
+实现完成后应满足：
 
-- polished feature UI
-- backend connectivity
-- production-ready data models
-- full end-to-end tests
+1. `npm run build` 通过
+2. `npm run lint` 通过
+3. `npm run type-check` 通过
+4. `/`, `/talk`, `/room`, `/memory`, `/sleep-monitoring` 路由仍存在
 
-## Review Reminder
+## UI Baseline
 
-If a change removes route skeletons, shared navigation, or repository rules without explicit approval, it should be treated as a regression.
-If a change conflicts with the locked V1 spec without explicit approval, it should also be treated as a regression.
+Talk UI 合格至少满足：
+
+1. 顶部导航固定为 `Talk / Memory / Sleep / Room`
+2. Bottom dock 为 voice-first 单胶囊结构
+3. `Tap to speak` 是最强主操作
+4. Light / Dark 同骨架
+5. 首屏不是高密度 IM
+6. 主要状态有明确 UI 响应
