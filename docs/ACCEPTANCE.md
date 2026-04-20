@@ -16,38 +16,38 @@
 
 ## Current Task Class
 
-当前已完成的是 `content-only` 文档同步。
-
-下一阶段待执行的是 `/talk` 的 `ui-only` 结构纠偏：
+当前待执行的是 `/talk` 的 `api-contract + ui-only` 重构：
 
 - 不扩新路由
-- 不改后端 API shape
-- 不把 Talk 做成 transcript-first 页面
-- 不让 typing 成为默认可见主态
+- 不改后端服务端
+- 删除旧的双模式前端消费字段
+- 把 Talk 收口到单模式、icon-only nav、dock-contained feedback
 
 ## Documentation Acceptance
 
 仓库内文档同步完成后，至少需要满足：
 
 1. `docs/SPEC.md` 明确 Talk 是 `voice-presence page`
-2. `docs/SPEC.md` 明确 `overlay_mode / shell_text_profile / feedback_contrast_profile` 来自素材元数据
-3. `docs/TALK_UI_SPEC.md` 明确顶部结构为 `settings button + 4-item nav capsule`
-4. `docs/TALK_UI_SPEC.md` 明确默认 dock 为 `weak image attach + Tap to speak + strong mic`
-5. `docs/TALK_UI_SPEC.md` 明确默认 Talk 主页面不得显示 transcript / user bubble
-6. `docs/ACCEPTANCE.md`、`docs/TRACKING.md`、`docs/HANDOFF.md` 明确本轮是 Talk 结构纠偏，而不是泛化 UI polish
+2. `docs/SPEC.md` 明确已删除 `overlay_mode / shell_text_profile / feedback_contrast_profile`
+3. `docs/TALK_UI_SPEC.md` 明确顶部结构为 `settings button + 4-item icon-only nav capsule`
+4. `docs/TALK_UI_SPEC.md` 明确默认 dock 为 `weak image attach + integrated mic + Tap to speak`
+5. `docs/TALK_UI_SPEC.md` 明确所有 speaking feedback 只能出现在 dock 内
+6. `docs/TALK_UI_SPEC.md` 明确不使用 3D icon，改为单色线性 icon
+7. `docs/ACCEPTANCE.md`、`docs/TRACKING.md`、`docs/HANDOFF.md` 明确本轮是单模式 Talk 重构
 
 ## Future UI Acceptance
 
 后续 `/talk` UI 真正对齐完成后，至少需要满足：
 
-1. 顶部导航固定为 `Talk / Memory / Sleep / Room`
+1. 顶部导航固定为 `Talk / Room / Memory / Sleep`，且为 `icon-only`
 2. 左侧存在独立 settings button，且不并入 nav capsule
 3. top nav、settings button、bottom dock 为同一 shell family
 4. Bottom dock 为 voice-first 单胶囊结构
-5. `Tap to speak` 是默认主操作
-6. 默认主页面没有 visible user transcript
-7. transient AI voice feedback 不累计成历史
-8. Light / Dark 同骨架，仅换皮肤
+5. 默认主 CTA 为 integrated `[mic icon + label + subtle waveform]`
+6. room name 位于底部左侧且为单行低位标签
+7. 默认主页面没有 visible user transcript
+8. 所有 animated voice feedback 只出现在 dock 内
+9. 页面为单模式固定视觉，不做 runtime theme switching
 
 ## Verification Baseline
 

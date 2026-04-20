@@ -35,18 +35,22 @@
 1. Talk 是 `voice-presence page`，不是 `transcript-first page`
 2. 默认主页面不显示 visible user text
 3. 默认 dock 不显示 visible typing entry
-4. 顶部导航固定为 `Talk / Memory / Sleep / Room`
+4. 顶部导航固定为 `Talk / Room / Memory / Sleep`，且为 `icon-only`
 5. settings button 必须独立于 nav capsule
 6. top nav、settings button、bottom dock 必须属于同一 shell family
-7. theme mode 必须消费 room / background metadata，而不是运行时猜测
+7. 页面采用 single fixed visual mode，不做 runtime theme switching
+8. room identity 只保留底部左侧单行 `room name`
+9. 默认主 CTA 必须是一体化 `[mic icon + label + subtle waveform]`
+10. 所有 speaking-related 动效和反馈只允许出现在 nav、settings button 和 bottom dock
 
 ## Known Mock-Only Areas
 
 当前代码层仍有以下 mock / placeholder 风险需要明确标注：
 
 1. [app/talk/scene-config.ts](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/scene-config.ts) 仍是本地 scene mock，不是后端真实 room contract
-2. 最新规范要求的 `shell_text_profile`、`feedback_contrast_profile`、`voice_profile_id`、`sound_defaults` 还未进入当前 mock shape
-3. sound panel 的 instant-apply 与全局持久化规则目前仍只有文档定义，没有实现承接
+2. 新合同中的 `ui_shell_token_set_id` 尚未和真实后端对接，目前只能在本地 mock 中占位
+3. 背景准入规则、顶部亮度约束、用户自定义生图筛选逻辑，目前仍停留在文档层，不在这轮 `/talk` UI 重构内
+4. sound panel 的 instant-apply 与本地持久化需要继续保留，但视觉会切换到新的单模式 shell
 
 ## Before Coding
 
@@ -61,10 +65,10 @@
 
 优先顺序建议如下：
 
-1. 先替换页面骨架，去掉 transcript-like layout
-2. 再重写 bottom voice dock 与状态机
-3. 再引入 settings button 与 floating sound panel
-4. 最后补齐 scene metadata mock 与视觉 token
+1. 先删除旧双模式字段与消费逻辑
+2. 再重写 top nav、settings、room name 和 bottom dock 的骨架与状态呈现
+3. 再把所有 speaking feedback 收口到 dock 内
+4. 最后统一线性 icon 和单模式壳层 token
 
 ## After Coding
 

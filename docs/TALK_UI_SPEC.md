@@ -1,447 +1,419 @@
 # Talk 页面 UI / 交互 Spec
 
+iPhone 16 Portrait · Single-Mode Final Draft
+
 本文件是仓库内 Talk 页面当前唯一有效的 UI / 交互真源。
 
-- 外部来源：`Talk页面_UI交互Spec_Final_v2.docx`
-- 补充参考：`Talk_Codex_Revision_Prompt_v2.txt`
+- 外部来源：`Talk_Page_UI_Interaction_Spec_English_Final.docx`
 - 产品配套真源：[docs/SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SPEC.md)
+- 视觉主参考：本轮用户确认的暖白玻璃单模式 room scene 参考图
 
-## 0. 文档定位
+## 0. Document Positioning
+
+本文件定义 Talk 页面的最终 UI 结果、布局结构、组件规则、状态行为与交互流，供 design、front-end 和 Codex 直接使用。
 
 约束优先级固定如下：
 
 1. [docs/SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SPEC.md)
 2. 本文件
-3. 视觉参考
+3. 已确认的本轮视觉参考图
 
 解释：
 
 - PRD 决定页面有什么
 - 本文件决定这些内容怎么显示、怎么动、怎么切状态
-- 视觉参考只借 shell language，不借产品功能集合
+- 历史 Talk UI 说明、旧版冷蓝壳层、旧版 3D icon 方向均不再作为实现依据
 
-## 1. 参考边界与实现原则
+## 1. Core Page Definition
 
-只允许借用以下视觉 / 交互语言：
+Talk main screen 必须表现为：
 
-- Replika 风格的 compact capsule controls
-- 低刺激 hierarchy
-- 同一家族的 material / blur / low-shadow 语言
+- immersive room scene
+- voice-first companionship surface
+- 由 bottom voice control dock 锚定的固定模式页面
 
-明确禁止：
+主页面不得表现为：
 
-- 借用对方产品的功能集合
-- 借用 transcript-first 内容结构
-- 在默认 Talk 主页面重新引入 visible user bubbles
-- 在顶部导航内塞入 settings
+- visible user transcript
+- alternating user / AI message stacks
+- default typing input
+- IM-style conversation layout
 
-## 2. 页面设计目标
+### 1.1 Allowed On The Main Surface
 
-Talk 首屏必须同时满足：
+- room background / ambient scene
+- top navigation
+- top-left settings button
+- room name
+- bottom voice-first dock
+- extremely subtle state changes inside the dock only
 
-1. 像 ambient companionship surface，而不是 message-history screen
-2. bottom dock 是最强交互锚点
-3. voice 是默认可见路径，typing 是隐藏 fallback
-4. 顶部导航在存在左侧独立 settings button 的前提下仍然可读
-5. transient AI speaking feedback 可见，但不得形成 transcript stack
+### 1.2 Not Allowed On The Main Surface
 
-## 3. 参考视口与响应式基线
+- persistent visible user transcript
+- stacked message bubbles
+- scrollable chat history as the main content mode
+- default text input affordance
+- `Tap to write` / `Typing...`
+- any separate voice feedback effect layer outside the dock
 
-| 字段 | 要求 |
-| --- | --- |
-| Reference viewport | `393 x 852`，mobile-first Web / PWA baseline |
-| Global horizontal inset | `16px` |
-| Responsive principle | 只缩尺寸，不改骨架；不得换成 tab bar；不得把 settings 合并进 nav |
-| Theme rule | Light / Dark 只换皮肤，不换骨架、层级与位置 |
+## 2. Reference Viewport And Baseline
 
-## 4. 设计 token
+当前版本锁定到 iPhone 16 portrait：`393 × 852px`。
 
-| 类别 | 规则 |
-| --- | --- |
-| Corner radius | `12 / 18 / 24 / 999px`，主 shell 用 `999px`，内容卡片用 `24px` |
-| Spacing | 仅使用 `4 / 8 / 12 / 16 / 20 / 24px` |
-| Typography | nav label `13px medium`；dock primary label `18px medium`；state hint `12px regular`；content text `15px regular` |
-| Icons | nav `18px`；shell utility `18px`；mic `20px`；stroke `1.75px` |
-| Motion | `180ms` standard；`220ms` dock；`280ms` theme fade；`1600ms` mic pulse |
+当前阶段规则：
 
-## 5. 色彩与材质 token
+- 先锁定 iPhone 16 portrait 结果
+- responsive behavior 后续再处理，不属于本次主 revision
 
-顶部导航、设置按钮、底部 dock 必须共享同一 shell typography / color family。
+Page insets：
 
-| token | Light | Dark |
-| --- | --- | --- |
-| Shell text primary | `#353C4D` | `#F5F7FF` |
-| Shell text secondary | `#717A8E / #939AAC` | `#AAB2C8 / #9FA8C1` |
-| Transient feedback bg | `rgba(220,226,238,0.74)` | `rgba(60,69,100,0.44)` |
-| Transient feedback text | `#60697E` | `#E3E8F7` |
-| Transient waveform | `#6F7BA0` | `#C3CAE0` |
-| Presence glow | `#EAF2FB` soft bloom | `#2F3E6C` soft bloom |
+- left `16px`
+- right `16px`
+- top `12px + safe area`
+- bottom `12px + safe area`
 
-Shell surface 规则：
+## 3. Single-Mode Fixed Rule
 
-- top nav
+本版本只使用一个固定视觉模式：
+
+- no dark / light mode switch
+- no brightness-based UI adaptation
+- no runtime image analysis for theme switching
+- no dynamic recoloring based on room image content
+
+单一固定 token system 必须同时应用于：
+
 - settings button
+- top navigation
+- room name
 - bottom dock
+- settings panel
 
-这三者必须使用同一 shell material family，包括：
+## 4. Fixed Color And Material Tokens
 
-- 低对比 border
-- `20px-22px` blur
-- 低阴影
-- 同一 radius family
+固定基础 token：
 
-## 6. 页面结构骨架
+- `shell-bg = rgba(255,255,255,0.22)`
+- `shell-border = rgba(255,255,255,0.18)`
+- `shell-text-primary = #786E66`
+- `shell-text-secondary = #8C837C`
+- `shell-active-bg = rgba(255,255,255,0.48)`
+- `shell-highlight = rgba(255,245,224,0.52)`
 
-Talk 页面从上到下固定为以下结构：
+Dock / state token：
 
-1. background layer
-2. top control band
-3. ambient hero / room header
-4. transient AI voice feedback area
-5. bottom voice-first dock
-6. temporary overlay layer
+- `wave-idle = rgba(255,255,255,0.18)`
+- `wave-active = rgba(255,255,255,0.34)`
+- `mic-icon = #FFFFFF`
+- `error-bg = rgba(255,240,240,0.38)`
+- `error-text = #8A5C5C`
 
-关键原则：
+Material token：
 
-- 主页面不是 transcript stack
-- 大部分屏幕应该被 atmosphere、presence 与 whitespace 占据
-- lower content field 只能承载 temporary AI feedback，不能承载 persistent chat history
+- `shell-blur = 20px`
+- `shell-shadow = 0 8px 24px rgba(0,0,0,0.08)`
+- `shell-border-width = 1px`
 
-## 7. 布局尺寸
+Hard rules：
 
-### 7.1 Top control band
+- 不得从 room image 动态取色
+- 不得让不同组件定义不同 glass system
+- 不得让 top 和 bottom UI 看起来像两个产品
+
+## 5. Shared Shell System
+
+以下组件必须属于同一 shell family：
+
+- top-left settings button
+- top navigation capsule
+- bottom voice dock
+- settings panel
+
+它们必须共享：
+
+- 同一 material family
+- 同一 border logic
+- 同一 blur logic
+- 同一 subtle shadow logic
+- 同一 icon / text color family
+- 同一 large-radius capsule philosophy
+
+但它们不需要完全一致于：
+
+- width
+- internal layout
+- information density
+- hierarchy strength
+
+## 6. Top Area Layout
+
+顶部区域包含两个独立控制：
+
+1. top-left settings button
+2. top-center navigation capsule
+
+它们属于同一 top control band，但不属于同一 layout box。
+
+## 7. Top-Left Settings Button
 
 | 项目 | 规则 |
 | --- | --- |
-| Available width | `361px` at `393px` viewport |
-| Top offset | `12px + safe area` |
-| Horizontal inset | `16px` |
-
-### 7.2 Settings button
-
-| 项目 | 规则 |
-| --- | --- |
+| Position | `x = 16px`, `y = 12px + safe area` |
 | Size | `52 x 52px` |
 | Radius | `999px` |
-| Icon size | `18px` |
-| Position | `left: 16px`, `top: 12px + safe area` |
-| Placement | 必须位于 nav capsule 外部左侧 |
+| Style | 与 nav 和 dock 同一 shell family；icon-only；无文字 |
+| Icon | `18px`，`2px` stroke，颜色使用 `shell-text-primary` |
+| Interaction | 打开 compact floating settings panel；不跳转页面；不变成 full-screen page |
 
-### 7.3 Gap
-
-- settings button 与 nav capsule 间距固定 `8px`
-
-### 7.4 Top nav capsule
+## 8. Top Navigation Capsule
 
 | 项目 | 规则 |
 | --- | --- |
+| Position | `x = 76px`, `y = 12px + safe area` |
 | Size | `301 x 52px` |
-| Position | `left: 76px`, `top: 12px + safe area` |
 | Radius | `999px` |
-| Item count | 只能有 4 个 item |
-| Order | `Talk / Memory / Sleep / Room` |
+| Content | 固定 4 项：`Talk / Room / Memory / Sleep` |
+| Presentation mode | `icon-only` |
 
-Top nav 内部规则：
+内部规格：
 
-- active item height `40px`
-- inner horizontal padding `6px`
-- item gap `2px`
-- icon `16px`
-- label `12px medium`
-- icon-label gap `4px`
-- inactive padding `8px`
-- active padding `10px`
+- item hit area height = `40px`
+- inner horizontal padding = `6px`
+- item gap = `2px`
+- icon size = `16px`
+- icon stroke = `2px`
 
-### 7.5 Main content area
+Active item：
 
-| 项目 | 规则 |
-| --- | --- |
-| Ambient header block | 距 top control band 下方 `20px` 起 |
-| Room header inset | 使用左侧 `16px` 内容对齐线 |
-| Transient feedback mount | 位于 lower content field，距离 bottom dock 上方 `88-116px` |
+- 默认 `Talk`
+- active chip height = `40px`
+- active chip width = `62px`
+- radius = `999px`
+- bg = `shell-active-bg`
 
-### 7.6 Bottom dock
+Rules：
 
-| 项目 | 规则 |
-| --- | --- |
-| Size | `361 x 52px` at `393px` viewport |
-| Position | `left: 16px`, `bottom: 12px + safe area` |
-| Shell family | 必须与 top nav 和 settings button 一致 |
+- no visible text labels
+- no second line
+- 不得转换成 tab bar
+- 不得增加第五项
+- 不得把 settings 合并进 nav capsule
+- 不得使用 3D icon，统一使用单色线性 icon
 
-Bottom dock 内部规则：
+## 9. Main Scene Area
 
-- internal horizontal padding `10px`
-- internal gap `8px`
-- image attach hit area `40 x 40px`
-- image attach icon `18px`
-- mic hit area `40 x 40px`
-- mic visual circle `36 x 36px`
-- mic icon `20px`
-- primary label `18px medium`
-- primary zone min width `180px`
+主场景区是页面的 primary visual surface，承载：
 
-## 8. 顶部导航区域规则
+- room background
+- spatial atmosphere
+- large breathing space
+- subtle AI presence
 
-顶部导航包含且仅包含以下 4 项：
+主规则：
 
-- Talk
-- Memory
-- Sleep
-- Room
+- room scene 必须保持 primary visual subject
+- 不显示 transcript
+- 不显示 stacked bubbles
+- 不显示 dock 外 voice feedback layer
 
-明确要求：
+所有动态反馈必须只在 bottom dock 内解决。
 
-1. 左侧必须保留独立 settings button
-2. nav capsule 与 bottom dock 必须读起来像 matched pair
-3. selected item 使用 inner active capsule treatment
-4. 不得使用 underline tab
-5. 不得使用高饱和 fill
-6. 不得把 settings 合并进 nav
+视觉方向：
 
-## 9. 主内容区规则
+- low-noise
+- low-contrast
+- softly warm room interior
+- scenic background
 
-### 9.1 Allowed
-
-- room label
-- room title
-- room subtitle / description
-- whitespace
-- subtle presence glow
-- transient AI voice feedback
-- lightweight contextual hint
-
-### 9.2 Not allowed
-
-- persistent user bubbles
-- alternating user / AI message stack
-- readable transcript list 作为主内容模式
-- 多个 response cards 纵向累计
-
-Talk 主内容必须保持 calm、sparse、breathable。
-
-## 10. Room header 规则
+## 10. Room Name
 
 | 项目 | 规则 |
 | --- | --- |
-| Room label | 小字号 uppercase 或 small caps，使用 shell secondary color |
-| Room title | 主标题，强可读权重 |
-| Room subtitle | 最多 1 行或 2 行短描述 |
-| Placement | ambient content field 左上区域，不得与顶部控制带冲突 |
+| Purpose | 识别当前 room |
+| Position | 位于 bottom dock 上方，左对齐 dock 左边 |
+| Measurements | 距 dock `28px` |
+| Style | `13px / 16px / 500` |
+| Color | `shell-text-secondary` |
 
-## 11. Transient AI voice feedback 规则
+Rules：
 
-这个模块是 `temporary AI speaking indicator`，不是 bubble，也不是 transcript card。
+- single line only
+- not a chip
+- not a bubble
+- not a hero title
+- no subtitle
 
-允许的视觉表达：
+## 11. Bottom Voice Dock
 
-- restrained waveform
-- subtle ripple
-- optional one-line AI summary
-- subtle speaking indicator
+这是页面最重要的交互元素。它是 `voice-first control surface`，不是 chat input bar。
 
-必须满足：
-
-1. 只在 `processing` 或 `ai_speaking` 相关状态显示
-2. waveform 低振幅、低频、短长度
-3. 不得使用 full-screen visualizer
-4. 不得使用 full-width chat card
-5. speaking 结束后淡出
-6. 不能累计成历史列表
-7. 挂载在 dock 上方，不得引发布局 reflow
-
-## 12. Media / attachment 规则
-
-Image attach 是弱次要能力。
-
-允许：
-
-- 在 dock 左侧图标上显示 attached 状态
-- 以 overlay 方式打开 image preview
-
-禁止：
-
-- 默认主页面展示 large attachment composer
-- 让 image attach 与 mic 拥有同等视觉权重
-
-## 13. Bottom voice dock 规则
-
-默认 bottom dock 只能包含：
-
-1. 左侧弱 image attach
-2. 中间主标签 `Tap to speak`
-3. 右侧强 mic
-
-禁止项：
-
-- visible typing entry
-- text caret
-- standard input field
-- emoji row
-- generic chat toolbar composition
-
-主标签规则：
-
-- `Tap to speak` 是最强视觉锚点
-- 它必须像 voice action，而不是 input placeholder
-
-## 14. Theme / overlay 规则
-
-Light / Dark 仅允许改变：
-
-- color
-- transparency
-- blur
-- atmosphere
-
-不允许改变：
-
-- skeleton
-- placement
-- control hierarchy
-
-theme 来源必须消费以下元数据字段：
-
-- `overlay_mode`
-- `shell_text_profile`
-- `feedback_contrast_profile`
-
-不得使用运行时图像分析作为真源。
-
-## 15. 状态可见性矩阵
-
-| 状态 | 可见结果 |
+| 项目 | 规则 |
 | --- | --- |
-| `idle_default` | nav visible；settings visible；room header visible；无 transcript；dock 显示 image attach + Tap to speak + mic |
-| `standby_for_voice` | dock 轻微强调；mic ready；可有小型 hint |
-| `voice_recording` | 标签变为 `Listening...`；mic pulse；image attach 变弱；不出现 transcript |
-| `processing` | dock 固定；仅弱 responding hint；无 spinner-dominant screen；可准备 transient feedback |
-| `ai_speaking_transient_feedback` | dock 保持可见；dock 上方出现 transient AI feedback；不出现 stacked bubbles |
-| `image_attached` | image icon 进入 attached state；Tap to speak 与 mic 仍可见 |
-| `error_permission` | mic 不可用；页面内联 permission hint；页面仍可用 |
-| `error_network` | shell 稳定；仅弱网络提示；不回退 transcript |
-| `quiet_mode` | hints 减弱；无 persistent feedback；dock 继续可见 |
+| Position | 水平居中；`bottom = 12px + safe area` |
+| Outer size | `361 x 48px` |
+| Radius | `999px` |
+| Style | 与 top UI 同一 shell family；存在感略强于 top nav；但不能厚重，也不能像 control console 或 messaging toolbar |
 
-Typing 只能存在于 hidden / secondary state，不能存在于默认可见 dock。
+## 12. Bottom Dock Internal Structure
 
-## 16. 交互流
+默认结构固定为：
 
-### 16.1 首次进入
+`[mic + Tap to speak] [weak image attach]`
 
-用户看到：
+### 12.1 Trailing Side
 
-- 左侧 settings button
-- 右侧 compact top nav
-- room header
-- calm whitespace
-- bottom voice dock
+- weak image button
+- hit area = `40 x 40`
+- icon size = `18px`
+- low emphasis
+- no glow
+- secondary only
 
-### 16.2 Tap to speak
+### 12.2 Primary CTA
 
-- bottom dock 进入 `voice_recording`
-- 主内容区不转换为 chat list
+Primary CTA 必须是一体化的：
 
-### 16.3 录音结束
+- integrated mic
+- `Tap to speak`
+- subtle waveform
+- 所有内容都在 dock 内
 
-- 页面切到 `processing`
-- dock 固定不动
-- 不显示 transcript placeholder
+具体规则：
 
-### 16.4 AI speaking
+- CTA container size = `220 x 40px`
+- mic circle = `36 x 36px`
+- mic circle radius = `18px`
+- mic bg = `shell-highlight`
+- mic glow 只允许在 voice states 出现
+- mic icon = `20px`, `2.5px` stroke, `#FFFFFF`
+- label = `Tap to speak`
+- label style = `16px / 20px / 500`
+- label color = `shell-text-primary`
+- mic 与 label 水平排列，gap = `8px`
+- label 不得像 text input placeholder
+- 默认态不得出现 caret
 
-- dock 上方出现 transient AI voice feedback
-- 说完后 feedback 淡出
+### 12.3 Waveform Rules
 
-### 16.5 Image attach
+Waveform 是唯一允许的 animated voice feedback form，且只能出现在 bottom dock 内。
 
-- dock 进入弱 attached state
-- voice path 仍为主路径
+状态规则：
 
-### 16.6 Settings
+- Idle：几乎静止，极低对比，极低 opacity
+- Standby for Voice：略微更可见
+- Voice Recording：明显增强，可做 gentle animation
+- Processing：waveform 略微变软；不允许外部 loading layer
+- AI Speaking：切换成 speaking rhythm；仍只存在于 dock 内；不允许第二反馈区；不允许 AI summary line
 
-- 点击左侧 settings button
-- 打开 compact floating sound-control panel
-- 锚定在按钮下方
+Hard rules：
 
-### 16.7 Typing
+- main content area 不得出现 waveform
+- 不得有 dock 外 transient feedback strip
+- 不得有 bubble-form AI feedback
+- 不得有 one-line AI summary
 
-- 不在默认 dock 暴露
-- 如果未来启用，也只能存在于 secondary state 或 overlay path
+## 13. Bottom Dock Default Hidden Content
 
-## 17. Inline hint 挂载规则
+以下内容默认必须隐藏：
 
-inline hints 必须挂载在 lower content field 且位于 bottom dock 上方。
+- typing icon
+- text placeholder
+- caret
+- `Tap to write`
+- `Typing...`
+- transcript
+- user text
+- AI bubble
+- any extra speaking feedback layer
 
-禁止：
+## 14. Bottom Dock State Machine
 
-- 把 hints 挂到 top nav 内
-- 把 hints 塞进 `Tap to speak` 文案区
-
-文案要求：
-
-- short
-- non-technical
-- low-stimulation
-
-## 18. PRD -> UI 映射
-
-| PRD 规则 | UI 结果 |
+| 状态 | 结果 |
 | --- | --- |
-| voice-first, text-fallback | 默认 dock 不显示 typing entry |
-| no visible user transcript | 默认主页面不显示 persistent user bubbles |
-| image is secondary | image attach 保持左侧弱权重 |
-| top four destinations fixed | settings 独立在 nav capsule 外 |
-| asset-defined theme | overlay / shell / feedback profile 由元数据驱动 |
+| `idle_default` | weak image button + integrated mic + `Tap to speak` CTA + very subtle waveform；typing、transcript、bubbles 和 extra feedback 全隐藏 |
+| `standby_for_voice` | mic glow 略增强；waveform 略增强；label 保持 `Tap to speak` |
+| `voice_recording` | label 变为 `Listening...`；mic glow 明显增强；waveform 动画增强；image button 变弱；不出现 user text / speech-to-text / chat bubbles |
+| `processing` | 不在中心区显示 processing 文字；dock 内只允许轻量过渡状态；无大 loading、无外部反馈区、无 bubble placeholder |
+| `ai_speaking` | dock 保持可见；waveform 切到 speaking rhythm；mic 可感知但不达到 recording 级 glow；无 AI summary line；无 transcript；无 dock 外特效 |
+| `image_attached` | image button 进入 attached state；primary CTA 保留；无 large attachment composer |
+| `error_permission` | mic 变弱；dock 上方出现 subtle error hint |
+| `error_network` | waveform 停止或减弱；dock 上方出现 subtle error hint |
+| `quiet_mode` | waveform 几乎不可见；dock 保留；页面更安静 |
 
-## 19. Strict prohibitions
+## 15. Settings Panel
+
+| 项目 | 规则 |
+| --- | --- |
+| Trigger | top-left settings button |
+| Form | compact floating panel，不是 full-screen |
+| Position | anchored below settings button，left-aligned |
+| Size | width = `280px`；min height = `220px`；max height = `320px`；radius = `24px` |
+| Style | 同一 shell family，但 opacity 略高于 nav / dock 以保证可读性 |
+| Content | companion voice volume、background music volume、white noise volume、white noise type、sound mix preset |
+| Interaction | instant apply；无 Save button；outside tap 关闭；再次点击 settings 关闭 |
+
+## 16. Hint And Error Mounting Rules
+
+所有 hint 和 error 只允许挂载在 bottom dock 上方，靠近 dock，不允许跑到 main content center。
+
+样式规则：
+
+- height = `24px-28px`
+- radius = `999px`
+- normal hint bg = `shell-bg`
+- normal hint text = `shell-text-secondary`
+- error bg = `error-bg`
+- error text = `error-text`
+
+限制：
+
+- lightweight only
+- no large toast
+- 不得遮挡 top navigation
+
+## 17. Hard Prohibitions
 
 以下实现一律视为不合格：
 
-1. 把 Talk 做成 visible transcript stack
-2. 默认主页面显示 persistent user text
-3. 默认 bottom dock 暴露 visible typing entry
-4. 把 settings 放进 4-item nav capsule
-5. settings button、top nav、bottom dock 使用不同 shell family
-6. 为 Light / Dark 设计两套不同 skeleton
-7. 使用 runtime-guessed theme mode
-8. 让 transient AI feedback 累计为 visible history
+1. 在 Talk main screen 显示 visible user transcript
+2. 把 Talk 实现成可阅读 chat history surface
+3. 默认暴露 typing entry
+4. 把 bottom dock 做成标准 input bar
+5. 在 dock 外放 waveform 或 transient feedback
+6. AI speaking 时显示 AI summary line
+7. 让 image button 比 primary CTA 更强
+8. 把 settings 合并进 top navigation capsule
+9. 把 settings 做成 full-screen
+10. 让组件使用不同 shell system
+11. 基于 background image 做 runtime recoloring
+12. 加入 PRD 未定义的聊天模块
 
-## 20. Developer alignment checklist
-
-实现前后都要确认：
-
-1. top nav、settings button、bottom dock 使用同一套 outer shell language
-2. top nav 只包含 `Talk / Memory / Sleep / Room`
-3. 默认 dock 只包含 weak image attach、`Tap to speak`、strong mic
-4. 默认 Talk state 无 visible typing entry
-5. 默认主页面无 persistent user transcript
-6. transient AI voice feedback 是 temporary 的，不形成 history
-7. settings panel 是 compact、floating、instant-apply
-8. theme mode 来自 room / background metadata
-
-## 21. 页面级验收标准
+## 18. Acceptance Criteria
 
 Talk UI 合格至少满足：
 
-1. 首屏明确读作 voice-presence page，而不是 message-history page
-2. settings button、top nav capsule、bottom dock 明显属于同一 shell family
-3. 顶部导航在 4 个 item + 独立 settings button 的前提下仍可读
-4. bottom dock 语音优先，默认不暴露 typing
-5. persistent user transcript 不存在于默认主页面
-6. transient AI voice feedback 只在应出现时出现，并能干净淡出
-7. Light / Dark 只换皮肤，不换骨架
-8. 状态切换时页面不会漂移成 generic chat UI
+1. 第一印象是 room scene surface，而不是 chat page
+2. settings 位于 top-left 且独立存在
+3. top navigation 是固定四项的 icon-only 结构
+4. room name 位于 dock 上方左侧
+5. bottom dock 更薄、更轻
+6. 默认 dock 只显示 weak image action 和 integrated mic + `Tap to speak` CTA
+7. typing 默认不可见
+8. transcript 默认不可见
+9. 所有 animated voice feedback 只发生在 dock 内
+10. dock 外不存在额外 feedback layer
+11. top 与 bottom controls 属于同一 shell family
+12. 页面只使用 one fixed mode，不做 runtime theme switching
 
-## 22. Responsive rules
+## 19. Review Note
 
-| 断点 | 规则 |
-| --- | --- |
-| `393-430px` | settings `52x52`；nav `301x52`；dock `361x52`；nav label `12px`；dock label `18px` |
-| `375-392px` | settings `50x50`；nav height `50px`；nav width = `viewport - 32 - 50 - 8`；dock height `50px` |
-| `360-374px` | settings `48x48`；nav height `48px`；nav width = `viewport - 32 - 48 - 8`；nav label `11.5-12px`；dock height `48px` |
+本稿锁定到当前 single-mode、image-aligned 方向。
 
-硬约束：
+如果后续引入以下任何变化：
 
-1. 不得换成 tab bar
-2. 不得把 settings 移进 nav capsule
-3. 不得换 page skeleton
-4. 不得让 label wrap
+- responsive behavior
+- dark / light variants
+- visible typing secondary state
+
+都必须作为单独 patch 明确追加，而不能由实现自行推断。

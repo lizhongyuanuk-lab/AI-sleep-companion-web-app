@@ -2,16 +2,33 @@ type IconProps = {
   className?: string;
 };
 
-export function ChatIcon({ className }: IconProps) {
+export function SettingsIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <path
-        d="M6 7.4A2.4 2.4 0 0 1 8.4 5h7.2A2.4 2.4 0 0 1 18 7.4v5.2a2.4 2.4 0 0 1-2.4 2.4H9.2L6.7 17.1c-.3.2-.7 0-.7-.4V7.4Z"
+        d="M12 4.8v1.9M12 17.3v1.9M5.8 12H3.9M20.1 12h-1.9M17.1 6.9l-1.4 1.4M8.3 15.7l-1.4 1.4M17.1 17.1l-1.4-1.4M8.3 8.3 6.9 6.9"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+      <circle cx="12" cy="12" r="3.35" stroke="currentColor" strokeWidth="1.9" />
+    </svg>
+  );
+}
+
+export function TalkIcon({ className }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path
+        d="M8.3 18.2 6.4 20v-3.2a6.4 6.4 0 1 1 2 .3Z"
+        stroke="currentColor"
+        strokeWidth="1.9"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      <circle cx="9.5" cy="12" r="1" fill="currentColor" />
+      <circle cx="12" cy="12" r="1" fill="currentColor" />
+      <circle cx="14.5" cy="12" r="1" fill="currentColor" />
     </svg>
   );
 }
@@ -20,16 +37,16 @@ export function MemoryIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <path
-        d="M12 5.2c1.8-1.2 4.5-1 6.1.6 1.9 1.9 1.9 5 0 6.9L12 18.8l-6.1-6.1A4.9 4.9 0 0 1 12 5.2Z"
+        d="M9.1 6.1a3.6 3.6 0 0 0-3.6 3.6c0 1 .4 1.9 1 2.5-.6.6-1 1.5-1 2.5a3.6 3.6 0 0 0 3.6 3.6c1 0 1.9-.4 2.5-1 .6.6 1.5 1 2.5 1a3.6 3.6 0 0 0 3.6-3.6c0-1-.4-1.9-1-2.5.6-.6 1-1.5 1-2.5a3.6 3.6 0 0 0-3.6-3.6c-1 0-1.9.4-2.5 1-.6-.6-1.5-1-2.5-1Z"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="1.85"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
-        d="M12 9.2v5.5M9.3 11.9h5.4"
+        d="M12 7.4v9.2M9.7 10.2c.7.3 1.4.3 2.3 0M12 13.8c.8.3 1.6.3 2.3 0"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="1.6"
         strokeLinecap="round"
       />
     </svg>
@@ -40,21 +57,18 @@ export function SleepIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <path
-        d="M7.4 9.4a4 4 0 0 1 4-4h5.2a4 4 0 0 1 4 4v4.2a4 4 0 0 1-4 4h-5.2a4 4 0 0 1-4-4V9.4Z"
+        d="M15.9 5.5a7.1 7.1 0 1 0 2.6 13.7 6.4 6.4 0 1 1-2.6-13.7Z"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
       <path
-        d="M4.8 8.5h2.1M17.1 4.8v2.1M5.7 16.7l1.5-1.5M18.3 16.7l-1.5-1.5"
+        d="M10.7 15.2h1.7l1.2-2.7 1.6 3.5 1.1-2.2h1.9"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="1.7"
         strokeLinecap="round"
-      />
-      <path
-        d="M12 11.2c1.5 0 2.8-1.2 2.8-2.8"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
@@ -64,15 +78,21 @@ export function RoomIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <path
-        d="M4.8 11.2h14.4v5.6H4.8v-5.6ZM7.2 7.5h9.6v3.7H7.2V7.5Z"
+        d="M7.3 10.2V8.6A2.6 2.6 0 0 1 9.9 6h4.2a2.6 2.6 0 0 1 2.6 2.6v1.6"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="1.85"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5.4 10.2h13.2v4.2a2.3 2.3 0 0 1-2.3 2.3H7.7a2.3 2.3 0 0 1-2.3-2.3v-4.2Z"
+        stroke="currentColor"
+        strokeWidth="1.85"
         strokeLinejoin="round"
       />
       <path
-        d="M7.4 16.8v1.8M16.6 16.8v1.8"
+        d="M7.6 16.7v1.6M16.4 16.7v1.6"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="1.85"
         strokeLinecap="round"
       />
     </svg>
@@ -83,14 +103,14 @@ export function MicIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <path
-        d="M12 4.8a3.1 3.1 0 0 1 3.1 3.1v4.9a3.1 3.1 0 0 1-6.2 0V7.9A3.1 3.1 0 0 1 12 4.8Z"
+        d="M12 4.9a3.15 3.15 0 0 1 3.15 3.15v4.55a3.15 3.15 0 1 1-6.3 0V8.05A3.15 3.15 0 0 1 12 4.9Z"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="2.1"
       />
       <path
-        d="M7.6 12.2a4.4 4.4 0 0 0 8.8 0M12 17.1v2.3M9.3 19.4h5.4"
+        d="M7.7 12.4a4.3 4.3 0 0 0 8.6 0M12 16.9v2.2M9.2 19.1h5.6"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="2"
         strokeLinecap="round"
       />
     </svg>
@@ -101,66 +121,22 @@ export function ImageIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <rect
-        x="4.4"
-        y="4.4"
-        width="15.2"
-        height="15.2"
-        rx="3.2"
+        x="4.2"
+        y="4.5"
+        width="15.6"
+        height="15"
+        rx="3.1"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="1.85"
       />
       <path
-        d="m8 15.2 3.1-3.2 2.2 2.3 2.7-2.9 2 2.2"
+        d="m7.7 15.1 2.7-2.9 2.2 2.2 2.7-3 2 2.2"
         stroke="currentColor"
-        strokeWidth="1.75"
+        strokeWidth="1.85"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="9.4" cy="9.2" r="1.65" fill="currentColor" />
-    </svg>
-  );
-}
-
-export function TypingIcon({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        d="M5.5 7.4A2.4 2.4 0 0 1 7.9 5h8.2a2.4 2.4 0 0 1 2.4 2.4v6.2a2.4 2.4 0 0 1-2.4 2.4H9.1l-2.7 2c-.3.2-.6 0-.6-.4V7.4Z"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9.2 10.8h5.6M9.2 13.5h3.9"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-export function PlayIcon({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        d="M9 7.6v8.8c0 .5.5.8 1 .6l6.8-4.4c.4-.2.4-.8 0-1.1L10 7c-.5-.3-1 .1-1 .6Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-export function CloseIcon({ className }: IconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <path
-        d="m7.5 7.5 9 9M16.5 7.5l-9 9"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-      />
+      <circle cx="9.2" cy="9.2" r="1.35" fill="currentColor" />
     </svg>
   );
 }
