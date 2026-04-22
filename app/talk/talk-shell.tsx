@@ -165,25 +165,24 @@ export function TalkShell({
   initialSceneParam?: string;
 }) {
   const pathname = usePathname();
-  const resolvedSceneId = initialSceneParam
+  const initialSceneId = initialSceneParam
     ? getInitialSceneId(initialSceneParam)
-    : readStoredSceneId() ?? defaultSceneId;
-  const supportsMicrophone =
-    typeof navigator === "undefined" ||
-    Boolean(navigator.mediaDevices?.getUserMedia);
+    : defaultSceneId;
   const timersRef = useRef<number[]>([]);
   const settingsPanelRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
+  const skipNextSoundPersistRef = useRef(true);
 
-  const [activeSceneId] = useState<SceneId>(resolvedSceneId);
+  const [activeSceneId, setActiveSceneId] = useState<SceneId>(initialSceneId);
   const activeScene = sceneConfigMap[activeSceneId];
-  const [uiState, setUiState] = useState<TalkUiState>(() =>
-    supportsMicrophone ? "idle_default" : "error_permission",
-  );
+  const [uiState, setUiState] = useState<TalkUiState>("idle_default");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [imageAttached, setImageAttached] = useState(false);
-  const [soundSettings, setSoundSettings] = useState<SoundDefaults>(() =>
-    readStoredSoundSettings(sceneConfigMap[resolvedSceneId].soundDefaults),
+  const [sceneStorageReady, setSceneStorageReady] = useState(
+    Boolean(initialSceneParam),
+  );
+  const [soundSettings, setSoundSettings] = useState<SoundDefaults>(
+    sceneConfigMap[initialSceneId].soundDefaults,
   );
 
   const stateHint = getHint(uiState, imageAttached, settingsOpen);
@@ -221,7 +220,10 @@ export function TalkShell({
   };
 
   const ensureVoiceRuntime = () => {
-    if (!supportsMicrophone) {
+    if (
+      typeof navigator === "undefined" ||
+      !navigator.mediaDevices?.getUserMedia
+    ) {
       clearQueuedTransitions();
       setUiState("error_permission");
       setSettingsOpen(false);
@@ -320,35 +322,59 @@ export function TalkShell({
   };
 
   useEffect(() => {
-    writeStoredSceneId(activeSceneId);
-  }, [activeSceneId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
+    if (initialSceneParam) {
+      startTransition(() => {
+        setActiveSceneId(getInitialSceneId(initialSceneParam));
+        setSceneStorageReady(true);
+      });
       return;
     }
 
-    window.localStorage.setItem(
-      soundSettingsStorageKey,
-      JSON.stringify(soundSettings),
-    );
-  }, [soundSettings]);
+    const storedSceneId = readStoredSceneId();
+
+    startTransition(() => {
+      if (storedSceneId) {
+        setActiveSceneId(getInitialSceneId(storedSceneId));
+      }
+
+      setSceneStorageReady(true);
+    });
+  }, [initialSceneParam]);
+
+  useEffect(() => {
+    if (!sceneStorageReady) {
+      return;
+    }
+
+    writeStoredSceneId(activeSceneId);
+  }, [activeSceneId, sceneStorageReady]);
 
   useEffect(() => {
     clearQueuedTransitions();
 
-    if (!supportsMicrophone) {
+    const hasMicrophoneSupport = Boolean(navigator.mediaDevices?.getUserMedia);
+
+    if (!hasMicrophoneSupport) {
+      startTransition(() => {
+        setUiState("error_permission");
+      });
       return () => {
         clearQueuedTransitions();
       };
     }
 
-    queueTransition(() => {
-      setUiState("standby_for_voice");
-    }, 1400);
-    queueTransition(() => {
-      setUiState("quiet_mode");
-    }, 9000);
+    if (!navigator.onLine) {
+      startTransition(() => {
+        setUiState("error_network");
+      });
+    } else {
+      queueTransition(() => {
+        setUiState("standby_for_voice");
+      }, 1400);
+      queueTransition(() => {
+        setUiState("quiet_mode");
+      }, 9000);
+    }
 
     const handleOffline = () => {
       clearQueuedTransitions();
@@ -372,7 +398,32 @@ export function TalkShell({
       window.removeEventListener("online", handleOnline);
       clearQueuedTransitions();
     };
-  }, [supportsMicrophone]);
+  }, []);
+
+  useEffect(() => {
+    skipNextSoundPersistRef.current = true;
+    startTransition(() => {
+      setSoundSettings(
+        readStoredSoundSettings(sceneConfigMap[activeSceneId].soundDefaults),
+      );
+    });
+  }, [activeSceneId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (skipNextSoundPersistRef.current) {
+      skipNextSoundPersistRef.current = false;
+      return;
+    }
+
+    window.localStorage.setItem(
+      soundSettingsStorageKey,
+      JSON.stringify(soundSettings),
+    );
+  }, [soundSettings]);
 
   useEffect(() => {
     if (!settingsOpen) {

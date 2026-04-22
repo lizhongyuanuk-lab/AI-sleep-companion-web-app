@@ -32,12 +32,12 @@ export type SceneConfig = {
 export const sceneConfigs: SceneConfig[] = [
   {
     id: "seaside_night",
-    image: "/scenes/seaside-night.svg",
+    image: "/scenes/seaside-night-room.png",
     eyebrow: "Moon Tide",
     title: "Seaside Night",
     summary: "Soft moonlight, cool walls, and a shoreline horizon that keeps the room slow.",
     roomName: "Seaside Night",
-    backgroundAsset: "/scenes/seaside-night.svg",
+    backgroundAsset: "/scenes/seaside-night-room.png",
     voiceProfileId: "luna-whisper",
     soundDefaults: {
       voiceVolume: 70,
@@ -50,12 +50,12 @@ export const sceneConfigs: SceneConfig[] = [
   },
   {
     id: "seaside_day",
-    image: "/scenes/seaside-day.svg",
+    image: "/scenes/seaside-day-room.png",
     eyebrow: "Sea Light",
     title: "Seaside Day",
     summary: "Warm plaster, pale linen, and a bright horizon that keeps the page breathable.",
     roomName: "Seaside Day",
-    backgroundAsset: "/scenes/seaside-day.svg",
+    backgroundAsset: "/scenes/seaside-day-room.png",
     voiceProfileId: "sola-warm",
     soundDefaults: {
       voiceVolume: 70,
@@ -68,12 +68,12 @@ export const sceneConfigs: SceneConfig[] = [
   },
   {
     id: "rainforest_day",
-    image: "/scenes/rainforest-day.svg",
+    image: "/scenes/rainforest-day-room.png",
     eyebrow: "Canopy Mist",
     title: "Rainforest Day",
     summary: "Muted stone, green fog, and a low canopy hush that makes the shell feel grounded.",
     roomName: "Rainforest Day",
-    backgroundAsset: "/scenes/rainforest-day.svg",
+    backgroundAsset: "/scenes/rainforest-day-room.png",
     voiceProfileId: "moss-calm",
     soundDefaults: {
       voiceVolume: 70,
@@ -86,7 +86,7 @@ export const sceneConfigs: SceneConfig[] = [
   },
   {
     id: "snow_mountain_day",
-    image: "/scenes/snow-mountain-day.svg",
+    image: "/scenes/snow-mountain-day-room.png",
     eyebrow: "Alpine Quiet",
     title: "Snow Mountain Day",
     summary: "Pale room tones and a distant ridge that keeps the atmosphere crisp and uncluttered.",

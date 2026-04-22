@@ -5,37 +5,45 @@
 - Mainline repository confirmed: `ai-companion-web`
 - Latest Talk PRD + non-UI spec vendored into `docs/SPEC.md`: yes
 - Latest Talk UI spec vendored into `docs/TALK_UI_SPEC.md`: yes
-- Current `/talk` implementation fully aligned to latest docs: no
+- Current `/talk` implementation aligned to the latest single-mode direction: yes
 
 ## Current Task Classification
 
-本轮主任务：`api-contract + ui-only`
+本轮主任务：`ui-only + bugfix`
 
 解释：
 
-- 当前仓库内 Talk 真源已切换到单模式版本
-- 当前 `/talk` 代码仍残留双模式字段、dock 外反馈层和旧视觉方向
+- Talk 的产品和视觉方向已经固定为最终的暖白玻璃单模式
+- 当前收尾工作聚焦于最终稿视觉对齐、首屏稳定性和过程文档去旧
 
-## Confirmed Implementation Gaps
+## Confirmed Alignment Baseline
 
-基于当前代码与新版规范的对照，已确认以下差距：
+当前仓库内已经确认的 Talk 基线如下：
 
-1. [app/talk/scene-config.ts](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/scene-config.ts) 仍保留 `overlay_mode / shell_text_profile / feedback_contrast_profile`
-2. [app/talk/talk-shell.tsx](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/talk-shell.tsx) 仍存在 dock 外 feedback layer 与旧状态承载方式
-3. [app/talk/talk-shell.tsx](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/talk-shell.tsx) 尚未完成 icon-only 顶部导航
-4. [app/talk/talk-shell.tsx](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/talk-shell.tsx) 尚未完全收口 room name 的低位单行标签形态
-5. [app/talk/talk-page.module.css](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/talk-page.module.css) 仍是旧的双模式视觉与冷色壳层体系
-6. [app/talk/talk-icons.tsx](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/talk-icons.tsx) 与顶部导航仍未彻底切换到非 3D 单色线性 icon 方案
+1. 顶部导航固定为 `Talk / Room / Memory / Sleep`
+2. 顶部导航为 `icon-only`
+3. 左上保留独立 settings button
+4. room name 下沉到底部左侧单行标签
+5. bottom dock 为 voice-first 单胶囊结构
+6. 默认主 CTA 为一体化 `[mic + Tap to speak]`
+7. image action 位于 dock 右侧
+8. 所有 speaking-related 动效与反馈只允许发生在 dock 内
+9. Snow Mountain Day 使用已 vendored 的暖白房间背景资产
+10. 顶部导航使用已 vendored 的最终 PNG icon 资产
 
-## Expected File Scope For UI Work
+## Active File Scope
 
-后续 `/talk` UI-only 实现预计会改这些文件：
+当前 Talk 最终稿主要依赖以下文件：
 
 1. [app/talk/talk-shell.tsx](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/talk-shell.tsx)
 2. [app/talk/talk-page.module.css](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/talk-page.module.css)
 3. [app/talk/scene-config.ts](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/scene-config.ts)
 4. [app/talk/talk-icons.tsx](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/talk-icons.tsx)
-5. [app/talk/page.tsx](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/page.tsx)，仅在 route-level 参数或入口消费需要调整时触达
+5. [public/nav-icons/talk-shell.png](/Users/zhongyuanli/Documents/Playground/ai-companion-web/public/nav-icons/talk-shell.png)
+6. [public/nav-icons/room-shell.png](/Users/zhongyuanli/Documents/Playground/ai-companion-web/public/nav-icons/room-shell.png)
+7. [public/nav-icons/memory-shell.png](/Users/zhongyuanli/Documents/Playground/ai-companion-web/public/nav-icons/memory-shell.png)
+8. [public/nav-icons/sleep-shell.png](/Users/zhongyuanli/Documents/Playground/ai-companion-web/public/nav-icons/sleep-shell.png)
+9. [public/scenes/snow-mountain-day-room.png](/Users/zhongyuanli/Documents/Playground/ai-companion-web/public/scenes/snow-mountain-day-room.png)
 
 默认不应修改：
 
@@ -45,11 +53,20 @@
 - 全局路由结构
 - 无关共享组件
 
-## Next Recommended Steps
+## Remaining Review Focus
 
-1. 删除旧双模式字段与相关消费逻辑
-2. 把顶部导航收口成 icon-only 4-item capsule
-3. 把所有 speaking-related 反馈压回 dock 内
-4. 用单模式暖白玻璃视觉重写 nav / settings / dock / room name
-5. 把 Talk 局部 icon 统一成单色线性 icon
-6. 完成后运行 `build / lint / type-check`
+后续如果继续做 Talk fidelity pass，优先只看这几类问题：
+
+1. nav / settings / dock 的玻璃材质是否仍然过重
+2. idle waveform 是否过于可见
+3. room name 的低位标签是否过深或过大
+4. 首屏 hydration 是否保持稳定
+5. Figma 回填后是否需要再做一次 1:1 spacing pass
+
+## Verification Rule
+
+任何继续修改 `/talk` 的任务结束后，都必须运行：
+
+1. `npm run build`
+2. `npm run lint`
+3. `npm run type-check`
