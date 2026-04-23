@@ -105,7 +105,7 @@ Dock / state token：
 
 - `wave-idle = rgba(255,255,255,0.18)`
 - `wave-active = rgba(255,255,255,0.34)`
-- `mic-icon = #FFFFFF`
+- `mic-icon = #A57B52`
 - `error-bg = rgba(255,240,240,0.38)`
 - `error-text = #8A5C5C`
 
@@ -350,8 +350,8 @@ Hard rules：
 | Position | anchored below settings button，left-aligned |
 | Size | width = `280px`；min height = `220px`；max height = `320px`；radius = `24px` |
 | Style | 同一 shell family，但 opacity 略高于 nav / dock 以保证可读性 |
-| Content | companion voice volume、background music volume、white noise volume、white noise type、sound mix preset |
-| Interaction | instant apply；无 Save button；outside tap 关闭；再次点击 settings 关闭 |
+| Content | companion voice volume、background music volume、white noise volume、environment sound on/off、white noise type、sound mix preset |
+| Interaction | instant apply；无 Save button；outside tap 关闭；再次点击 settings 关闭；environment sound 为 `On` 时恢复当前 room 默认环境音，`Off` 时关闭环境音 |
 
 ## 16. Hint And Error Mounting Rules
 

@@ -116,7 +116,7 @@ Talk 页面运行时至少消费以下字段：
 | `room_name` | 当前房间展示名称 |
 | `background_asset` | 背景素材引用 |
 | `voice_profile_id` | TTS / playback 使用的 companion voice 标识 |
-| `sound_defaults` | 房间级默认的 BGM / white noise 配置 |
+| `sound_defaults` | 房间级默认环境音配置，至少包含 BGM、white noise 和环境音默认开启状态 |
 | `ui_shell_token_set_id` | 可选，固定使用的单模式 shell token 套件标识 |
 
 不可协商的合同规则：
@@ -160,16 +160,17 @@ Talk 页只允许轻量音频设置，不允许展开成深设置体验。
 | --- | --- |
 | Entry | 顶部控制带左侧独立 settings button，且在 4-item nav capsule 外部 |
 | Panel type | 悬浮、紧凑、锚定在 settings button 下方的 floating panel |
-| Controls | companion voice volume、background music volume、white noise volume、white noise type、sound mix preset |
+| Controls | companion voice volume、background music volume、white noise volume、environment sound on/off、white noise type、sound mix preset |
 | Apply behavior | instant apply，无 save button |
-| Persistence | volume 全局持久化，white noise type 支持 room default + global fallback |
+| Persistence | volume 全局持久化；white noise type 支持 room default + global fallback；environment sound on/off 本地持久化 |
 | Availability | `idle_default`、`quiet_mode`、`ai_speaking` 可用；`voice_recording` 不可用 |
-| Default values | voice 70%，BGM 35%，white noise 45%，preset `Balanced`，type 默认取 room default |
+| Default values | voice 70%，BGM 35%，white noise 45%，preset `Balanced`，type 默认取 room default；environment sound 默认 `On` |
 
 设计意图：
 
 - 这是即时调音面板，不是 full-screen settings
 - 不得破坏 Talk 的 ambient companionship feel
+- environment sound 为 `On` 时，进入房间应恢复该 room 的默认环境音；为 `Off` 时，本地保留关闭状态
 
 ## 9. 内容与文案策略
 
