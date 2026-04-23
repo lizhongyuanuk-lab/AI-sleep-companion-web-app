@@ -3,6 +3,7 @@ export type WhiteNoiseType = "room_default" | "rain" | "ocean" | "wind";
 export type SoundMixPreset = "balanced" | "voice_focus" | "deep_sleep";
 
 export type SoundDefaults = {
+  environmentSoundEnabled: boolean;
   voiceVolume: number;
   bgmVolume: number;
   whiteNoiseVolume: number;
@@ -40,6 +41,7 @@ export const sceneConfigs: SceneConfig[] = [
     backgroundAsset: "/scenes/seaside-night-room.png",
     voiceProfileId: "luna-whisper",
     soundDefaults: {
+      environmentSoundEnabled: true,
       voiceVolume: 70,
       bgmVolume: 35,
       whiteNoiseVolume: 45,
@@ -58,6 +60,7 @@ export const sceneConfigs: SceneConfig[] = [
     backgroundAsset: "/scenes/seaside-day-room.png",
     voiceProfileId: "sola-warm",
     soundDefaults: {
+      environmentSoundEnabled: true,
       voiceVolume: 70,
       bgmVolume: 35,
       whiteNoiseVolume: 45,
@@ -76,6 +79,7 @@ export const sceneConfigs: SceneConfig[] = [
     backgroundAsset: "/scenes/rainforest-day-room.png",
     voiceProfileId: "moss-calm",
     soundDefaults: {
+      environmentSoundEnabled: true,
       voiceVolume: 70,
       bgmVolume: 30,
       whiteNoiseVolume: 48,
@@ -94,6 +98,7 @@ export const sceneConfigs: SceneConfig[] = [
     backgroundAsset: "/scenes/snow-mountain-day-room.png",
     voiceProfileId: "alba-soft",
     soundDefaults: {
+      environmentSoundEnabled: true,
       voiceVolume: 70,
       bgmVolume: 32,
       whiteNoiseVolume: 40,

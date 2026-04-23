@@ -536,34 +536,44 @@
   height: 42px;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(232, 227, 218, 0.45);
+  border: 1px solid rgba(255, 244, 223, 0.72);
   border-radius: 999px;
-  background: rgba(241, 244, 246, 0.8);
+  background:
+    radial-gradient(
+      circle at 50% 34%,
+      rgba(255, 255, 255, 0.98) 0%,
+      rgba(252, 247, 239, 0.96) 48%,
+      rgba(243, 232, 208, 0.92) 100%
+    );
   box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.1),
-    inset 0 1px 4px rgba(255, 255, 255, 0.22);
+    0 6px 18px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(255, 247, 228, 0.24),
+    0 0 12px rgba(255, 228, 180, 0.12),
+    inset 0 1px 4px rgba(255, 255, 255, 0.34);
 }
 
 .dockRecording .micCircle {
   box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.1),
-    inset 0 1px 4px rgba(255, 255, 255, 0.22),
-    0 0 0 3px rgba(255, 243, 220, 0.12),
-    0 0 14px rgba(255, 237, 195, 0.24);
+    0 6px 18px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(255, 247, 228, 0.24),
+    0 0 0 3px rgba(255, 244, 220, 0.14),
+    0 0 14px rgba(255, 228, 180, 0.18),
+    inset 0 1px 4px rgba(255, 255, 255, 0.34);
 }
 
 .dockSpeaking .micCircle {
   box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.1),
-    inset 0 1px 4px rgba(255, 255, 255, 0.22),
-    0 0 0 2px rgba(255, 247, 230, 0.14),
-    0 0 12px rgba(255, 241, 207, 0.2);
+    0 6px 18px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(255, 247, 228, 0.24),
+    0 0 0 2px rgba(255, 244, 220, 0.12),
+    0 0 12px rgba(255, 228, 180, 0.16),
+    inset 0 1px 4px rgba(255, 255, 255, 0.34);
 }
 
 .micIcon {
   width: 23px;
   height: 23px;
-  color: var(--mic-icon);
+  color: #a57b52;
 }
 
 .primaryLabel {

@@ -57,6 +57,11 @@ const soundMixOptions: { value: SoundMixPreset; label: string }[] = [
   { value: "deep_sleep", label: "Deep sleep" },
 ];
 
+const environmentSoundOptions = [
+  { value: true, label: "On" },
+  { value: false, label: "Off" },
+] as const;
+
 function clampVolume(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
@@ -65,6 +70,11 @@ function normalizeSoundSettings(
   candidate: Partial<SoundDefaults> | null | undefined,
   defaults: SoundDefaults,
 ): SoundDefaults {
+  const environmentSoundEnabled =
+    typeof candidate?.environmentSoundEnabled === "boolean"
+      ? candidate.environmentSoundEnabled
+      : defaults.environmentSoundEnabled;
+
   const whiteNoiseType = whiteNoiseOptions.some(
     (option) => option.value === candidate?.whiteNoiseType,
   )
@@ -78,6 +88,7 @@ function normalizeSoundSettings(
     : defaults.soundMixPreset;
 
   return {
+    environmentSoundEnabled,
     voiceVolume: clampVolume(candidate?.voiceVolume ?? defaults.voiceVolume),
     bgmVolume: clampVolume(candidate?.bgmVolume ?? defaults.bgmVolume),
     whiteNoiseVolume: clampVolume(
@@ -114,6 +125,19 @@ function formatVoiceProfileLabel(voiceProfileId: string) {
     .split("-")
     .map((token) => token.charAt(0).toUpperCase() + token.slice(1))
     .join(" ");
+}
+
+function applyEnvironmentSoundDefaults(
+  currentSettings: SoundDefaults,
+  defaults: SoundDefaults,
+): SoundDefaults {
+  return {
+    ...currentSettings,
+    environmentSoundEnabled: true,
+    bgmVolume: defaults.bgmVolume,
+    whiteNoiseVolume: defaults.whiteNoiseVolume,
+    whiteNoiseType: defaults.whiteNoiseType,
+  };
 }
 
 function getPrimaryLabel(uiState: TalkUiState) {
@@ -321,6 +345,23 @@ export function TalkShell({
     }));
   };
 
+  const updateEnvironmentSound = (environmentSoundEnabled: boolean) => {
+    const roomSoundDefaults = activeScene.soundDefaults;
+
+    setSoundSettings((current) => {
+      if (environmentSoundEnabled) {
+        return applyEnvironmentSoundDefaults(current, roomSoundDefaults);
+      }
+
+      return {
+        ...current,
+        environmentSoundEnabled: false,
+        bgmVolume: 0,
+        whiteNoiseVolume: 0,
+      };
+    });
+  };
+
   useEffect(() => {
     if (initialSceneParam) {
       startTransition(() => {
@@ -403,8 +444,13 @@ export function TalkShell({
   useEffect(() => {
     skipNextSoundPersistRef.current = true;
     startTransition(() => {
+      const roomSoundDefaults = sceneConfigMap[activeSceneId].soundDefaults;
+      const storedSettings = readStoredSoundSettings(roomSoundDefaults);
+
       setSoundSettings(
-        readStoredSoundSettings(sceneConfigMap[activeSceneId].soundDefaults),
+        storedSettings.environmentSoundEnabled
+          ? applyEnvironmentSoundDefaults(storedSettings, roomSoundDefaults)
+          : storedSettings,
       );
     });
   }, [activeSceneId]);
@@ -595,6 +641,37 @@ export function TalkShell({
                   }}
                 />
               </label>
+
+              <div className={styles.settingBlock}>
+                <span className={styles.settingHead}>
+                  <span className={styles.settingLabel}>Environment sound</span>
+                  <span className={styles.settingValue}>
+                    {soundSettings.environmentSoundEnabled ? "Room default" : "Off"}
+                  </span>
+                </span>
+                <div className={styles.segmentRow}>
+                  {environmentSoundOptions.map((option) => {
+                    const isActive =
+                      soundSettings.environmentSoundEnabled === option.value;
+
+                    return (
+                      <button
+                        key={String(option.value)}
+                        type="button"
+                        className={[
+                          styles.segmentButton,
+                          isActive ? styles.segmentButtonActive : "",
+                        ].join(" ")}
+                        onClick={() => {
+                          updateEnvironmentSound(option.value);
+                        }}
+                      >
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div className={styles.settingBlock}>
                 <span className={styles.settingHead}>
