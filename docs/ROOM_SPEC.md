@@ -82,8 +82,8 @@ Room 的目标不是做内容分发，也不是做分类浏览，而是通过最
 
 - 完成 onboarding 后，直接进入 Room 页面。
 - 首屏即为一个全屏 room，自动开始 ambience 预览。
-- 用户上下滑动切换不同 room；每次切换后进入新的 3–4 秒沉浸窗口。
-- 用户在当前 room 停留约 3 秒后，出现极弱的进入提示。
+- 用户上下滑动切换不同 room；每次切换后进入新的 2 秒沉浸窗口。
+- 用户在当前 room 停留 2 秒后，出现居中的进入提示。
 - 用户 tap 当前 room 主画面区域，进入 Talk。
 - 进入 Talk 后才出现产品导航；Room 页面自身不显示顶部导航或底部导航。
 
@@ -93,7 +93,7 @@ Room 的目标不是做内容分发，也不是做分类浏览，而是通过最
 | --- | --- | --- | --- |
 | 进入 Room | 首屏直接进入单个 room 预览态 | 首个 room 背景与 ambience 自动加载并播放 | 不可先显示列表、缩略卡片墙或功能菜单 |
 | 上下滑动 | 纵向一屏一个 room，自动吸附 | 只切换相邻 room；切换后重置停留计时 | 不可半屏停留，不可同屏并列多个 room |
-| 停留 | 停留约 3 秒后显示弱提示 | 提示不应强按钮化，不应破坏沉浸 | 不可一进入就弹强 CTA |
+| 停留 | 停留 2 秒后显示进入提示 | 页面中央偏下出现 `Tap to enter` 玻璃胶囊；切换后重新计时 | 不可一进入就弹进入提示 |
 | tap 进入 Talk | 仅在稳定预览态下响应 | 滑动惯性过程中不响应 tap 进入 | 不可因误触频繁跳页 |
 | 返回 Room | 从 Talk 返回到原 room | 保留上次位置与氛围上下文 | 不可重置到首个 room |
 
@@ -113,7 +113,7 @@ Room 的目标不是做内容分发，也不是做分类浏览，而是通过最
 | 初始加载态 | 首次进入 Room 或资源尚未完成加载 | 优先保证首个 room 尽快出现；不使用复杂 loading 文案 | 可轻过渡，不可破坏沉浸。 |
 | Room 预览态 | 当前 room 资源已可感知 | 背景、标题、ambience 生效；用户可继续滑动 | 这是 Room 的默认主状态。 |
 | Room 切换态 | 用户上下滑动到新 room | 旧 room 退出，新 room 进入；音频淡入淡出 | 不可黑屏、不可闪断。 |
-| 可进入态 | 当前 room 停留达到阈值 | 弱提示出现；允许 tap 进入 Talk | 提示弱化，不按钮化。 |
+| 可进入态 | 当前 room 停留达到阈值 | 居中的 `Tap to enter` 提示出现；允许 tap 进入 Talk | 切换中不可进入。 |
 | 异常降级态 | 背景或音频资源异常 | 允许继续滑动与进入 Talk | 单个 room 失败不应阻断全页。 |
 
 ## 11. Onboarding 与 Room 的关系
@@ -153,7 +153,7 @@ MVP 固定提供 6 个 room。
 | --- | --- | --- |
 | room 数量 | MVP = 6 个 | 后续验证通过再扩到 8 个或 10–12 个。 |
 | 标题形式 | 统一使用氛围型命名 | 不使用“快速入睡”“缓解焦虑”这类功能型标题。 |
-| 前台显示 | 只显示标题 | 不显示副标题、标签、时长、分类。 |
+| 前台显示 | 显示标题和 ambience 标签 | 标题为单独 title pill；第二行显示拆分后的 ambience tag pills。 |
 | 内部标签 | 必须保留 | 供 onboarding 弱推荐与后续扩展使用。 |
 
 ### 13.2 建议数据字段
@@ -162,8 +162,9 @@ MVP 固定提供 6 个 room。
 type Room = {
   id: string
   title: string
+  ambienceLabel: string
   backgroundAsset: string
-  ambienceAsset: string
+  ambienceAsset: string | null
   ambienceType: 'white_noise' | 'light_music' | 'nature' | 'mixed'
   stimulationLevel: 'very_low' | 'low' | 'medium_low'
   moodProfile: 'calming' | 'safe' | 'quiet' | 'companion_like'
@@ -171,6 +172,8 @@ type Room = {
   recommendedFor: string[]
   sortOrder: number
   isActive: boolean
+  motionVariant: string
+  talkSceneId: string
 }
 ```
 
@@ -209,7 +212,8 @@ type Room = {
 - Room 页面不显示导航栏，只有进入 Talk 后导航才出现。
 - 用户可通过纵向滑动切换 room，且一屏只展示一个 room。
 - 切换后 ambience 使用淡入淡出过渡，不出现硬切、黑屏或闪断。
-- 停留约 3 秒后出现弱提示；tap 主画面可进入 Talk。
+- 停留 2 秒后出现居中的 `Tap to enter` 玻璃 CTA；tap 当前 room 进入 Talk。
+- 左下信息簇由独立 title pill 和独立 ambience tag pills 组成，不使用共享外层容器。
 - 首次进入时首屏 room 受 onboarding 弱影响；后续不限制自由滑动。
 - 非首次进入时，默认落在上一次成功进入 Talk 的 room。
 - 从 Talk 返回时，回到原 room，不重置到首个 room。
@@ -222,14 +226,39 @@ type Room = {
 | --- | --- | --- |
 | 6 个 room 最终标题 | 待补 | 不阻塞页面结构与状态开发。 |
 | 背景素材 | 待补 | 后续可替换资源，不影响页面骨架。 |
-| ambience 音频 | 待补 | 后续替换资源即可，不影响页面骨架。 |
+| ambience 音频 | 占位中 | 当前运行时允许 `null` 音频资源并静默降级；后续替换真实资源即可。 |
 | onboarding → room 弱映射表 | 待补 | 可先用占位映射实现逻辑闭环。 |
 
-## 19. Room PRD Patch
+## 19. 当前实现对齐补丁
+
+以下规则用于把 Room PRD 与当前已落地页面收口一致：
+
+- dwell 时间当前锁定为 `2s`
+- 进入提示当前不是弱文案，而是页面中下部的独立玻璃 CTA
+- `Tap to enter` 当前为 `200 × 50 px` 胶囊，文案为黑色，并带左侧三根竖条
+- CTA 出现后，三根竖条先静止 `2s`，随后进行低频、低幅度的错峰跳动
+- 左下信息簇当前分为两行：
+  - 第 1 行：独立 room title pill
+  - 第 2 行：由 ambienceLabel 拆分出的独立 tag pills
+- title pill 与 tag pills 均为独立玻璃气泡，不存在共享外层壳
+- 当前标题与 ambience 标签文案均使用深灰色 `#454545`
+- 当前标题是主层级，tag pills 是次层级
+- 当前页面仍保持无 top nav、无 bottom nav、无 dock、无音频控制
+
+## 20. 当前运行时说明
+
+当前 `/room` 的实现仍保留以下占位特征：
+
+- 6 个 room 已接入，但部分背景资源存在复用
+- ambience 文案已前台展示，但 `ambienceAsset` 仍允许为 `null`
+- 当音频资源缺失或自动播放受限时，页面以 silent fallback 继续运行
+- subtle motion 已通过 CSS 动效占位实现，后续可替换为更完整的资产层
+
+## 21. Room PRD Patch
 
 This patch supplements the existing Room Page PRD and does not replace its core product definition.
 
-### 19.1 Room As Ambience Package
+### 21.1 Room As Ambience Package
 
 Each Room must be defined as an ambience package, not as a static background image only.
 
@@ -243,7 +272,7 @@ The subtle ambient motion layer may include low-energy loops such as drifting cl
 
 It must remain non-intrusive and must not become a narrative animation or a high-stimulation visual effect.
 
-### 19.2 Matched Audio Rule
+### 21.2 Matched Audio Rule
 
 Each Room must have a dedicated default ambience audio set that matches the scene.
 
@@ -271,7 +300,7 @@ Room must not play:
 - lyrical music
 - any other intrusive foreground audio during preview
 
-### 19.3 Audio Control Ownership
+### 21.3 Audio Control Ownership
 
 Room is a preview surface only and must not expose audio controls directly.
 
@@ -286,7 +315,7 @@ The following controls belong to the Talk settings panel, not the Room page:
 
 This ownership rule aligns with the final Talk UI definition, where the compact floating settings panel contains companion voice volume, background music volume, white noise volume, white noise type, and sound mix preset.
 
-### 19.4 Visual Consistency Rule
+### 21.4 Visual Consistency Rule
 
 Room must inherit the same single-mode fixed warm translucent glass system as the final Talk page.
 
@@ -299,7 +328,7 @@ Room may remain structurally different from Talk, but it must not introduce:
 
 The Talk UI has already locked this as a fixed single-mode rule.
 
-### 19.5 Room Title Anchor Continuity
+### 21.5 Room Title Anchor Continuity
 
 Room title placement on the Room page must follow the same bottom-left anchor logic as the Room name on the Talk page.
 
@@ -307,7 +336,7 @@ This is a continuity rule, not a duplication of the Talk layout.
 
 The Talk UI defines the Room name as a single-line label positioned above the bottom dock and left-aligned to the dock’s left edge.
 
-### 19.6 No Change To Existing Room Product Scope
+### 21.6 No Change To Existing Room Product Scope
 
 This patch does not change the existing Room product scope.
 
@@ -318,7 +347,7 @@ Room remains:
 - a page with no navigation bars, no dock, and no settings entry
 - a page whose only primary user actions are vertical room switching and entry into Talk
 
-## 20. 交付说明
+## 22. 交付说明
 
 本文档按已确认版本收口。
 
