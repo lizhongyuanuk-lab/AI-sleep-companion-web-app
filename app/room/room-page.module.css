@@ -1,155 +1,520 @@
 .page {
   position: relative;
   min-height: 100svh;
-  padding:
-    max(20px, env(safe-area-inset-top))
-    20px
-    calc(env(safe-area-inset-bottom) + 1rem);
-  background:
-    radial-gradient(circle at top, rgba(255, 244, 227, 0.62), transparent 30%),
-    linear-gradient(180deg, #f4efe8 0%, #ece5db 100%);
-}
-
-.topCopy {
-  position: relative;
-  z-index: 1;
-  margin-bottom: 1rem;
-}
-
-.eyebrow {
-  display: inline-flex;
-  color: #9b7f63;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.title {
-  margin: 0.55rem 0 0;
-  color: #2f2a22;
-  font-size: clamp(1.8rem, 5vw, 2.35rem);
-  font-weight: 600;
-  line-height: 1.05;
-  letter-spacing: -0.04em;
-  text-wrap: balance;
-}
-
-.description {
-  max-width: 20rem;
-  margin: 0.65rem 0 0;
-  color: rgba(72, 62, 51, 0.74);
-  font-size: 0.98rem;
-  line-height: 1.55;
-  text-wrap: balance;
-}
-
-.scroller {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: 0.9rem;
-  max-height: calc(100svh - 11rem - env(safe-area-inset-bottom));
-  overflow-y: auto;
-  scroll-snap-type: y mandatory;
-  padding-bottom: 4rem;
-}
-
-.slide {
-  scroll-snap-align: start;
-}
-
-.sceneButton {
-  position: relative;
-  display: block;
-  width: 100%;
-  min-height: clamp(27rem, 76vh, 34rem);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.68);
-  border-radius: 32px;
-  background: #d7d2ca;
-  box-shadow: 0 28px 64px rgba(118, 105, 85, 0.16);
-  text-align: left;
+  font-family: var(--font-sans);
+  --safe-bottom: max(12px, env(safe-area-inset-bottom));
+  --shell-bg: rgba(255, 255, 255, 0.22);
+  --shell-border: rgba(255, 255, 255, 0.18);
+  --shell-text-primary: #786e66;
+  --shell-text-secondary: #786e66;
+  --shell-shadow: 0 18px 42px rgba(64, 49, 34, 0.14);
+  background: linear-gradient(180deg, #f1ebe3 0%, #e8dfd3 100%);
 }
 
-.sceneImage,
-.sceneOverlay {
+.scrollViewport {
+  position: relative;
+  z-index: 1;
+  height: 100svh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollViewport::-webkit-scrollbar {
+  display: none;
+}
+
+.roomSection {
+  position: relative;
+  min-height: 100svh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  cursor: grab;
+  outline: none;
+}
+
+.roomSectionEnterable {
+  cursor: pointer;
+}
+
+.roomSection:focus-visible .sceneFrame {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.24);
+}
+
+.sceneFrame,
+.sceneVisual,
+.sceneShade,
+.motionLayer,
+.motionBand,
+.motionGlow,
+.bottomScrim,
+.infoLayer {
   position: absolute;
   inset: 0;
 }
 
-.sceneImage {
+.sceneFrame {
+  overflow: hidden;
+}
+
+.sceneVisual {
+  inset: -3%;
   background-position: center center;
   background-repeat: no-repeat;
   background-size: cover;
-  transform: scale(1.04);
-  transition: transform 200ms ease;
+  transform: scale(1.03);
+  filter: saturate(1.02) contrast(1.01);
 }
 
-.sceneButton:hover .sceneImage {
-  transform: scale(1.06);
-}
-
-.sceneOverlay {
+.sceneVisualFallback {
   background:
-    linear-gradient(180deg, rgba(18, 21, 30, 0.04), rgba(18, 21, 30, 0.18)),
-    linear-gradient(180deg, transparent 42%, rgba(14, 18, 25, 0.38) 100%);
+    radial-gradient(circle at 50% 18%, rgba(255, 245, 226, 0.32), transparent 30%),
+    linear-gradient(180deg, #d5cbc0 0%, #b8aea4 100%);
 }
 
-.sceneContent {
+.sceneShade {
+  background:
+    linear-gradient(180deg, rgba(255, 248, 237, 0.12) 0%, rgba(255, 248, 237, 0.02) 24%, rgba(32, 26, 21, 0.08) 100%),
+    radial-gradient(circle at 50% 12%, rgba(255, 255, 255, 0.12), transparent 28%);
+}
+
+.motionLayer {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.motionBand,
+.motionGlow {
+  content: "";
+  pointer-events: none;
+}
+
+.motionBand {
+  opacity: 0.48;
+  filter: blur(10px);
+}
+
+.motionGlow {
+  opacity: 0.42;
+  filter: blur(18px);
+}
+
+.motionBandMoon {
+  inset: -10% -18% 12%;
+  background:
+    radial-gradient(circle at 28% 28%, rgba(255, 255, 255, 0.1), transparent 16%),
+    linear-gradient(120deg, rgba(150, 176, 226, 0.05), rgba(255, 255, 255, 0.16), rgba(120, 149, 205, 0.04));
+  animation: driftBand 16s ease-in-out infinite alternate;
+}
+
+.motionGlowMoon {
+  inset: 12% 8% 22%;
+  background: radial-gradient(circle at 50% 22%, rgba(233, 239, 255, 0.22), transparent 30%);
+  animation: breatheGlow 12s ease-in-out infinite;
+}
+
+.motionBandShore {
+  inset: auto -12% 24% -12%;
+  height: 22%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 247, 235, 0.1)),
+    linear-gradient(90deg, rgba(255, 250, 241, 0.04), rgba(255, 255, 255, 0.18), rgba(255, 250, 241, 0.06));
+  animation: tideSweep 14s linear infinite;
+}
+
+.motionGlowShore {
+  inset: auto 12% 12% 12%;
+  height: 26%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 250, 241, 0.16), transparent 56%);
+  animation: shimmerLift 10s ease-in-out infinite;
+}
+
+.motionBandCanopy {
+  inset: -8% -10% 36%;
+  background:
+    radial-gradient(circle at 20% 34%, rgba(255, 255, 255, 0.08), transparent 12%),
+    linear-gradient(90deg, rgba(120, 144, 112, 0.08), rgba(255, 255, 255, 0.1), rgba(103, 134, 92, 0.08));
+  animation: canopyDrift 18s ease-in-out infinite alternate;
+}
+
+.motionGlowCanopy {
+  inset: 18% 0 20%;
+  background:
+    radial-gradient(circle at 32% 42%, rgba(228, 241, 223, 0.14), transparent 22%),
+    radial-gradient(circle at 68% 54%, rgba(222, 232, 214, 0.12), transparent 20%);
+  animation: leafPulse 11s ease-in-out infinite;
+}
+
+.motionBandAlpine {
+  inset: 8% -16% auto;
+  height: 22%;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(246, 249, 255, 0.22), rgba(255, 255, 255, 0.06));
+  animation: cloudDrift 22s linear infinite;
+}
+
+.motionGlowAlpine {
+  inset: auto 10% 16%;
+  height: 32%;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.12), transparent 54%);
+  animation: breatheGlow 14s ease-in-out infinite;
+}
+
+.motionBandHarbor {
+  inset: -6% -12% 18%;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 42%),
+    linear-gradient(110deg, rgba(183, 189, 216, 0.04), rgba(255, 255, 255, 0.14), rgba(183, 189, 216, 0.04));
+  animation: harborDrift 17s ease-in-out infinite alternate;
+}
+
+.motionGlowHarbor {
+  inset: auto 14% 10%;
+  height: 30%;
+  background: radial-gradient(circle at 50% 50%, rgba(236, 239, 251, 0.14), transparent 58%);
+  animation: shimmerLift 13s ease-in-out infinite;
+}
+
+.motionBandSnowfall {
+  inset: -10%;
+  background-image:
+    radial-gradient(circle at 18% 24%, rgba(255, 255, 255, 0.18) 0 1px, transparent 2px),
+    radial-gradient(circle at 62% 18%, rgba(255, 255, 255, 0.14) 0 1.2px, transparent 2px),
+    radial-gradient(circle at 74% 48%, rgba(255, 255, 255, 0.16) 0 1px, transparent 2px),
+    radial-gradient(circle at 36% 66%, rgba(255, 255, 255, 0.14) 0 1.1px, transparent 2px);
+  background-size: 180px 180px;
+  animation: snowfallDrift 16s linear infinite;
+}
+
+.motionGlowSnowfall {
+  inset: 12% 4% 20%;
+  background: radial-gradient(circle at 50% 32%, rgba(255, 255, 255, 0.16), transparent 30%);
+  animation: breatheGlow 15s ease-in-out infinite;
+}
+
+.bottomScrim {
+  top: auto;
+  height: 42%;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(34, 28, 23, 0) 0%, rgba(34, 28, 23, 0.12) 34%, rgba(34, 28, 23, 0.42) 100%);
+}
+
+.infoLayer {
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  pointer-events: none;
+  padding:
+    0
+    16px
+    calc(var(--safe-bottom) + 20px);
+}
+
+.infoCluster {
+  position: absolute;
+  bottom: calc(var(--safe-bottom) + 98px);
+  left: 16px;
+  display: grid;
+  gap: 10px;
+  max-width: min(280px, calc(100vw - 32px));
+}
+
+.titlePill {
+  width: fit-content;
+  max-width: min(280px, calc(100vw - 32px));
+  display: inline-flex;
+  align-items: center;
+  min-height: 46px;
+  padding: 11px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 10px 24px rgba(44, 34, 24, 0.06);
+  backdrop-filter: blur(16px);
+}
+
+.roomTitle {
+  color: #454545;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 17px;
+  letter-spacing: -0.01em;
+  text-shadow: 0 10px 28px rgba(32, 26, 21, 0.22);
+}
+
+.ambienceTagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ambienceTag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 10px 24px rgba(44, 34, 24, 0.06);
+  backdrop-filter: blur(16px);
+  color: #454545;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 15px;
+}
+
+.hintStack {
   position: relative;
   display: flex;
-  min-height: inherit;
+  min-height: 100%;
   flex-direction: column;
+  align-items: center;
   justify-content: flex-end;
-  padding: 1.4rem;
-  color: white;
+  justify-items: center;
+  gap: 0.7rem;
+  padding-bottom: calc(var(--safe-bottom) + 110px);
 }
 
-.sceneEyebrow {
+.swipeHint {
   display: inline-flex;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  opacity: 0.78;
-}
-
-.sceneTitle {
-  margin: 0.45rem 0 0;
-  font-size: clamp(1.8rem, 5vw, 2.2rem);
-  font-weight: 600;
-  line-height: 1.02;
-  letter-spacing: -0.04em;
-}
-
-.sceneSummary {
-  max-width: 16rem;
-  margin: 0.6rem 0 0;
-  font-size: 0.98rem;
-  line-height: 1.5;
-  opacity: 0.9;
-  text-wrap: balance;
-}
-
-.sceneAction {
-  width: fit-content;
-  margin-top: 1rem;
-  padding: 0.62rem 0.95rem;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  font-size: 0.92rem;
+  align-items: center;
+  gap: 0.5rem;
+  color: #000000;
+  font-size: 17px;
   font-weight: 500;
-  line-height: 1.2;
-  backdrop-filter: blur(10px);
+  line-height: 21px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(16px);
 }
 
-.slideActive .sceneButton {
-  border-color: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 32px 72px rgba(118, 105, 85, 0.22);
+.tapHintWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: clamp(166px, calc(18vh + 50px), 226px);
 }
 
-.slideActive .sceneAction {
-  background: rgba(255, 255, 255, 0.22);
+.swipeChevron {
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translateY(-1px);
+  opacity: 0.82;
+}
+
+.tapHintHighlight {
+  position: absolute;
+  width: 248px;
+  height: 104px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(255, 245, 224, 0.78) 0%, rgba(255, 245, 224, 0.34) 44%, transparent 76%);
+  filter: blur(20px);
+}
+
+.tapHint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 200px;
+  height: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.18)),
+    rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 20px 44px rgba(44, 34, 24, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36);
+  color: #000000;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: -0.01em;
+  backdrop-filter: blur(22px);
+}
+
+.tapHintBars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 18px;
+}
+
+.tapHintBars span {
+  display: block;
+  width: 3px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.82);
+  transform-origin: center bottom;
+}
+
+.tapHintBarShort {
+  height: 8px;
+  animation: tapHintBarBounce 1260ms ease-in-out 2s infinite;
+}
+
+.tapHintBarMid {
+  height: 12px;
+  animation: tapHintBarBounce 1260ms ease-in-out 2.12s infinite;
+}
+
+.tapHintBarTall {
+  height: 18px;
+  animation: tapHintBarBounce 1260ms ease-in-out 2.24s infinite;
+}
+
+@media (max-width: 420px) {
+  .infoCluster {
+    max-width: calc(100vw - 32px);
+  }
+
+  .tapHint {
+    width: min(200px, calc(100vw - 64px));
+  }
+
+  .tapHintHighlight {
+    width: min(240px, calc(100vw - 32px));
+  }
+}
+
+@keyframes driftBand {
+  from {
+    transform: translate3d(-3%, 0, 0);
+  }
+
+  to {
+    transform: translate3d(3%, -2%, 0);
+  }
+}
+
+@keyframes breatheGlow {
+  0%,
+  100% {
+    opacity: 0.28;
+    transform: scale(0.98);
+  }
+
+  50% {
+    opacity: 0.44;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes tideSweep {
+  from {
+    transform: translate3d(-4%, 0, 0);
+  }
+
+  to {
+    transform: translate3d(4%, 0, 0);
+  }
+}
+
+@keyframes shimmerLift {
+  0%,
+  100% {
+    opacity: 0.22;
+    transform: translateY(2%);
+  }
+
+  50% {
+    opacity: 0.38;
+    transform: translateY(-2%);
+  }
+}
+
+@keyframes canopyDrift {
+  from {
+    transform: translate3d(-2%, 0, 0);
+  }
+
+  to {
+    transform: translate3d(3%, -3%, 0);
+  }
+}
+
+@keyframes leafPulse {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+
+  50% {
+    opacity: 0.34;
+  }
+}
+
+@keyframes cloudDrift {
+  from {
+    transform: translate3d(-6%, 0, 0);
+  }
+
+  to {
+    transform: translate3d(6%, 0, 0);
+  }
+}
+
+@keyframes harborDrift {
+  from {
+    transform: translate3d(-2%, 0, 0);
+  }
+
+  to {
+    transform: translate3d(2%, -2%, 0);
+  }
+}
+
+@keyframes snowfallDrift {
+  from {
+    transform: translate3d(0, -6%, 0);
+  }
+
+  to {
+    transform: translate3d(-3%, 8%, 0);
+  }
+}
+
+@keyframes tapHintBarBounce {
+  0%,
+  100% {
+    transform: scaleY(1) translateY(0);
+    opacity: 0.82;
+  }
+
+  20% {
+    transform: scaleY(1.24) translateY(-0.7px);
+    opacity: 1;
+  }
+
+  45% {
+    transform: scaleY(0.8) translateY(0.7px);
+    opacity: 0.7;
+  }
+
+  70% {
+    transform: scaleY(1.13) translateY(-0.35px);
+    opacity: 0.92;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motionBand,
+  .motionGlow,
+  .tapHintBars span {
+    animation: none;
+  }
 }

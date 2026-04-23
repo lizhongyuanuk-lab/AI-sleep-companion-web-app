@@ -1,130 +1,560 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { sceneConfigs, type SceneId } from "@/app/talk/scene-config";
 import {
-  getInitialSceneId,
-  readStoredSceneId,
-  sceneQueryParam,
-  writeStoredSceneId,
-} from "@/lib/scene-selection";
+  startTransition,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MutableRefObject,
+} from "react";
+import { useRouter } from "next/navigation";
+import { sceneQueryParam, writeStoredSceneId } from "@/lib/scene-selection";
+import {
+  getInitialRoomId,
+  readLastEnteredRoomId,
+  readStoredRoomId,
+  readSwipeHintDismissed,
+  writeLastEnteredRoomId,
+  writeStoredRoomId,
+  writeSwipeHintDismissed,
+} from "@/lib/room-selection";
+import {
+  activeRoomConfigs,
+  defaultRoomId,
+  roomConfigMap,
+  type RoomId,
+  type RoomMotionVariant,
+} from "./room-config";
 import styles from "./room-page.module.css";
+
+const DWELL_DELAY_MS = 2000;
+const SCROLL_SETTLE_DELAY_MS = 160;
+const TALK_ENTER_DELAY_MS = 140;
+const AUDIO_CROSSFADE_DURATION_MS = 640;
+const AUDIO_STEP_INTERVAL_MS = 64;
+const TARGET_AMBIENCE_VOLUME = 0.38;
+
+type RoomUiState =
+  | "page_loaded_first_entry"
+  | "idle_room_preview"
+  | "dwell_ready_to_enter"
+  | "room_switching"
+  | "talk_enter_transition"
+  | "asset_audio_failed"
+  | "asset_visual_failed";
+
+const motionBandClassMap: Record<RoomMotionVariant, string> = {
+  moon: styles.motionBandMoon,
+  shore: styles.motionBandShore,
+  canopy: styles.motionBandCanopy,
+  alpine: styles.motionBandAlpine,
+  harbor: styles.motionBandHarbor,
+  snowfall: styles.motionBandSnowfall,
+};
+
+const motionGlowClassMap: Record<RoomMotionVariant, string> = {
+  moon: styles.motionGlowMoon,
+  shore: styles.motionGlowShore,
+  canopy: styles.motionGlowCanopy,
+  alpine: styles.motionGlowAlpine,
+  harbor: styles.motionGlowHarbor,
+  snowfall: styles.motionGlowSnowfall,
+};
+
+function clearTimer(timerRef: MutableRefObject<number | null>) {
+  if (timerRef.current === null) {
+    return;
+  }
+
+  window.clearTimeout(timerRef.current);
+  timerRef.current = null;
+}
+
+function getClosestRoomId(container: HTMLDivElement): RoomId {
+  const pageHeight = Math.max(container.clientHeight, 1);
+  const nextIndex = Math.min(
+    activeRoomConfigs.length - 1,
+    Math.max(0, Math.round(container.scrollTop / pageHeight)),
+  );
+
+  return activeRoomConfigs[nextIndex]?.id ?? defaultRoomId;
+}
 
 export default function RoomPage() {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [activeSceneId, setActiveSceneId] = useState<SceneId>(() =>
-    getInitialSceneId(readStoredSceneId()),
-  );
+  const dwellTimerRef = useRef<number | null>(null);
+  const settleTimerRef = useRef<number | null>(null);
+  const enterTimerRef = useRef<number | null>(null);
+  const hydrateTimerRef = useRef<number | null>(null);
+  const previewTimerRef = useRef<number | null>(null);
+  const audioIntervalIdsRef = useRef<number[]>([]);
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null);
+  const hasAlignedInitialRoomRef = useRef(false);
 
-  useEffect(() => {
-    writeStoredSceneId(activeSceneId);
-  }, [activeSceneId]);
+  const [activeRoomId, setActiveRoomId] = useState<RoomId>(defaultRoomId);
+  const [initialRoomId, setInitialRoomId] = useState<RoomId>(defaultRoomId);
+  const [uiState, setUiState] = useState<RoomUiState>("idle_room_preview");
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [isFirstEntry, setIsFirstEntry] = useState(false);
+  const [isEnterReady, setIsEnterReady] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
+  const [swipeHintDismissed, setSwipeHintDismissed] = useState(false);
+  const [visualFailed, setVisualFailed] = useState(false);
 
-  useEffect(() => {
+  const activeRoom = roomConfigMap[activeRoomId];
+  const showSwipeHint =
+    isHydrated &&
+    isFirstEntry &&
+    !swipeHintDismissed &&
+    activeRoomId === initialRoomId;
+  const showTapHint =
+    isHydrated &&
+    isEnterReady &&
+    !isSwitching &&
+    uiState !== "talk_enter_transition";
+
+  const clearAudioIntervals = () => {
+    audioIntervalIdsRef.current.forEach((intervalId) => {
+      window.clearInterval(intervalId);
+    });
+
+    audioIntervalIdsRef.current = [];
+  };
+
+  const rampAudioVolume = (
+    audio: HTMLAudioElement | null,
+    from: number,
+    to: number,
+    durationMs: number,
+    onComplete?: () => void,
+  ) => {
+    if (!audio) {
+      onComplete?.();
+      return;
+    }
+
+    const totalSteps = Math.max(1, Math.round(durationMs / AUDIO_STEP_INTERVAL_MS));
+    let currentStep = 0;
+
+    audio.volume = from;
+
+    const intervalId = window.setInterval(() => {
+      currentStep += 1;
+      const progress = currentStep / totalSteps;
+
+      audio.volume = from + (to - from) * progress;
+
+      if (currentStep >= totalSteps) {
+        window.clearInterval(intervalId);
+        audioIntervalIdsRef.current = audioIntervalIdsRef.current.filter(
+          (id) => id !== intervalId,
+        );
+
+        audio.volume = to;
+        onComplete?.();
+      }
+    }, AUDIO_STEP_INTERVAL_MS);
+
+    audioIntervalIdsRef.current.push(intervalId);
+  };
+
+  const alignInitialRoom = (roomId: RoomId) => {
     const container = scrollRef.current;
 
     if (!container) {
       return;
     }
 
-    const activeIndex = sceneConfigs.findIndex((scene) => scene.id === activeSceneId);
+    const roomIndex = activeRoomConfigs.findIndex((room) => room.id === roomId);
 
-    if (activeIndex < 0) {
+    if (roomIndex < 0) {
       return;
     }
 
-    const activeSlide = container.children.item(activeIndex) as HTMLElement | null;
+    container.scrollTo({
+      top: container.clientHeight * roomIndex,
+      behavior: "auto",
+    });
+  };
 
-    if (!activeSlide) {
+  useEffect(() => {
+    hydrateTimerRef.current = window.setTimeout(() => {
+      const lastEnteredRoomId = readLastEnteredRoomId();
+      const storedRoomId = readStoredRoomId();
+      const nextInitialRoomId = getInitialRoomId({
+        lastEnteredRoomId,
+        storedRoomId,
+      });
+
+      setInitialRoomId(nextInitialRoomId);
+      setSwipeHintDismissed(readSwipeHintDismissed());
+      setIsFirstEntry(!lastEnteredRoomId && !storedRoomId);
+      setActiveRoomId(nextInitialRoomId);
+      setUiState(
+        !lastEnteredRoomId && !storedRoomId
+          ? "page_loaded_first_entry"
+          : "idle_room_preview",
+      );
+      setIsHydrated(true);
+    }, 0);
+
+    return () => {
+      clearTimer(hydrateTimerRef);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated || hasAlignedInitialRoomRef.current) {
       return;
     }
 
-    activeSlide.scrollIntoView({ block: "nearest" });
-  }, [activeSceneId]);
+    alignInitialRoom(activeRoomId);
+    hasAlignedInitialRoomRef.current = true;
+  }, [activeRoomId, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    writeStoredRoomId(activeRoomId);
+  }, [activeRoomId, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated || isSwitching) {
+      return;
+    }
+
+    clearTimer(dwellTimerRef);
+    clearTimer(previewTimerRef);
+
+    previewTimerRef.current = window.setTimeout(() => {
+      setIsEnterReady(false);
+      setUiState(
+        isFirstEntry &&
+          !swipeHintDismissed &&
+          activeRoomId === initialRoomId
+          ? "page_loaded_first_entry"
+          : "idle_room_preview",
+      );
+    }, 0);
+
+    dwellTimerRef.current = window.setTimeout(() => {
+      setIsEnterReady(true);
+      setUiState("dwell_ready_to_enter");
+    }, DWELL_DELAY_MS);
+
+    return () => {
+      clearTimer(previewTimerRef);
+      clearTimer(dwellTimerRef);
+    };
+  }, [
+    activeRoomId,
+    initialRoomId,
+    isFirstEntry,
+    isHydrated,
+    isSwitching,
+    swipeHintDismissed,
+  ]);
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    let cancelled = false;
+    const image = new Image();
+
+    image.onload = () => {
+      if (cancelled) {
+        return;
+      }
+
+      setVisualFailed(false);
+    };
+
+    image.onerror = () => {
+      if (cancelled) {
+        return;
+      }
+
+      setVisualFailed(true);
+      setUiState("asset_visual_failed");
+    };
+
+    image.src = activeRoom.backgroundAsset;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeRoom.backgroundAsset, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    clearAudioIntervals();
+
+    if (!activeRoom.ambienceAsset) {
+      if (currentAudioRef.current) {
+        const previousAudio = currentAudioRef.current;
+        currentAudioRef.current = null;
+
+        rampAudioVolume(
+          previousAudio,
+          previousAudio.volume,
+          0,
+          AUDIO_CROSSFADE_DURATION_MS,
+          () => {
+            previousAudio.pause();
+            previousAudio.src = "";
+          },
+        );
+      }
+
+      return;
+    }
+
+    const nextAudio = new Audio(activeRoom.ambienceAsset);
+    const previousAudio = currentAudioRef.current;
+
+    nextAudio.loop = true;
+    nextAudio.preload = "auto";
+    nextAudio.volume = 0;
+
+    currentAudioRef.current = nextAudio;
+
+    nextAudio
+      .play()
+      .then(() => {
+        rampAudioVolume(
+          nextAudio,
+          0,
+          TARGET_AMBIENCE_VOLUME,
+          AUDIO_CROSSFADE_DURATION_MS,
+        );
+
+        if (previousAudio) {
+          rampAudioVolume(
+            previousAudio,
+            previousAudio.volume,
+            0,
+            AUDIO_CROSSFADE_DURATION_MS,
+            () => {
+              previousAudio.pause();
+              previousAudio.src = "";
+            },
+          );
+        }
+      })
+      .catch(() => {
+        currentAudioRef.current = previousAudio;
+        nextAudio.src = "";
+        setUiState("asset_audio_failed");
+      });
+  }, [activeRoom.ambienceAsset, isHydrated]);
+
+  useEffect(() => {
+    return () => {
+      clearTimer(dwellTimerRef);
+      clearTimer(settleTimerRef);
+      clearTimer(enterTimerRef);
+      clearTimer(hydrateTimerRef);
+      clearTimer(previewTimerRef);
+      clearAudioIntervals();
+
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current.src = "";
+      }
+    };
+  }, []);
+
+  const dismissSwipeHint = () => {
+    if (swipeHintDismissed) {
+      return;
+    }
+
+    writeSwipeHintDismissed(true);
+    setSwipeHintDismissed(true);
+  };
 
   const handleScroll = () => {
     const container = scrollRef.current;
 
-    if (!container) {
+    if (!container || !isHydrated) {
       return;
     }
 
-    const containerCenter = container.scrollTop + container.clientHeight / 2;
-    let nearestSceneId = activeSceneId;
-    let smallestDistance = Number.POSITIVE_INFINITY;
+    clearTimer(dwellTimerRef);
+    clearTimer(settleTimerRef);
+    setIsEnterReady(false);
+    setIsSwitching(true);
+    setUiState("room_switching");
+    dismissSwipeHint();
 
-    Array.from(container.children).forEach((child, index) => {
-      const element = child as HTMLElement;
-      const elementCenter = element.offsetTop + element.offsetHeight / 2;
-      const distance = Math.abs(containerCenter - elementCenter);
-
-      if (distance < smallestDistance) {
-        smallestDistance = distance;
-        nearestSceneId = sceneConfigs[index]?.id ?? nearestSceneId;
-      }
-    });
-
-    if (nearestSceneId !== activeSceneId) {
-      setActiveSceneId(nearestSceneId);
-    }
+    settleTimerRef.current = window.setTimeout(() => {
+      setActiveRoomId(getClosestRoomId(container));
+      setIsSwitching(false);
+    }, SCROLL_SETTLE_DELAY_MS);
   };
 
-  const openTalkScene = (sceneId: SceneId) => {
-    writeStoredSceneId(sceneId);
-    router.push(`/talk?${sceneQueryParam}=${sceneId}`);
+  const enterTalk = (roomId: RoomId) => {
+    if (
+      !isHydrated ||
+      !isEnterReady ||
+      isSwitching ||
+      uiState === "talk_enter_transition" ||
+      roomId !== activeRoomId
+    ) {
+      return;
+    }
+
+    const room = roomConfigMap[roomId];
+
+    clearTimer(dwellTimerRef);
+    clearTimer(settleTimerRef);
+    clearTimer(enterTimerRef);
+    setIsEnterReady(false);
+    setUiState("talk_enter_transition");
+    writeStoredRoomId(roomId);
+    writeLastEnteredRoomId(roomId);
+    writeStoredSceneId(room.talkSceneId);
+
+    enterTimerRef.current = window.setTimeout(() => {
+      startTransition(() => {
+        router.push(`/talk?${sceneQueryParam}=${room.talkSceneId}`);
+      });
+    }, TALK_ENTER_DELAY_MS);
+  };
+
+  const handleSurfaceKeyDown = (
+    roomId: RoomId,
+    event: KeyboardEvent<HTMLElement>,
+  ) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    enterTalk(roomId);
   };
 
   return (
     <section className={styles.page}>
-      <div className={styles.topCopy}>
-        <span className={styles.eyebrow}>Scene Picker</span>
-        <h1 className={styles.title}>Choose the room you want to return to.</h1>
-        <p className={styles.description}>
-          Scroll vertically, stay with one scene at a time, then tap to enter Talk.
-        </p>
-      </div>
-
-      <div ref={scrollRef} className={styles.scroller} onScroll={handleScroll}>
-        {sceneConfigs.map((scene) => {
-          const isActive = scene.id === activeSceneId;
+      <div
+        ref={scrollRef}
+        className={styles.scrollViewport}
+        onScroll={handleScroll}
+        aria-label="Room preview"
+      >
+        {activeRoomConfigs.map((room) => {
+          const isActive = room.id === activeRoomId;
+          const canEnterRoom =
+            isActive &&
+            isEnterReady &&
+            !isSwitching &&
+            uiState !== "talk_enter_transition";
 
           return (
             <article
-              key={scene.id}
-              className={[styles.slide, isActive ? styles.slideActive : ""].join(" ")}
+              key={room.id}
+              className={[
+                styles.roomSection,
+                canEnterRoom ? styles.roomSectionEnterable : "",
+              ].join(" ")}
+              role={isActive ? "button" : undefined}
+              tabIndex={isActive ? 0 : -1}
+              aria-label={
+                canEnterRoom
+                  ? `${room.title}. Tap to enter Talk.`
+                  : `${room.title}. Swipe to continue exploring rooms.`
+              }
+              onClick={() => {
+                enterTalk(room.id);
+              }}
+              onKeyDown={(event) => {
+                handleSurfaceKeyDown(room.id, event);
+              }}
             >
-              <button
-                type="button"
-                className={styles.sceneButton}
-                onClick={() => {
-                  if (!isActive) {
-                    setActiveSceneId(scene.id);
-                    return;
-                  }
-
-                  openTalkScene(scene.id);
-                }}
-              >
+              <div className={styles.sceneFrame}>
                 <div
-                  className={styles.sceneImage}
-                  style={{ backgroundImage: `url(${scene.image})` }}
+                  className={[
+                    styles.sceneVisual,
+                    visualFailed && isActive ? styles.sceneVisualFallback : "",
+                  ].join(" ")}
+                  style={
+                    visualFailed && isActive
+                      ? undefined
+                      : { backgroundImage: `url(${room.backgroundAsset})` }
+                  }
                   aria-hidden="true"
                 />
-                <div className={styles.sceneOverlay} aria-hidden="true" />
-                <div className={styles.sceneContent}>
-                  <span className={styles.sceneEyebrow}>{scene.eyebrow}</span>
-                  <h2 className={styles.sceneTitle}>{scene.title}</h2>
-                  <p className={styles.sceneSummary}>{scene.summary}</p>
-                  <span className={styles.sceneAction}>
-                    {isActive ? "Enter Talk" : "Tap to select"}
-                  </span>
+
+                <div className={styles.sceneShade} aria-hidden="true" />
+
+                <div className={styles.motionLayer} aria-hidden="true">
+                  <span
+                    className={[
+                      styles.motionBand,
+                      motionBandClassMap[room.motionVariant],
+                    ].join(" ")}
+                  />
+                  <span
+                    className={[
+                      styles.motionGlow,
+                      motionGlowClassMap[room.motionVariant],
+                    ].join(" ")}
+                  />
                 </div>
-              </button>
+              </div>
             </article>
           );
         })}
+      </div>
+
+      <div className={styles.bottomScrim} aria-hidden="true" />
+
+      <div className={styles.infoLayer}>
+        <div className={styles.infoCluster}>
+          <div className={styles.titlePill}>
+            <div className={styles.roomTitle}>{activeRoom.title}</div>
+          </div>
+
+          <div className={styles.ambienceTagRow}>
+            {activeRoom.ambienceLabel.split(",").map((label) => (
+              <span key={label.trim()} className={styles.ambienceTag}>
+                {label.trim()}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.hintStack}>
+          {showSwipeHint ? (
+            <div className={styles.swipeHint}>
+              <span className={styles.swipeChevron} />
+              <span>Swipe to explore rooms</span>
+            </div>
+          ) : null}
+
+          {showTapHint ? (
+            <div className={styles.tapHintWrap}>
+              <span className={styles.tapHintHighlight} aria-hidden="true" />
+              <div className={styles.tapHint}>
+                <span className={styles.tapHintBars} aria-hidden="true">
+                  <span className={styles.tapHintBarShort} />
+                  <span className={styles.tapHintBarTall} />
+                  <span className={styles.tapHintBarMid} />
+                </span>
+                <span>Tap to enter</span>
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
     </section>
   );
