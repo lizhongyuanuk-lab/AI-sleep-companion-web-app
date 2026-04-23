@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { AppFrame } from "@/components/app-frame";
 import "./globals.css";
 
@@ -17,6 +18,7 @@ export default function RootLayout({
       <body className="min-h-full">
         <AppFrame>{children}</AppFrame>
       </body>
+      <Script src="https://mcp.figma.com/mcp/html-to-design/capture.js" />
     </html>
   );
 }
