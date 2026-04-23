@@ -38,10 +38,10 @@ type HintTone = "normal" | "error";
 const soundSettingsStorageKey = "ai-companion-web.talk-sound-settings";
 
 const topTabs = [
-  { href: "/talk", label: "Talk", icon: "/nav-icons/talk-shell.png" },
-  { href: "/room", label: "Room", icon: "/nav-icons/room-shell.png" },
-  { href: "/memory", label: "Memory", icon: "/nav-icons/memory-shell.png" },
-  { href: "/sleep-monitoring", label: "Sleep", icon: "/nav-icons/sleep-shell.png" },
+  { href: "/talk", label: "Talk", icon: "/nav-icons/talk-shell-black.png" },
+  { href: "/room", label: "Room", icon: "/nav-icons/room-shell-black.png" },
+  { href: "/memory", label: "Memory", icon: "/nav-icons/memory-shell-black.png" },
+  { href: "/sleep-monitoring", label: "Sleep", icon: "/nav-icons/sleep-shell-black.png" },
 ] as const;
 
 const whiteNoiseOptions: { value: WhiteNoiseType; label: string }[] = [

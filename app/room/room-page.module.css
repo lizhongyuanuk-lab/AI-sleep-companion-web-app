@@ -1,0 +1,155 @@
+.page {
+  position: relative;
+  min-height: 100svh;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    20px
+    calc(env(safe-area-inset-bottom) + 1rem);
+  background:
+    radial-gradient(circle at top, rgba(255, 244, 227, 0.62), transparent 30%),
+    linear-gradient(180deg, #f4efe8 0%, #ece5db 100%);
+}
+
+.topCopy {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 1rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  color: #9b7f63;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0.55rem 0 0;
+  color: #2f2a22;
+  font-size: clamp(1.8rem, 5vw, 2.35rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.description {
+  max-width: 20rem;
+  margin: 0.65rem 0 0;
+  color: rgba(72, 62, 51, 0.74);
+  font-size: 0.98rem;
+  line-height: 1.55;
+  text-wrap: balance;
+}
+
+.scroller {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.9rem;
+  max-height: calc(100svh - 11rem - env(safe-area-inset-bottom));
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  padding-bottom: 4rem;
+}
+
+.slide {
+  scroll-snap-align: start;
+}
+
+.sceneButton {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: clamp(27rem, 76vh, 34rem);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 32px;
+  background: #d7d2ca;
+  box-shadow: 0 28px 64px rgba(118, 105, 85, 0.16);
+  text-align: left;
+}
+
+.sceneImage,
+.sceneOverlay {
+  position: absolute;
+  inset: 0;
+}
+
+.sceneImage {
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  transform: scale(1.04);
+  transition: transform 200ms ease;
+}
+
+.sceneButton:hover .sceneImage {
+  transform: scale(1.06);
+}
+
+.sceneOverlay {
+  background:
+    linear-gradient(180deg, rgba(18, 21, 30, 0.04), rgba(18, 21, 30, 0.18)),
+    linear-gradient(180deg, transparent 42%, rgba(14, 18, 25, 0.38) 100%);
+}
+
+.sceneContent {
+  position: relative;
+  display: flex;
+  min-height: inherit;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.4rem;
+  color: white;
+}
+
+.sceneEyebrow {
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  opacity: 0.78;
+}
+
+.sceneTitle {
+  margin: 0.45rem 0 0;
+  font-size: clamp(1.8rem, 5vw, 2.2rem);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.sceneSummary {
+  max-width: 16rem;
+  margin: 0.6rem 0 0;
+  font-size: 0.98rem;
+  line-height: 1.5;
+  opacity: 0.9;
+  text-wrap: balance;
+}
+
+.sceneAction {
+  width: fit-content;
+  margin-top: 1rem;
+  padding: 0.62rem 0.95rem;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.2;
+  backdrop-filter: blur(10px);
+}
+
+.slideActive .sceneButton {
+  border-color: rgba(255, 255, 255, 0.84);
+  box-shadow: 0 32px 72px rgba(118, 105, 85, 0.22);
+}
+
+.slideActive .sceneAction {
+  background: rgba(255, 255, 255, 0.22);
+}

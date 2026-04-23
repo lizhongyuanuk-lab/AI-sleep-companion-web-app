@@ -7,6 +7,7 @@
   min-height: 100svh;
   overflow: hidden;
   isolation: isolate;
+  font-family: var(--font-sans);
   --safe-top: max(12px, env(safe-area-inset-top));
   --safe-bottom: max(12px, env(safe-area-inset-bottom));
   --shell-bg: rgba(255, 255, 255, 0.28);
@@ -73,11 +74,11 @@
 
 .topBand {
   position: absolute;
-  top: var(--safe-top);
+  top: calc(var(--safe-top) + 45px);
   right: 16px;
   left: 16px;
   z-index: 8;
-  min-height: 56px;
+  min-height: 58px;
 }
 
 .settingsButton {
@@ -93,8 +94,8 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.3);
   box-shadow: var(--shell-shadow);
-  color: var(--shell-text-primary);
-  backdrop-filter: blur(22px);
+  color: rgba(69, 69, 69, 0.86);
+  backdrop-filter: blur(20px);
   transition:
     transform 180ms ease-out,
     background-color 180ms ease-out,
@@ -115,26 +116,27 @@
 }
 
 .utilityIcon {
-  width: 19px;
-  height: 19px;
+  width: 28px;
+  height: 28px;
 }
 
 .navCapsule {
   width: 301px;
-  min-height: 56px;
+  min-height: 58px;
   margin: 0 auto;
-  padding: 7px;
+  padding: 8px;
   border: 1px solid var(--shell-border);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.26);
   box-shadow: var(--shell-shadow);
-  backdrop-filter: blur(22px);
+  backdrop-filter: blur(20px);
 }
 
 .navList {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2px;
+  min-height: 42px;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -173,12 +175,12 @@
 
 .navIconAsset {
   display: block;
-  width: 17px;
-  height: 17px;
+  width: 24px;
+  height: 24px;
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
-  opacity: 0.88;
+  opacity: 1;
 }
 
 .navLinkActive .navIconAsset {
@@ -187,7 +189,7 @@
 
 .settingsPanel {
   position: absolute;
-  top: calc(var(--safe-top) + 60px);
+  top: calc(var(--safe-top) + 105px);
   left: 16px;
   z-index: 9;
   width: min(280px, calc(100vw - 32px));
@@ -199,6 +201,7 @@
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.38);
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.1);
+  color: #000000;
   backdrop-filter: blur(20px);
 }
 
@@ -209,7 +212,7 @@
 }
 
 .settingsEyebrow {
-  color: var(--shell-text-secondary);
+  color: #000000;
   font-size: 11px;
   font-weight: 500;
   line-height: 14px;
@@ -219,7 +222,7 @@
 
 .settingsTitle {
   margin: 0;
-  color: var(--shell-text-primary);
+  color: #000000;
   font-size: 20px;
   font-weight: 600;
   line-height: 1.05;
@@ -228,7 +231,7 @@
 
 .settingsMeta {
   margin: 0;
-  color: var(--shell-text-secondary);
+  color: #000000;
   font-size: 12px;
   line-height: 16px;
 }
@@ -251,14 +254,14 @@
 }
 
 .settingLabel {
-  color: var(--shell-text-primary);
+  color: #000000;
   font-size: 13px;
   font-weight: 500;
   line-height: 17px;
 }
 
 .settingValue {
-  color: var(--shell-text-secondary);
+  color: #000000;
   font-size: 12px;
   line-height: 16px;
 }
@@ -313,7 +316,7 @@
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
   background: transparent;
-  color: var(--shell-text-secondary);
+  color: #000000;
   font-size: 12px;
   line-height: 16px;
   transition:
@@ -327,7 +330,7 @@
 
 .segmentButtonActive {
   background: rgba(255, 255, 255, 0.42);
-  color: var(--shell-text-primary);
+  color: #000000;
 }
 
 .contentArea {
@@ -353,7 +356,7 @@
 .bottomLayer {
   position: absolute;
   right: 16px;
-  bottom: var(--safe-bottom);
+  bottom: calc(var(--safe-bottom) + 15px);
   left: 16px;
   z-index: 6;
   display: grid;
@@ -362,12 +365,11 @@
 
 .roomAnchor {
   padding-left: 6px;
-  color: var(--shell-text-secondary);
+  color: #0d0d0d;
   font-size: 13px;
   font-weight: 500;
   line-height: 16px;
   opacity: 0.82;
-  text-shadow: var(--room-shadow);
 }
 
 .stateHint {
@@ -402,7 +404,7 @@
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.3);
   box-shadow: var(--shell-shadow);
-  backdrop-filter: blur(22px);
+  backdrop-filter: blur(20px);
   transition:
     transform 180ms ease-out,
     box-shadow 180ms ease-out,
@@ -530,40 +532,43 @@
 .micCircle {
   display: inline-flex;
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 42px;
+  height: 42px;
   align-items: center;
   justify-content: center;
+  border: 1px solid rgba(232, 227, 218, 0.45);
   border-radius: 999px;
-  background: var(--shell-highlight);
+  background: rgba(241, 244, 246, 0.8);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.46),
-    0 4px 12px rgba(199, 170, 123, 0.2);
+    0 6px 18px rgba(0, 0, 0, 0.1),
+    inset 0 1px 4px rgba(255, 255, 255, 0.22);
 }
 
 .dockRecording .micCircle {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 0 0 4px rgba(255, 243, 220, 0.14),
-    0 0 16px rgba(255, 237, 195, 0.28);
+    0 6px 18px rgba(0, 0, 0, 0.1),
+    inset 0 1px 4px rgba(255, 255, 255, 0.22),
+    0 0 0 3px rgba(255, 243, 220, 0.12),
+    0 0 14px rgba(255, 237, 195, 0.24);
 }
 
 .dockSpeaking .micCircle {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 0 0 2px rgba(255, 247, 230, 0.16),
-    0 0 14px rgba(255, 241, 207, 0.22);
+    0 6px 18px rgba(0, 0, 0, 0.1),
+    inset 0 1px 4px rgba(255, 255, 255, 0.22),
+    0 0 0 2px rgba(255, 247, 230, 0.14),
+    0 0 12px rgba(255, 241, 207, 0.2);
 }
 
 .micIcon {
-  width: 20px;
-  height: 20px;
+  width: 23px;
+  height: 23px;
   color: var(--mic-icon);
 }
 
 .primaryLabel {
   display: block;
-  color: var(--shell-text-primary);
+  color: #454545;
   font-size: 16px;
   font-weight: 500;
   line-height: 20px;
@@ -580,8 +585,8 @@
   border: 1px solid rgba(255, 255, 255, 0.24);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.44);
-  color: var(--shell-text-primary);
-  backdrop-filter: blur(22px);
+  color: rgba(69, 69, 69, 0.86);
+  backdrop-filter: blur(20px);
   transition:
     transform 180ms ease-out,
     opacity 180ms ease-out,
