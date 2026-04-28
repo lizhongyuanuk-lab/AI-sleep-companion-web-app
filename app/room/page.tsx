@@ -28,7 +28,6 @@ import {
 } from "./room-config";
 import styles from "./room-page.module.css";
 
-const DWELL_DELAY_MS = 2000;
 const SCROLL_SETTLE_DELAY_MS = 160;
 const TALK_ENTER_DELAY_MS = 140;
 const AUDIO_CROSSFADE_DURATION_MS = 640;
@@ -84,11 +83,9 @@ function getClosestRoomId(container: HTMLDivElement): RoomId {
 export default function RoomPage() {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
-  const dwellTimerRef = useRef<number | null>(null);
   const settleTimerRef = useRef<number | null>(null);
   const enterTimerRef = useRef<number | null>(null);
   const hydrateTimerRef = useRef<number | null>(null);
-  const previewTimerRef = useRef<number | null>(null);
   const audioIntervalIdsRef = useRef<number[]>([]);
   const currentAudioRef = useRef<HTMLAudioElement | null>(null);
   const hasAlignedInitialRoomRef = useRef(false);
@@ -98,7 +95,6 @@ export default function RoomPage() {
   const [uiState, setUiState] = useState<RoomUiState>("idle_room_preview");
   const [isHydrated, setIsHydrated] = useState(false);
   const [isFirstEntry, setIsFirstEntry] = useState(false);
-  const [isEnterReady, setIsEnterReady] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
   const [swipeHintDismissed, setSwipeHintDismissed] = useState(false);
   const [visualFailed, setVisualFailed] = useState(false);
@@ -109,11 +105,7 @@ export default function RoomPage() {
     isFirstEntry &&
     !swipeHintDismissed &&
     activeRoomId === initialRoomId;
-  const showTapHint =
-    isHydrated &&
-    isEnterReady &&
-    !isSwitching &&
-    uiState !== "talk_enter_transition";
+  const showTapHint = isHydrated && uiState !== "talk_enter_transition";
 
   const clearAudioIntervals = () => {
     audioIntervalIdsRef.current.forEach((intervalId) => {
@@ -179,6 +171,18 @@ export default function RoomPage() {
     });
   };
 
+  const getPreviewUiState = (
+    roomId: RoomId,
+    initialRoomIdValue: RoomId,
+    firstEntryValue: boolean,
+    swipeHintDismissedValue: boolean,
+  ): RoomUiState =>
+    firstEntryValue &&
+    !swipeHintDismissedValue &&
+    roomId === initialRoomIdValue
+      ? "page_loaded_first_entry"
+      : "idle_room_preview";
+
   useEffect(() => {
     hydrateTimerRef.current = window.setTimeout(() => {
       const lastEnteredRoomId = readLastEnteredRoomId();
@@ -193,9 +197,12 @@ export default function RoomPage() {
       setIsFirstEntry(!lastEnteredRoomId && !storedRoomId);
       setActiveRoomId(nextInitialRoomId);
       setUiState(
-        !lastEnteredRoomId && !storedRoomId
-          ? "page_loaded_first_entry"
-          : "idle_room_preview",
+        getPreviewUiState(
+          nextInitialRoomId,
+          nextInitialRoomId,
+          !lastEnteredRoomId && !storedRoomId,
+          readSwipeHintDismissed(),
+        ),
       );
       setIsHydrated(true);
     }, 0);
@@ -221,43 +228,6 @@ export default function RoomPage() {
 
     writeStoredRoomId(activeRoomId);
   }, [activeRoomId, isHydrated]);
-
-  useEffect(() => {
-    if (!isHydrated || isSwitching) {
-      return;
-    }
-
-    clearTimer(dwellTimerRef);
-    clearTimer(previewTimerRef);
-
-    previewTimerRef.current = window.setTimeout(() => {
-      setIsEnterReady(false);
-      setUiState(
-        isFirstEntry &&
-          !swipeHintDismissed &&
-          activeRoomId === initialRoomId
-          ? "page_loaded_first_entry"
-          : "idle_room_preview",
-      );
-    }, 0);
-
-    dwellTimerRef.current = window.setTimeout(() => {
-      setIsEnterReady(true);
-      setUiState("dwell_ready_to_enter");
-    }, DWELL_DELAY_MS);
-
-    return () => {
-      clearTimer(previewTimerRef);
-      clearTimer(dwellTimerRef);
-    };
-  }, [
-    activeRoomId,
-    initialRoomId,
-    isFirstEntry,
-    isHydrated,
-    isSwitching,
-    swipeHintDismissed,
-  ]);
 
   useEffect(() => {
     if (!isHydrated) {
@@ -359,11 +329,9 @@ export default function RoomPage() {
 
   useEffect(() => {
     return () => {
-      clearTimer(dwellTimerRef);
       clearTimer(settleTimerRef);
       clearTimer(enterTimerRef);
       clearTimer(hydrateTimerRef);
-      clearTimer(previewTimerRef);
       clearAudioIntervals();
 
       if (currentAudioRef.current) {
@@ -389,15 +357,23 @@ export default function RoomPage() {
       return;
     }
 
-    clearTimer(dwellTimerRef);
     clearTimer(settleTimerRef);
-    setIsEnterReady(false);
     setIsSwitching(true);
     setUiState("room_switching");
     dismissSwipeHint();
 
     settleTimerRef.current = window.setTimeout(() => {
-      setActiveRoomId(getClosestRoomId(container));
+      const nextRoomId = getClosestRoomId(container);
+
+      setActiveRoomId(nextRoomId);
+      setUiState(
+        getPreviewUiState(
+          nextRoomId,
+          initialRoomId,
+          isFirstEntry,
+          readSwipeHintDismissed(),
+        ),
+      );
       setIsSwitching(false);
     }, SCROLL_SETTLE_DELAY_MS);
   };
@@ -405,7 +381,6 @@ export default function RoomPage() {
   const enterTalk = (roomId: RoomId) => {
     if (
       !isHydrated ||
-      !isEnterReady ||
       isSwitching ||
       uiState === "talk_enter_transition" ||
       roomId !== activeRoomId
@@ -415,10 +390,8 @@ export default function RoomPage() {
 
     const room = roomConfigMap[roomId];
 
-    clearTimer(dwellTimerRef);
     clearTimer(settleTimerRef);
     clearTimer(enterTimerRef);
-    setIsEnterReady(false);
     setUiState("talk_enter_transition");
     writeStoredRoomId(roomId);
     writeLastEnteredRoomId(roomId);
@@ -455,7 +428,7 @@ export default function RoomPage() {
           const isActive = room.id === activeRoomId;
           const canEnterRoom =
             isActive &&
-            isEnterReady &&
+            isHydrated &&
             !isSwitching &&
             uiState !== "talk_enter_transition";
 
