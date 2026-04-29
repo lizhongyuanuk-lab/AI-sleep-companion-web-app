@@ -1,0 +1,154 @@
+export type MemoryPageData = {
+  user_id: string;
+  memory_page_available: boolean;
+  recent_memory_summary: {
+    headline_summary: string;
+    time_window_label: string;
+    summary_confidence: "low" | "medium" | "high";
+    source_session_count: number;
+    supporting_line?: string | null;
+  } | null;
+  recurring_topics: Array<{
+    memory_id: string;
+    display_text: string;
+    supporting_session_count: number;
+    time_window_label: string;
+    is_deleted: boolean;
+    continuation_hint?: string | null;
+  }>;
+  helpful_patterns: Array<{
+    pattern_id: string;
+    display_text: string;
+    pattern_type:
+      | "pacing"
+      | "tone"
+      | "room_preference"
+      | "conversation_shape"
+      | "general";
+    evidence_strength: "light" | "medium" | "strong";
+    supporting_line?: string | null;
+  }>;
+  continue_actions: Array<{
+    action_id: string;
+    action_type: "general" | "topic" | "style" | "deep_history";
+    label: string;
+    target_route: "/talk" | "/memory/history";
+    target_payload?: {
+      continuation_source: "memory";
+      selected_memory_item_id?: string;
+      continuation_mode?: "general" | "topic" | "style";
+      soft_prefill_context?: string;
+    };
+    visual_priority: "primary" | "secondary" | "weak";
+  }>;
+  memory_items_version: string;
+  deep_history_available: boolean;
+  memory_delete_capability: boolean;
+  last_memory_refresh_at: string;
+};
+
+// Mock contract mirrors the approved Memory spec until backend wiring exists.
+export const memoryPageMockData: MemoryPageData = {
+  user_id: "user_demo_night_01",
+  memory_page_available: true,
+  recent_memory_summary: {
+    headline_summary:
+      "Lately, your nights have been asking for a gentler pace.",
+    time_window_label: "From the last 7 nights",
+    summary_confidence: "medium",
+    source_session_count: 5,
+    supporting_line: "Shorter check-ins seemed to help.",
+  },
+  recurring_topics: [
+    {
+      memory_id: "memory_topic_unfinished_evenings",
+      display_text: "Evenings that still feel mentally busy",
+      supporting_session_count: 3,
+      time_window_label: "This week",
+      continuation_hint: "You usually settle more easily when the conversation starts softly.",
+      is_deleted: false,
+    },
+    {
+      memory_id: "memory_topic_sleep_entry_pressure",
+      display_text: "Wanting bedtime to feel less like another task",
+      supporting_session_count: 4,
+      time_window_label: "This week",
+      continuation_hint: "A lighter start tends to work better than trying to solve everything first.",
+      is_deleted: false,
+    },
+    {
+      memory_id: "memory_topic_quiet_company",
+      display_text: "Looking for quiet company more than advice",
+      supporting_session_count: 2,
+      time_window_label: "Last few sessions",
+      continuation_hint: "Calmer room choices tended to fit this mood better.",
+      is_deleted: false,
+    },
+  ],
+  helpful_patterns: [
+    {
+      pattern_id: "pattern_slower_openings",
+      display_text: "Slower openings seem to help more than jumping straight into problem-solving.",
+      pattern_type: "pacing",
+      evidence_strength: "strong",
+      supporting_line: "You tended to stay longer when the first minutes felt unhurried.",
+    },
+    {
+      pattern_id: "pattern_quieter_rooms",
+      display_text: "Quieter room settings seem to fit better on the nights you want less stimulation.",
+      pattern_type: "room_preference",
+      evidence_strength: "medium",
+      supporting_line: "The softer scenes showed up repeatedly alongside longer sessions.",
+    },
+    {
+      pattern_id: "pattern_shorter_loops",
+      display_text: "Shorter unwinding conversations seem easier to return to consistently.",
+      pattern_type: "conversation_shape",
+      evidence_strength: "light",
+      supporting_line: "Brief check-ins were easier to restart on the following night.",
+    },
+  ],
+  continue_actions: [
+    {
+      action_id: "continue_general_tonight",
+      action_type: "general",
+      label: "Continue gently",
+      target_route: "/talk",
+      target_payload: {
+        continuation_source: "memory",
+        continuation_mode: "general",
+        soft_prefill_context: "Continue gently from recent nights.",
+      },
+      visual_priority: "secondary",
+    },
+    {
+      action_id: "continue_topic_quiet_company",
+      action_type: "topic",
+      label: "Start with quiet company",
+      target_route: "/talk",
+      target_payload: {
+        continuation_source: "memory",
+        selected_memory_item_id: "memory_topic_quiet_company",
+        continuation_mode: "topic",
+        soft_prefill_context: "Start with quiet company instead of advice.",
+      },
+      visual_priority: "secondary",
+    },
+    {
+      action_id: "continue_style_slow_pacing",
+      action_type: "style",
+      label: "Begin with a slower pace",
+      target_route: "/talk",
+      target_payload: {
+        continuation_source: "memory",
+        continuation_mode: "style",
+        soft_prefill_context: "Keep the opening unhurried.",
+      },
+      visual_priority: "secondary",
+    },
+  ],
+  memory_items_version: "mock-v1",
+  deep_history_available: true,
+  memory_delete_capability: true,
+  last_memory_refresh_at: "2026-04-28T10:30:00+08:00",
+};

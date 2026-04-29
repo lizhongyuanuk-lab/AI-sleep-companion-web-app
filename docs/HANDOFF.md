@@ -2,10 +2,11 @@
 
 ## Current Source Of Truth
 
-当前 Talk 页面文档真源固定为：
+当前页面级文档真源固定为：
 
-- [docs/SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SPEC.md)
-- [docs/TALK_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/TALK_UI_SPEC.md)
+- `/talk` -> [docs/SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SPEC.md) + [docs/TALK_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/TALK_UI_SPEC.md)
+- `/room` -> [docs/ROOM_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/ROOM_SPEC.md) + [docs/ROOM_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/ROOM_UI_SPEC.md)
+- `/memory` -> [docs/MEMORY_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/MEMORY_SPEC.md) + [docs/MEMORY_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/MEMORY_UI_SPEC.md)
 
 支持性过程文档为：
 
@@ -13,7 +14,7 @@
 - [docs/TRACKING.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/TRACKING.md)
 - 本文件
 
-不要再把旧版 Talk 文档、旧 transcript 聊天式布局、旧双模式壳层和旧 3D icon 方向当作真源。
+不要再把旧版 Talk / Room / Memory 文档、旧 transcript 聊天式布局、旧双模式壳层和旧 3D icon 方向当作真源。
 
 ## Current Repo Mapping
 
@@ -63,9 +64,8 @@
 1. Confirm `pwd`
 2. Confirm `git rev-parse --show-toplevel`
 3. Read `AGENTS.md`
-4. Read [docs/SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SPEC.md)
-5. Read [docs/TALK_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/TALK_UI_SPEC.md)
-6. Read the relevant local Next.js docs when framework behavior matters
+4. Read the active page's primary spec pair under `docs/`
+5. Read the relevant local Next.js docs when framework behavior matters
 
 ## For Future Fidelity Passes
 

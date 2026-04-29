@@ -1,0 +1,422 @@
+# Memory Page Main Document: PRD + Non-UI Delivery Specification
+
+This document is the current single source of truth for the `/memory` page product definition, runtime behavior, content boundaries, page skeleton, and non-UI implementation requirements.
+
+It defines what the Memory page is, what it must contain, what it must not contain, what upstream data it depends on, what downstream capabilities it enables, what fallback behaviors are allowed, and what qualifies as a correct implementation.
+
+## 1. Document Role and Priority
+
+Priority order for `/memory` is fixed as:
+
+1. this document
+2. [docs/MEMORY_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/MEMORY_UI_SPEC.md)
+3. app-level shared routing and approved data contracts
+4. current implementation behavior
+
+If any current implementation, old prototype, or historical note conflicts with this document, this document wins.
+
+This document defines product boundaries, runtime shape, content organization, fallback rules, and page-level acceptance. It does not define detailed visual tokens or interaction styling.
+
+## 2. Page Definition
+
+The Memory page is the user's personal companionship memory space.
+
+It is a calm reflective reading page.
+
+It presents lightly processed, gently interpreted, and continuation-oriented companionship content so the user can:
+
+- understand what has stayed with them recently without rereading every message
+- see a small number of recurring themes
+- feel remembered across sessions
+- return to Talk with continuity instead of restarting from zero
+
+The Memory page is not:
+
+- a transcript-first page
+- a chat history page
+- a diagnosis page
+- a dashboard or report page
+- a settings surface
+- a management console
+- a productivity archive
+- a sleep metrics page
+
+The default Memory main page must prioritize edited, reduced, readable companionship reflection rather than raw conversation content.
+
+## 3. User Goals, Product Goals, and Success Criteria
+
+### 3.1 User Goals
+
+Users should be able to:
+
+- understand one clear main insight quickly
+- see a few repeated themes without rereading every session
+- feel continuity across sessions
+- choose from a small set of optional next steps
+
+### 3.2 Product Goals
+
+The page must:
+
+- strengthen continuity across Talk sessions
+- reinforce the sense of being remembered and understood
+- convert past interactions into reusable companionship context
+- provide a low-pressure reflection surface
+- support a closed loop back into Talk
+
+### 3.3 Success Criteria
+
+In a short visit, the user should be able to understand:
+
+- what the main insight is
+- what recurring themes appeared
+- what they can optionally do next
+
+The page succeeds if it feels edited, calm, lightly understanding, and readable.
+
+The page fails if it feels like:
+
+- raw logs
+- psychological analysis
+- scoring
+- emotionally heavy confrontation
+- dense data reading
+- a dashboard card system
+
+## 4. Scope
+
+### 4.1 In Scope
+
+- one hero insight block
+- recurring themes module
+- take-action module
+- lightweight empty states
+- lightweight error and fallback states
+- continuation back into Talk
+
+### 4.2 Out of Scope
+
+- full transcript as the default experience
+- large chronological message lists
+- diagnosis labels
+- psychiatric terminology
+- risk scores
+- therapeutic scales
+- deep journaling tools
+- dashboard-like metrics panels
+- media-led content blocks
+- heavy sleep reports
+- issue-frequency tables
+- severity rankings
+- default-visible management controls
+
+If Deep History or transcript browsing exists later, it belongs to a secondary layer, not the default Memory main page.
+
+## 5. Core Experience Principles
+
+1. Process before display. Raw user messages must not be the main default surface.
+2. Gentle, not diagnostic. The page may reflect patterns but must not classify the user clinically.
+3. Readability over decoration. Text is the primary actor; containers and background support reading only.
+4. Reduced by default. The page should show one main insight, a few repeated themes, and a small set of next steps.
+5. Continuity over analysis. The main value is companionship continuity, not analysis.
+6. Low pressure by default. The page must not require charts, scores, or specialist vocabulary.
+7. No reclassification in the UI layer. The frontend must not invent new labels or analyses outside the approved contract.
+
+## 6. Page Entry and Data Contract
+
+Rendering the Memory main page must not depend on transcript data.
+
+Required page-level inputs:
+
+```ts
+type MemoryPageData = {
+  user_id: string;
+  memory_page_available: boolean;
+  recent_memory_summary: {
+    headline_summary: string;
+    time_window_label: string;
+    summary_confidence: "low" | "medium" | "high";
+    source_session_count: number;
+    supporting_line?: string | null;
+  } | null;
+  recurring_topics: Array<{
+    memory_id: string;
+    display_text: string;
+    supporting_session_count: number;
+    time_window_label: string;
+    is_deleted: boolean;
+    continuation_hint?: string | null;
+  }>;
+  helpful_patterns: Array<{
+    pattern_id: string;
+    display_text: string;
+    pattern_type:
+      | "pacing"
+      | "tone"
+      | "room_preference"
+      | "conversation_shape"
+      | "general";
+    evidence_strength: "light" | "medium" | "strong";
+    supporting_line?: string | null;
+  }>;
+  continue_actions: Array<{
+    action_id: string;
+    action_type: "general" | "topic" | "style" | "deep_history";
+    label: string;
+    target_route: "/talk" | "/memory/history";
+    target_payload?: {
+      continuation_source: "memory";
+      selected_memory_item_id?: string;
+      continuation_mode?: "general" | "topic" | "style";
+      soft_prefill_context?: string;
+    };
+    visual_priority: "primary" | "secondary" | "weak";
+  }>;
+  memory_items_version: string;
+  deep_history_available: boolean;
+  memory_delete_capability: boolean;
+  last_memory_refresh_at: string;
+};
+```
+
+Contract rules:
+
+- `recent_memory_summary` must be processed rather than transcript-based
+- the page renders `display_text` only for recurring themes
+- metadata must remain contextual and secondary
+- `helpful_patterns` may remain part of upstream memory processing, but it is not a required standalone default section in the current main-page skeleton
+- `continue_actions` may carry processed continuation payload but must not expose internal reasoning
+- the frontend must not create new memory records locally
+- the current default main page should surface exactly three equal-weight actions and must not render action hierarchy even if upstream contract includes `visual_priority`
+- `memory_delete_capability` may remain part of the broader contract, but a strong management-style delete affordance is not part of the current default reading-first skeleton
+
+## 7. Runtime States
+
+### 7.1 Initial Loading
+
+- show loading placeholders matching the final reading hierarchy
+- do not fall back to transcript
+- do not fabricate content
+
+### 7.2 Content Available
+
+- render the default modules in the defined order
+
+### 7.3 Partial Content
+
+- render available modules
+- provide lightweight fallback for missing sections
+- do not blank the whole page because one module failed
+
+### 7.4 No Memory Yet
+
+- show a gentle empty state
+- keep a direct path into Talk
+- do not expose backend wording such as `insufficient signal`
+
+### 7.5 Page Error / Summary Fetch Failure
+
+- use section-level fallback when some content remains available
+- use page-level fallback only when primary content cannot render
+- keep a path back to Talk whenever appropriate
+
+## 8. Default Page Composition
+
+The Memory main page uses a single-column vertical structure.
+
+The default top-to-bottom order is fixed:
+
+1. Top Navigation
+2. Header
+3. Hero Insight
+4. Recurring Themes
+5. Take Action
+6. Bottom Safe Area
+
+The default main page must not insert additional summary strips, recommendation blocks, charts, media cards, or utility modules between these sections unless explicitly approved in the PRD.
+
+Fallback skeleton rules:
+
+- if Hero Insight is missing, keep Header -> Recurring Themes -> Take Action
+- if Recurring Themes are missing, keep Header -> Hero Insight -> Take Action
+- if all structured content is missing, use Header -> Empty State -> Take Action
+
+## 9. Core Module Definitions
+
+### 9.1 Header
+
+The header contains:
+
+- page title
+- short atmospheric subtitle
+
+The header is page identity only. It is not the main insight.
+
+### 9.2 Hero Insight
+
+The Hero Insight block is the single most important reading area on the page.
+
+It contains exactly:
+
+- one time label
+- one hero insight sentence
+- one support sentence
+
+No additional paragraph is allowed by default.
+
+The hero sentence must be the strongest line on the page and the first thing users notice after page entry.
+
+### 9.3 Recurring Themes
+
+Recurring Themes comes after Hero Insight.
+
+It contains:
+
+- one section title
+- optional one-line section description
+- a small number of recurring theme items
+
+Each recurring theme item contains exactly:
+
+- one theme title
+- one support sentence
+- one inline metadata line
+
+Metadata must remain in a single inline format such as:
+
+- `This week · 3 sessions`
+
+Metadata must not be split into multiple visual chips or detached fragments.
+
+### 9.4 Take Action
+
+Take Action is the required closing module.
+
+It must:
+
+- sit at the bottom of the main content area
+- contain exactly three actions in the current default main page
+- keep all three actions visually equal
+- remain suggestion-oriented rather than funnel-oriented
+
+It must not:
+
+- introduce a primary CTA
+- introduce secondary CTA hierarchy
+- introduce a fixed bottom bar
+- introduce explanatory subtext under action labels
+
+Deep History is not part of the current default main-page skeleton.
+
+## 10. Talk <-> Memory Handoff Contract
+
+Minimum Talk -> Memory inputs:
+
+- `session_id`
+- `session_end_time`
+- `session_valid_for_memory`
+- `extracted_topic_candidates`
+- `companionship_strategy_used`
+- `interruption_pattern`
+- `room_id`
+
+Minimum Memory -> Talk continuation inputs:
+
+- `continuation_source = memory`
+- `selected_memory_item_id` when applicable
+- `continuation_mode = topic | style | general`
+- `soft_prefill_context`
+
+Talk must treat these values as lightweight continuity context rather than as a script to continue verbatim.
+
+## 11. Content and Copy Strategy
+
+All Memory page copy must be:
+
+- warm
+- low-stimulus
+- concise
+- non-diagnostic
+- non-judgmental
+- emotionally safe by default
+
+Allowed directions:
+
+- recent companionship
+- repeated themes
+- what has been present lately
+- how to continue gently
+
+Disallowed directions:
+
+- pathology language
+- strong clinical labels
+- risk stratification
+- issue-count framing
+- severity framing
+- long AI-style explanation blocks
+
+## 12. Error and Fallback Strategy
+
+- if Hero Insight is unavailable but other sections are available, keep the other sections and use lightweight fallback text
+- if Recurring Themes are unavailable, omit the section or use lightweight fallback; never fabricate themes
+- if Take Action data is unavailable, provide up to three generic equal-weight paths back to Talk
+- if there is not enough data yet, show a gentle empty state that explains Memory will form gradually through companionship, and keep a Talk entry point
+- if all structured content fails, show a page-level fallback while retaining a path to Talk
+
+The page must never fall back to a transcript-first page.
+
+## 13. Technical Boundaries
+
+The frontend must not:
+
+- infer topics locally from transcript
+- compute emotional severity
+- compute helpful patterns locally
+- generate clinical labels
+- rewrite backend-provided memory semantics
+- silently absorb journaling tools, therapy workflows, sleep analytics dashboards, or note-taking behavior
+
+The current main page must not:
+
+- use dashboard card grids
+- use heavy management controls
+- use decorative media blocks in the reading flow
+- use background emphasis stronger than the main reading content
+
+## 14. Current Implementation Decisions For This Repository
+
+These decisions are confirmed for the current `/memory` implementation pass:
+
+1. the page uses a dark atmospheric reading-first background
+2. the first implementation uses local mock data while preserving the documented contract shape above
+3. top navigation follows the shared app navigation system
+4. the default main page uses exactly four major reading sections
+5. the default main page does not render `helpful_patterns` as a standalone section
+6. the current default main page surfaces exactly three equal-weight actions
+7. the current default main page does not use strong management-style delete UI inside theme items
+
+## 15. Page-Level Acceptance Criteria
+
+Acceptance requires all of the following:
+
+- the default main page displays processed companionship memory rather than raw transcript
+- the first thing users notice is one clear hero insight sentence
+- the hero insight block contains exactly one label, one hero sentence, and one support sentence
+- recurring theme items contain only one title, one support line, and one inline metadata line
+- metadata appears inline and is not fragmented into chips
+- the page contains exactly four major sections in the correct order
+- the three action options appear visually equal and non-hierarchical
+- no long default explanation blocks are introduced
+- no text background plates are used to force emphasis
+- containers remain visually softer than the text they contain
+- the page feels edited, reduced, and calm
+
+## 16. Responsibility Boundaries
+
+- Memory is responsible for processed companionship reflection, recurring themes, and continuation entry points back to Talk
+- Talk is responsible for live interaction, current-session experience, response generation, and immediate companionship flow
+- Room is responsible for environment entry, atmosphere, and scene selection
+- Sleep Monitoring is responsible for sleep tracking and sleep-specific records or indicators
+
+Memory may still consume upstream helpful-pattern signals, but it must not rely on them to introduce an additional default standalone section unless the product spec explicitly changes again.

@@ -9,7 +9,11 @@ export function AppFrame({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isImmersiveRoute = pathname === "/talk" || pathname === "/room";
+  const isImmersiveRoute =
+    pathname === "/talk" ||
+    pathname === "/room" ||
+    pathname === "/memory" ||
+    pathname.startsWith("/memory/");
 
   return (
     <div

@@ -1,0 +1,72 @@
+.navCapsule {
+  width: 301px;
+  min-height: 58px;
+  margin: 0 auto;
+  padding: 8px;
+  border: 1px solid var(--shell-border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.26);
+  box-shadow: var(--shell-shadow);
+  backdrop-filter: blur(20px);
+}
+
+.navList {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2px;
+  min-height: 42px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.navItem {
+  min-width: 0;
+}
+
+.navLink {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--shell-text-primary);
+  text-decoration: none;
+  transition:
+    transform 180ms ease-out,
+    background-color 180ms ease-out,
+    box-shadow 180ms ease-out;
+}
+
+.navLink:hover {
+  transform: translateY(-0.5px);
+}
+
+.navLinkActive {
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 8px 18px rgba(220, 201, 176, 0.14);
+}
+
+.navIconAsset {
+  display: block;
+  width: 24px;
+  height: 24px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: contain;
+  opacity: 1;
+}
+
+.navLinkActive .navIconAsset {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navLink {
+    transition: none;
+  }
+}

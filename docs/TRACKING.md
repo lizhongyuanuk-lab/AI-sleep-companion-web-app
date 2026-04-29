@@ -5,16 +5,25 @@
 - Mainline repository confirmed: `ai-companion-web`
 - Latest Talk PRD + non-UI spec vendored into `docs/SPEC.md`: yes
 - Latest Talk UI spec vendored into `docs/TALK_UI_SPEC.md`: yes
+- Latest Room PRD + UI specs vendored into `docs/ROOM_SPEC.md` and `docs/ROOM_UI_SPEC.md`: yes
+- Latest Memory PRD + UI specs vendored into `docs/MEMORY_SPEC.md` and `docs/MEMORY_UI_SPEC.md`: yes
 - Current `/talk` implementation aligned to the latest single-mode direction: yes
+
+## Page Source Mapping
+
+1. `/talk` -> `docs/SPEC.md` + `docs/TALK_UI_SPEC.md`
+2. `/room` -> `docs/ROOM_SPEC.md` + `docs/ROOM_UI_SPEC.md`
+3. `/memory` -> `docs/MEMORY_SPEC.md` + `docs/MEMORY_UI_SPEC.md`
 
 ## Current Task Classification
 
-本轮主任务：`ui-only + bugfix`
+本轮文档任务：`content-only`
 
 解释：
 
-- Talk 的产品和视觉方向已经固定为最终的暖白玻璃单模式
-- 当前收尾工作聚焦于最终稿视觉对齐、首屏稳定性和过程文档去旧
+- `/memory` 的 PRD 和 UI 文档已从外部原件转入仓库内真源
+- 当前工作聚焦于页面级 source-of-truth 区分和实现前约束收口
+- `/memory` 的 UI 实现仍待开始，当前页面代码仍是 placeholder
 
 ## Confirmed Alignment Baseline
 

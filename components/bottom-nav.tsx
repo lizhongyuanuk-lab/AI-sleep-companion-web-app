@@ -13,7 +13,12 @@ const navItems = [
 export function BottomNav() {
   const pathname = usePathname();
 
-  if (pathname === "/talk" || pathname === "/room") {
+  if (
+    pathname === "/talk" ||
+    pathname === "/room" ||
+    pathname === "/memory" ||
+    pathname.startsWith("/memory/")
+  ) {
     return null;
   }
 

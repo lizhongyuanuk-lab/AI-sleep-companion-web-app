@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
+import { ShellTopNav } from "@/components/shell-top-nav";
 import {
   defaultSceneId,
   sceneConfigMap,
@@ -36,13 +35,6 @@ type TalkUiState =
 type HintTone = "normal" | "error";
 
 const soundSettingsStorageKey = "ai-companion-web.talk-sound-settings";
-
-const topTabs = [
-  { href: "/talk", label: "Talk", icon: "/nav-icons/talk-shell-black.png" },
-  { href: "/room", label: "Room", icon: "/nav-icons/room-shell-black.png" },
-  { href: "/memory", label: "Memory", icon: "/nav-icons/memory-shell-black.png" },
-  { href: "/sleep-monitoring", label: "Sleep", icon: "/nav-icons/sleep-shell-black.png" },
-] as const;
 
 const whiteNoiseOptions: { value: WhiteNoiseType; label: string }[] = [
   { value: "room_default", label: "Room default" },
@@ -188,7 +180,6 @@ export function TalkShell({
 }: {
   initialSceneParam?: string;
 }) {
-  const pathname = usePathname();
   const initialSceneId = initialSceneParam
     ? getInitialSceneId(initialSceneParam)
     : defaultSceneId;
@@ -544,34 +535,7 @@ export function TalkShell({
             <SettingsIcon className={styles.utilityIcon} />
           </button>
 
-          <nav aria-label="Primary navigation" className={styles.navCapsule}>
-            <ul className={styles.navList}>
-              {topTabs.map((item) => {
-                const isActive = pathname === item.href;
-
-                return (
-                  <li key={item.href} className={styles.navItem}>
-                    <Link
-                      href={item.href}
-                      aria-current={isActive ? "page" : undefined}
-                      aria-label={item.label}
-                      title={item.label}
-                      className={[
-                        styles.navLink,
-                        isActive ? styles.navLinkActive : "",
-                      ].join(" ")}
-                    >
-                      <span
-                        className={styles.navIconAsset}
-                        style={{ backgroundImage: `url(${item.icon})` }}
-                        aria-hidden="true"
-                      />
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
+          <ShellTopNav />
         </div>
 
         {settingsOpen ? (

@@ -29,7 +29,9 @@
 
 ## 2. Source of Truth and Rule Priority
 
-Priority order:
+Page-specific source-of-truth mapping:
+
+### `/talk`
 
 1. `docs/SPEC.md`
 2. `docs/TALK_UI_SPEC.md`
@@ -39,13 +41,34 @@ Priority order:
 6. current repository code and config
 7. local inference
 
-Rules:
+### `/room`
 
-1. `docs/SPEC.md` is the current Talk PRD + non-UI baseline.
-2. `docs/TALK_UI_SPEC.md` is the current Talk UI and interaction baseline.
-3. Do not treat older in-repo drafts or external copies as runtime truth once these files are vendored.
-4. If two sources conflict, follow the higher-priority source and explicitly report the conflict.
-5. Do not silently resolve spec ambiguity by expanding product behavior.
+1. `docs/ROOM_SPEC.md`
+2. `docs/ROOM_UI_SPEC.md`
+3. `docs/ACCEPTANCE.md`
+4. `docs/TRACKING.md`
+5. `docs/HANDOFF.md`
+6. current repository code and config
+7. local inference
+
+### `/memory`
+
+1. `docs/MEMORY_SPEC.md`
+2. `docs/MEMORY_UI_SPEC.md`
+3. `docs/ACCEPTANCE.md`
+4. `docs/TRACKING.md`
+5. `docs/HANDOFF.md`
+6. current repository code and config
+7. local inference
+
+### Shared rules
+
+1. `docs/SPEC.md` and `docs/TALK_UI_SPEC.md` are the current Talk PRD and UI baseline only.
+2. `docs/ROOM_SPEC.md` and `docs/ROOM_UI_SPEC.md` are the current Room PRD and UI baseline only.
+3. `docs/MEMORY_SPEC.md` and `docs/MEMORY_UI_SPEC.md` are the current Memory PRD and UI baseline only.
+4. Do not treat older in-repo drafts or external copies as runtime truth once these files are vendored.
+5. If two sources conflict, follow the higher-priority source for the active page and explicitly report the conflict.
+6. Do not silently resolve spec ambiguity by expanding product behavior.
 
 ---
 
@@ -58,8 +81,7 @@ Before implementation:
 3. Only continue when both point to this repository root.
 4. Read:
    - `AGENTS.md`
-   - `docs/SPEC.md`
-   - `docs/TALK_UI_SPEC.md`
+   - the active page's primary spec pair under `docs/`
    - `docs/ACCEPTANCE.md`
    - `docs/TRACKING.md`
    - `docs/HANDOFF.md`
