@@ -53,7 +53,7 @@ export const memoryPageMockData: MemoryPageData = {
   memory_page_available: true,
   recent_memory_summary: {
     headline_summary:
-      "Lately, your nights have been asking for a gentler pace.",
+      "Lately, your nights\nhave been asking\nfor a gentler pace.",
     time_window_label: "From the last 7 nights",
     summary_confidence: "medium",
     source_session_count: 5,
@@ -62,26 +62,29 @@ export const memoryPageMockData: MemoryPageData = {
   recurring_topics: [
     {
       memory_id: "memory_topic_unfinished_evenings",
-      display_text: "Evenings that still feel mentally busy",
+      display_text: "Mentally busy evenings",
       supporting_session_count: 3,
       time_window_label: "This week",
-      continuation_hint: "You usually settle more easily when the conversation starts softly.",
+      continuation_hint:
+        "You settle more easily when the conversation starts softly.",
       is_deleted: false,
     },
     {
       memory_id: "memory_topic_sleep_entry_pressure",
-      display_text: "Wanting bedtime to feel less like another task",
+      display_text: "Wanting a lighter start",
       supporting_session_count: 4,
       time_window_label: "This week",
-      continuation_hint: "A lighter start tends to work better than trying to solve everything first.",
+      continuation_hint:
+        "A softer opening works better than trying to solve everything first.",
       is_deleted: false,
     },
     {
       memory_id: "memory_topic_quiet_company",
-      display_text: "Looking for quiet company more than advice",
+      display_text: "Quiet company over advice",
       supporting_session_count: 2,
       time_window_label: "Last few sessions",
-      continuation_hint: "Calmer room choices tended to fit this mood better.",
+      continuation_hint:
+        "You often stay longer when the tone feels calm and unhurried.",
       is_deleted: false,
     },
   ],
@@ -112,37 +115,37 @@ export const memoryPageMockData: MemoryPageData = {
     {
       action_id: "continue_general_tonight",
       action_type: "general",
-      label: "Continue gently",
+      label: "Talk about this",
       target_route: "/talk",
       target_payload: {
         continuation_source: "memory",
         continuation_mode: "general",
-        soft_prefill_context: "Continue gently from recent nights.",
+        soft_prefill_context: "Talk about what has been staying with me lately.",
       },
       visual_priority: "secondary",
     },
     {
       action_id: "continue_topic_quiet_company",
       action_type: "topic",
-      label: "Start with quiet company",
+      label: "Try a gentler start",
       target_route: "/talk",
       target_payload: {
         continuation_source: "memory",
-        selected_memory_item_id: "memory_topic_quiet_company",
+        selected_memory_item_id: "memory_topic_sleep_entry_pressure",
         continuation_mode: "topic",
-        soft_prefill_context: "Start with quiet company instead of advice.",
+        soft_prefill_context: "Begin with a softer opening tonight.",
       },
       visual_priority: "secondary",
     },
     {
       action_id: "continue_style_slow_pacing",
       action_type: "style",
-      label: "Begin with a slower pace",
+      label: "Stay with quiet company",
       target_route: "/talk",
       target_payload: {
         continuation_source: "memory",
         continuation_mode: "style",
-        soft_prefill_context: "Keep the opening unhurried.",
+        soft_prefill_context: "Keep the tone calm and unhurried.",
       },
       visual_priority: "secondary",
     },
