@@ -1,764 +1,584 @@
-# Memory UI / Interaction Spec
+# Memory Page UI Spec
 
-## 1. Document Positioning
+Project: AI Companion Web  
+Page: Memory  
+Document type: UI Spec  
+Version: v1.0  
+Status: Ready for implementation in Codex
 
-This document defines the final UI and interaction behavior for the Memory page.
+## 1. Page Role / Intent
 
-It exists to prevent implementation drift and to ensure the page is built as a calm reflective reading page rather than a dashboard, management panel, or generic card layout.
+The Memory page is a reflective, text-led screen that surfaces lightweight emotional insights from recent usage.
 
-Priority order for implementation:
+This page is not a dashboard, not a therapy report, and not an analytics page. It should feel like a calm, curated reflection screen inside a premium AI wellness companion.
 
-1. PRD
-2. main non-UI product spec
-3. this UI / Interaction Spec
-4. visual references
+The experience should communicate:
 
-If any visual reference conflicts with the PRD or this spec, the PRD and this spec win.
+- calm clarity
+- emotional relevance
+- strong typographic hierarchy
+- spacious reading rhythm
+- minimal visual noise
 
-## 2. Reference Boundaries and Implementation Principles
+The page should feel like a real product UI screen, not like a marketing poster or editorial composition.
 
-### 2.1 What may be borrowed from references
+## 2. Design Principles
 
-The following may be borrowed from external references:
+### 2.1 Core principles
 
-- editorial text hierarchy
-- strong text emphasis
-- calm reflective pacing
-- subtle atmospheric dark backgrounds
-- light container grouping
+Text-first  
+The experience is primarily driven by text hierarchy, not by containers, icons, or illustrations.
 
-### 2.2 What may not be borrowed
+No content cards  
+The body content must not be placed inside cards, blocks, frosted panels, or filled text containers.
 
-The following must not be borrowed:
+Strong hierarchy  
+The hero insight must be clearly dominant. The recurring insights must be clearly secondary. Supporting text must be clearly tertiary.
 
-- dramatic poster-style backgrounds
-- highly saturated visual storytelling backgrounds
-- dashboard-like data card systems
-- heavy decorative graphics competing with reading
-- annual-report / recap theatrics
+Generous spacing  
+Large vertical gaps are required between major content sections. The page should breathe.
 
-### 2.3 Implementation principle
+Talk-page consistency  
+The top navigation must use the same visual system as the Talk page.
 
-The Memory page must feel:
+Restrained atmosphere  
+The page background should feel alive and emotional, but subtle. It should not become colorful decoration that competes with the text.
 
-- calm
-- reduced
-- edited
-- readable
-- emotionally aware
+## 3. Screen Structure Overview
 
-It must not feel:
+The page is composed of the following major zones, top to bottom:
 
-- analytical dashboard
-- settings page
-- management console
-- content feed
-- long-form journaling page
+- Top safe area
+- Top navigation
+- Hero insight block
+- Recurring insights block (3 items)
+- Bottom action area (3 equal actions)
 
-### 2.4 Anti-improvisation rule
+## 4. Global Layout Rules
 
-If a detail is defined here, it must be implemented directly.
+### 4.1 Canvas
 
-Do not reinterpret `light`, `short`, `gentle`, or `clear` as vague aesthetic freedom.
+- mobile portrait layout
+- reference width: `393px`
+- reference height: flexible / scrollable long page
+- content should be vertically scrollable
+- layout must still look correct on common mobile widths around `375px–430px`
 
-Where this spec defines structural, visual, or length constraints, those constraints are hard requirements.
+### 4.2 Horizontal content width
 
-## 3. Page Design Goals
+- main content alignment: left-aligned
+- content max width: approximately `78%–82%` of screen width
+- left padding: `24px`
+- right padding: `24px`
+- content should not stretch edge-to-edge
 
-### 3.1 Intended final outcome
+### 4.3 Safe areas
 
-The page should feel like a quiet, edited reflection of what has stayed with the user lately.
+- respect iOS top safe area
+- respect bottom safe area / home indicator space
+- no important text should sit too close to the bottom gesture area
 
-Users should immediately understand:
+## 5. Background Specification
 
-- one main insight
-- a few repeated themes
-- a small set of equal-weight action options
+### 5.1 Background direction
 
-### 3.2 First visual priority
+The page background should not be pure black. It should be a dark atmospheric gradient with subtle color life.
 
-The first visual priority is the Hero Insight sentence.
+### 5.2 Background visual style
 
-### 3.3 First comprehension priority
+Use:
 
-The user should first understand:
+- deep navy
+- indigo
+- muted purple
+- subtle desaturated burgundy / amber haze near lower area
+- a soft warm glow behind the hero block
 
-- what the main insight is
+Avoid:
 
-Then:
+- harsh red blocks
+- neon gradients
+- high saturation
+- decorative images
+- visible textures that look noisy or cheap
 
-- what recurring themes appeared
+### 5.3 Glow treatment
 
-Then:
-
-- what they can optionally do next
-
-### 3.4 Main visual principle
-
-Text is the primary actor.
-
-Containers and background exist only to support reading.
-
-## 4. Reference Viewport and Responsive Baseline
-
-### 4.1 Reference viewport
-
-Use a mobile-first reference viewport:
-
-- `393 x 852 pt`
-
-### 4.2 Baseline
-
-- portrait mobile first
-- web / PWA implementation
-- responsive scaling allowed
-
-### 4.3 Structural invariants across viewport sizes
-
-The following must not change structurally:
-
-- section order
-- hero insight hierarchy
-- recurring themes grouping logic
-- equal-weight action row
-- overall calm reading rhythm
-
-### 4.4 What may adapt
-
-The following may adapt responsively:
-
-- horizontal padding
-- card width
-- line breaks
-- action layout wrapping if necessary
-
-## 5. Design Tokens
-
-### 5.1 Corner Radius Tokens
-
-- `radius-page-pill = 999`
-- `radius-large-panel = 28`
-- `radius-item-panel = 24`
-- `radius-small-pill = 16`
-
-### 5.2 Spacing Tokens
-
-- `space-4 = 4`
-- `space-8 = 8`
-- `space-12 = 12`
-- `space-16 = 16`
-- `space-20 = 20`
-- `space-24 = 24`
-- `space-32 = 32`
-- `space-40 = 40`
-- `space-48 = 48`
-
-### 5.3 Typography Tokens
-
-Page Title
-
-- `type-page-title-size = 48`
-- `type-page-title-weight = 600`
-- `type-page-title-line = 1.04`
-
-Hero Insight
-
-- `type-hero-size = 36`
-- `type-hero-weight = 600`
-- `type-hero-line = 1.22`
-
-Support
-
-- `type-support-size = 19`
-- `type-support-weight = 400`
-- `type-support-line = 1.5`
-
-Section Title
-
-- `type-section-size = 26`
-- `type-section-weight = 600`
-- `type-section-line = 1.24`
-
-Theme Title
-
-- `type-theme-size = 26`
-- `type-theme-weight = 500`
-- `type-theme-line = 1.32`
-
-Theme Support
-
-- `type-theme-support-size = 18`
-- `type-theme-support-weight = 400`
-- `type-theme-support-line = 1.5`
-
-Metadata / Label
-
-- `type-meta-size = 14`
-- `type-meta-weight = 400`
-- `type-meta-line = 1.4`
-
-### 5.4 Icon Tokens
-
-- inline helper icon size: `16`
-- action icon size: `18`
-- no oversized decorative icons in text sections
-
-### 5.5 Motion Tokens
-
-- `motion-fast = 160ms`
-- `motion-base = 220ms`
-- `motion-slow = 280ms`
-- easing: `ease-out`
-- no dramatic bounce
-- no theatrical movement
-
-## 6. Color Tokens
-
-### 6.1 Dark Base Tokens
-
-Background
-
-- `bg-base = #141517`
-- `bg-surface-soft = rgba(255,255,255,0.05)`
-- `bg-surface-item = rgba(255,255,255,0.07)`
-
-Stroke
-
-- `stroke-soft = rgba(255,255,255,0.08)`
-- `stroke-item = rgba(255,255,255,0.10)`
-
-Text
-
-- `text-primary = #F3EEE7`
-- `text-secondary = rgba(243,238,231,0.76)`
-- `text-tertiary = rgba(243,238,231,0.52)`
-
-Subtle atmospheric haze
-
-Allowed supporting hues:
-
-- `haze-plum = rgba(101,73,115,0.10)`
-- `haze-navy = rgba(63,79,112,0.08)`
-- `haze-warm = rgba(102,72,62,0.06)`
-
-Action surfaces
-
-- `action-fill = rgba(255,255,255,0.06)`
-- `action-stroke = rgba(255,255,255,0.10)`
-
-### 6.2 Color Mapping Rules
-
-- Page background uses `bg-base`
-- Hero panel uses `bg-surface-soft`
-- Theme items use `bg-surface-item`
-- Strokes must use soft white strokes only
-- Page title, hero insight, and theme titles use `text-primary`
-- Support text uses `text-secondary`
-- Metadata and labels use `text-tertiary`
-
-Important:
-
-Do not introduce accent colors for emphasis in the Memory page text hierarchy.
-
-Text hierarchy must be created through size, weight, spacing, and contrast only.
-
-## 7. Page Structural Skeleton
-
-The page consists of exactly four major sections in this order:
-
-1. Header
-2. Hero Insight
-3. Recurring Themes
-4. Take Action
-
-Fixed vs scrollable:
-
-- top app nav is fixed according to global app rules
-- Memory content scrolls vertically
-- no floating secondary CTA inside the content area
-
-Structural layers:
-
-- Layer 1 - Background
-- Layer 2 - Reading Structure
-- Layer 3 - Text + Actions
-
-Layer 1 - Background
-
-- deep dark neutral base
-- optional very subtle atmospheric haze
-- background remains visually weaker than all main text
-
-Layer 2 - Reading Structure
-
-- section containers
-- hero panel
-- recurring grouping
-- item panels
-
-Layer 3 - Text + Actions
-
-- all readable content
-- action row
-
-Invariant structure:
-
-Do not add extra sections between these four sections unless explicitly approved in the PRD.
-
-## 8. Layout Measurements
-
-### 8.1 Page Padding
-
-- horizontal page padding: `24`
-- top content padding below global nav: `28`
-- bottom content padding: `40`
-
-### 8.2 Header Spacing
-
-- title to subtitle: `12`
-- subtitle to hero section: `28`
-
-### 8.3 Section Spacing
-
-- hero section to recurring themes: `32`
-- recurring themes title to first item: `16`
-- recurring themes to take action: `32`
-
-### 8.4 Hero Panel
-
-- internal padding: `24`
-- radius: `28`
-- min height: no forced height
-- width: full available content width
-- max readable text width inside hero sentence: do not let text span too wide; keep comfortable reading width
-
-### 8.5 Theme Item Panel
-
-- internal padding: `20`
-- radius: `24`
-- vertical gap between theme items: `12`
-
-### 8.6 Tap Targets
-
-- all action buttons: min height `48`
-- all inline `show more` style controls if added later: min height `32`
-
-## 9. Top Navigation Area Spec
-
-The Memory page uses the shared top app navigation system defined by the global app spec.
+A soft ambient glow is allowed behind the hero block only.
 
 Rules:
 
-- do not redesign the top nav specifically for Memory
-- keep global nav layout unchanged
-- Memory content must begin below the global nav with sufficient breathing room
+- glow is a background aura, not a box
+- glow should be soft-edged and low contrast
+- glow should support readability, not call attention to itself
+- do not apply glow to recurring blocks
 
-## 10. Main Content Area Spec
+### 5.4 No text backing layer
 
-### 10.1 Content hierarchy
+There must be:
 
-The page must read in this order:
+- no opaque rectangle behind text
+- no glass card behind hero text
+- no filled capsule behind body content
+- no stroke or content panel framing the text
 
-1. Memory
-2. Hero Insight
-3. Recurring Themes
-4. Take Action
+Only:
 
-### 10.2 First-screen density
+- text
+- background
+- subtle hero-area glow
 
-The first screen must not feel crowded.
+## 6. Top Navigation Spec
 
-It should contain:
+### 6.1 Requirement
 
-- header
-- hero insight
-- beginning of recurring themes
+The top navigation must remain visually consistent with the Talk page.
 
-### 10.3 Whitespace priority
+### 6.2 Placement
 
-Whitespace is a primary structural tool.
+- positioned near the top center
+- below safe area
+- horizontal centered
+- top offset: align with Talk page spec
 
-Use spacing to separate:
+### 6.3 Container
 
-- page identity
-- emotional insight
-- grouped recurring patterns
-- actions
+- shape: rounded pill
+- visual style: translucent dark glass / soft dark shell
+- no hard border dominance
+- same height, radius, spacing logic, and overall visual weight as Talk page nav
 
-### 10.4 Anti-drift rule
+### 6.4 Navigation items
 
-The page must not degrade into:
+There are 4 tabs:
 
-- a dense card stack
-- a dashboard summary panel
-- a journaling feed
-- a settings menu
+- Talk
+- Room
+- Memory
+- Sleep
 
-## 11. Core Text and Panel Spec
+### 6.5 Active state
 
-### 11.1 Header
+Memory is the active tab.
 
-Page Title
+Active state style:
 
-- text: `Memory`
-- size: `48`
-- weight: `600`
-- strongest structural title on page
+- a soft warm off-white / cream capsule behind the Memory icon
+- icon color darkened inside active pill for contrast
 
-Subtitle
+### 6.6 Inactive state
 
-- max `1` line
-- use support style
-- must remain atmospheric, not explanatory
+Inactive icons:
 
-### 11.2 Hero Insight Section
+- outlined or simple line style
+- soft white / warm white
+- medium opacity
+- understated
 
-Structure
+### 6.7 Constraints
 
-The Hero Insight block contains exactly:
+- navigation must not dominate the page
+- it must feel unified with the Talk page
+- do not redesign the nav into a new visual language
 
-- time label
-- hero insight sentence
-- one support sentence
+## 7. Typography System
 
-No additional paragraph is allowed by default.
+Use a clean UI sans-serif similar to Poppins.
 
-Time Label
+### 7.1 Font family
 
-- style: metadata / label
-- max `1` line
-- example: `From the last 7 nights`
+Preferred:
 
-Hero Insight Sentence
+- `Poppins`
 
-- max `2` lines preferred, `3` lines maximum only if unavoidable
-- max `90` English characters
-- must be one reflective sentence
-- no multi-sentence output
-- no analysis paragraph
+Fallback:
 
-Support Sentence
+- `Inter`
+- `system-ui`
+- `sans-serif`
 
-- max `2` lines
-- max `70` English characters
-- one interpretive sentence only
-- not a second main statement
+### 7.2 Weight usage
 
-Hero Panel Visual
+- Hero insight: Bold / `700`
+- Recurring item titles: SemiBold / `600` or Bold / `700`
+- Supporting text: Regular / `400`
+- Context line: Regular / `400` or Medium / `500`
+- Bottom actions: Medium / `500` or SemiBold / `600`
 
-- fill: `bg-surface-soft`
-- stroke: optional `stroke-soft`
-- shadow: none or extremely subtle
-- no heavy card effect
-- no text backplate
-- no glow layer behind text
+### 7.3 Important rule
 
-### 11.3 Recurring Themes Section
+Typography must feel like app UI typography, not poster typography.
 
-Section Title
+Avoid:
 
-- example: `Things that came up more than once`
-- style: section title
+- serif
+- script
+- decorative display fonts
+- editorial style headline fonts
+- overly thin type for core insight
 
-Section Description
+## 8. Text Hierarchy
 
-- optional
-- max `1` line
-- must remain lightweight
+This page has 4 clear text levels.
 
-Outer Grouping
+### Level 1 — Hero Insight (highest emphasis)
 
-- may exist
-- must remain lighter than the theme items
-- should feel like grouping, not a big dashboard card
+This is the most important text on the page.
 
-### 11.4 Theme Item
+Content:
 
-Each item contains exactly:
+Lately, your nights  
+have been asking  
+for a gentler pace.
 
-- theme title
-- one support sentence
-- one inline metadata line
+Style:
 
-Theme Title
+- `Poppins Bold`
+- largest text on page
+- 3 lines preferred on reference width
+- strong visual dominance
+- warm soft white color
+- slight optical softness is okay
+- no text outline
+- no decorative font treatment
+- no glow directly on letters; only subtle background aura behind the hero area
 
-- max `2` lines
-- strongest text inside the item
-- style: theme title
+Recommended size:
 
-Theme Support
+- `48px` on reference width
+- line height: `1.08–1.14`
+- letter spacing: slightly tight or default
+- maximum text block width: around `78%` of screen width
 
-- max `2` lines
-- style: theme support
+### Level 2 — Recurring Insight Titles
 
-Metadata
+These are the three recurring results shown below the hero.
 
-- exactly `1` line
-- format only: `This week · 3 sessions`
-- do not split into multiple pills or detached labels
+Each should be clearly visible, but much smaller than the hero.
 
-Theme Item Visual
+Example titles:
 
-- fill: `bg-surface-item`
-- stroke: `stroke-item`
-- no strong shadow
-- no dashboard-card heaviness
-- content must remain visually stronger than the container
+- Mentally busy evenings
+- Wanting a lighter start
+- Quiet company over advice
 
-## 12. Media / Image / Audio / Attachment Spec
+Style:
 
-The Memory page does not use media cards, image blocks, audio strips, or attachment modules by default.
+- `Poppins SemiBold` or Bold
+- white / warm white
+- clean, calm, concise
+- maximum 8 words recommended
+- should not visually compete with hero
 
-Prohibition:
+Recommended size:
 
-- do not add decorative media panels
-- do not insert image-led cards
-- do not add visual-only atmospheric media modules into the reading flow
+- `28px`
+- line height: `1.20–1.26`
 
-## 13. Primary Action Area / Bottom Action Spec
+### Level 3 — Supporting Insight Text
 
-The final section is Take Action.
+This includes the supporting sentence under the hero and the supporting lines under recurring items.
 
-### 13.1 Structure
+Hero support example:
 
-- exactly `3` actions
-- presented as peer options
+Shorter check-ins seemed to help.
 
-### 13.2 Relationship
+Recurring support examples:
 
-All three actions are equal-weight options.
+- You settle more easily when the conversation starts softly.
+- A softer opening works better than trying to solve everything first.
+- You often stay longer when the tone feels calm and unhurried.
 
-### 13.3 Visual Rules
+Style:
 
-All `3` actions must share the same:
+- `Poppins Regular`
+- muted gray-lavender / muted cool white
+- clearly secondary / tertiary
+- easy to read
+- slightly more compact than hero
 
-- height
-- radius
-- fill
-- stroke
-- text size
-- text weight
-- shadow
-- pressed / hover state
+Recommended size:
 
-### 13.4 Forbidden
+- `18px`
+- line height: `1.50–1.60`
 
-- no primary CTA
-- no first button emphasis
-- no one-filled-two-outlined treatment
-- no explanatory subtext under action labels
+### Level 4 — Context Label
 
-### 13.5 Layout
+Small contextual text above the hero.
 
-- mobile default: vertical stack or equally weighted wrap, depending on copy length
-- maintain equal visual weight in all responsive states
+Content:
 
-## 14. Dual-Mode Rules
+From the last 7 nights
 
-Dark mode
+Style:
 
-This page is currently designed for dark mode and dark atmospheric context.
+- small
+- muted
+- understated
+- should not look like a pill or chip
+- plain text only
 
-Background behavior
+Recommended size:
 
-- avoid pure black
-- use deep neutral dark base
-- allow extremely subtle color haze only
+- `16px`
+- line height: `1.4`
+- color: low-emphasis muted gray-lavender
 
-Constraint
+## 9. Page Content Structure
 
-The background must remain weaker than the hero insight and all primary text.
+### 9.1 Hero block
 
-No skeleton change
+Order:
 
-Any future light-mode adaptation may change skin only.
+- Small context line
+- Hero insight
+- Hero support line
 
-It must not change page structure, hierarchy, or section order.
+Required content:
 
-## 15. State Visibility Matrix
+Context line
 
-State: `page_loaded`
+From the last 7 nights
 
-Visible:
+Hero insight
 
-- header
-- hero insight
-- recurring themes
-- take action
+Lately, your nights  
+have been asking  
+for a gentler pace.
 
-Hidden:
+Hero supporting text
 
-- no extra expanded explanation layers
+Shorter check-ins seemed to help.
 
-Clickable:
+### 9.2 Hero block spacing
 
-- action buttons
-- item-level controls if later defined
+- Top nav to context line: `72px`
+- Context line to hero: `20px`
+- Hero to hero support: `28px`
+- Hero block bottom to first recurring item: `96px`
 
-State: `idle`
+This large gap is important. The hero and recurring section should not feel crowded together.
 
-Visible:
+### 9.3 Recurring insights block
 
-- all default content
-- no overlays
-- no expanded hidden paragraphs
+Do not add a section title.
 
-State: `loading`
+Do not add:
 
-Visible:
+- “Things that came up more than once”
+- metadata pills
+- “hide” buttons
+- cards
+- badges
 
-- page shell
-- placeholder layout matching final hierarchy
+Show exactly 3 recurring insights in sequence.
 
-Rules:
+Recurring item 1
 
-- loading state must preserve hero > section > item hierarchy
-- do not use generic skeleton cards that feel heavier than final panels
+Title:
 
-State: `error`
+Mentally busy evenings
 
-Visible:
+Support:
 
-- page shell
-- short inline error copy
+You settle more easily when the conversation starts softly.
 
-Rules:
+Recurring item 2
 
-- keep tone calm
-- do not collapse page into a harsh error screen
+Title:
 
-State: `action_pressed`
+Wanting a lighter start
 
-Visible:
+Support:
 
-- equal pressed feedback across all three actions
+A softer opening works better than trying to solve everything first.
 
-Rules:
+Recurring item 3
 
-- no action may visually become `primary` on idle state
-- pressed state may temporarily darken / brighten equally
+Title:
 
-## 16. Interaction Flow Spec
+Quiet company over advice
 
-Entry
+Support:
 
-- user enters Memory page
-- page loads header, hero insight, recurring themes, actions
-- user first reads hero insight
+You often stay longer when the tone feels calm and unhurried.
 
-Reading flow
+### 9.4 Recurring item spacing
 
-- user scrolls
-- recurring themes appear as light grouped content
-- take action appears at end
+For each recurring item:
 
-Action flow
+- title to support: `12px`
+- item to next item: `56px`
 
-- user taps one of the `3` actions
-- page responds according to action definition in PRD
-- all three remain equal-weight options before tap
+The three items should feel like separate text moments, not list rows.
 
-Error recovery
+## 10. Bottom Action Area
 
-- if content generation fails
-- show short calm fallback copy
-- keep layout intact
-- do not replace page with generic error module
+### 10.1 Purpose
 
-## 17. Inline State / Error / Hint Copy Mounting Rules
+Provide 3 follow-up actions after the recurring insights.
 
-Hero section
+### 10.2 Relationship
 
-No helper paragraph beyond the single support sentence.
+All three actions are parallel options. None should appear primary or secondary in hierarchy.
 
-Recurring themes
+### 10.3 Placement
 
-No extra explanatory block above the item list unless explicitly defined.
+- place below the recurring insights
+- keep enough top spacing from the last recurring item
+- respect bottom safe area
 
-Error copy
+### 10.4 Layout
 
-- mount inside the relevant section
-- use support-text styling
-- keep to one short line when possible
+Use a vertical stack, not horizontal.
 
-Hint copy
+Why:
 
-- must remain lightweight
-- must not add new reading layers
+- better readability
+- calmer
+- more premium
+- more consistent with the text-first rhythm
 
-## 18. PRD -> UI Mapping Addendum
+### 10.5 Action style
 
-`This page is not a dashboard`
+- text-based button or subtle button
+- three actions should use identical visual treatment
+- no one action should be highlighted more than the others
+- soft outline / subtle ghost button / understated pill is acceptable
+- keep it clean and minimal
 
-- do not implement as large heavy cards or KPI panels
+### 10.6 Example action copy
 
-`This page should feel reflective`
+Use short, calm action labels. Suggested options:
 
-- prioritize hero sentence and readable pacing
+- Talk about this
+- Try a gentler start
+- Adjust tonight’s room
 
-`Users should feel remembered`
+If product needs different copy later, structure remains the same.
 
-- ensure one clear main insight is immediately visible
+### 10.7 Button visual rules
 
-`Text should not become long AI output`
+- equal size treatment
+- equal text weight
+- equal spacing
+- no filled primary CTA style
+- do not introduce bright accent colors
 
-- hard-limit copy length at every level
+### 10.8 Bottom action spacing
 
-`Cards should not overpower the text`
+- Last recurring item to action area: `72px`
+- Space between buttons: `16px`
+- Bottom safe margin: `32px` minimum
 
-- use light container treatment and strong text hierarchy
+## 11. Color System
 
-`Actions are suggestions, not a funnel`
+### 11.1 Text colors
 
-- `3` take-action options must remain visually equal
+Primary text
 
-`No text background plate`
+- warm soft white
+- example direction: `rgba(255, 248, 243, 0.96)`
 
-- typography and spacing must create emphasis without added text backplates
+Secondary text
 
-## 19. Strict Prohibitions
+- muted cool gray-lavender
+- example direction: `rgba(214, 208, 226, 0.72)`
 
-Do not turn the page into a dashboard card grid.
-Do not use heavy, thick, high-contrast cards.
-Do not add long explanatory paragraphs by default.
-Do not generate more than one support sentence in the hero section.
-Do not split metadata into multiple visual chips.
-Do not add glow plates, haze blocks, or blurred backplates behind text.
-Do not use strong poster-style background effects.
-Do not let section grouping become visually stronger than item panels.
-Do not let item panels become visually stronger than the hero insight.
-Do not make action buttons hierarchical.
-Do not use `Hide` as a strong management-style CTA.
-Do not introduce decorative media blocks into the Memory reading flow.
+Lower-emphasis text
 
-## 20. Developer Alignment Checklist
+- example direction: `rgba(214, 208, 226, 0.52)`
 
-Before implementation is considered complete, confirm:
+### 11.2 Active nav capsule
 
-- The page contains exactly `4` major sections in the correct order.
-- The hero insight block contains exactly `3` text roles.
-- No extra explanatory paragraph was added under the hero insight.
-- Theme items contain only title, one support line, and one inline metadata line.
-- Metadata is inline, not fragmented into chips.
-- The background remains subdued and non-dominant.
-- No text backplate exists behind hero or support text.
-- Container hierarchy is lighter than text hierarchy.
-- All `3` action options are visually equal.
-- No unintended dashboard-like modules were introduced.
+- soft cream / warm off-white
+- example direction: `#F3E7DF`
 
-## 21. Acceptance Criteria
+### 11.3 Active nav icon
 
-The implementation passes only if all of the following are true:
+- dark desaturated plum / charcoal
+- example direction: `#2D2630`
 
-- The first thing users notice is the hero insight sentence.
-- The hero insight sentence is visually stronger than section titles and theme titles.
-- The page does not contain long AI-style explanatory text.
-- The hero section contains only one label, one hero sentence, and one support sentence.
-- Theme items contain only one title, one support line, and one inline metadata line.
-- Metadata appears in single-line inline form only.
-- No extra text background layer exists behind the insight text.
-- Cards remain visually softer than the text they contain.
-- The recurring themes area reads as grouped content, not as a dashboard.
-- All `3` action options are equal-weight and non-hierarchical.
-- The background atmosphere does not compete with the reading content.
-- The page feels edited, reduced, and calm.
+### 11.4 Background directions
+
+Example background palette direction:
+
+- deep navy `#0B1020`
+- indigo `#171A3A`
+- muted purple `#2B2140`
+- soft burgundy haze `#402133`
+- soft amber glow `rgba(196, 137, 92, 0.16)`
+
+These are directional references, not strict tokens, unless needed.
+
+## 12. Spacing Summary
+
+Use an `8px` grid.
+
+Recommended vertical rhythm:
+
+- Top safe area to nav: per Talk page
+- Nav to hero context: `72px`
+- Context to hero: `20px`
+- Hero to hero support: `28px`
+- Hero block to recurring block start: `96px`
+- Recurring title to support: `12px`
+- Between recurring items: `56px`
+- Recurring block to actions: `72px`
+- Action buttons spacing: `16px`
+
+The page should feel more spacious than typical app UI.
+
+## 13. Things Explicitly Not Allowed
+
+Codex must not do any of the following:
+
+- Add page title `Memory`
+- Add subtitle `Things that have stayed with you lately.`
+- Add section title `Things that came up more than once`
+- Put content inside cards
+- Put content inside frosted glass text panels
+- Add body illustrations or decorative floating art
+- Add album art or poster-like decorative objects
+- Add extra icons in content area
+- Use decorative fonts
+- Use thin editorial display fonts for hero
+- Make the hero smaller than the current hierarchy requires
+- Compress the vertical spacing
+- Use bright, loud, saturated gradients
+- Make one bottom action look primary over the others
+- Turn the layout into an analytics dashboard
+
+## 14. Implementation Notes for Codex
+
+### 14.1 Layout behavior
+
+- The page should scroll naturally
+- Text blocks must stay left-aligned
+- Do not convert recurring items into cards or accordions in this version
+- Current version is static presentation of 3 recurring items
+
+### 14.2 Responsive behavior
+
+- Preserve the same text hierarchy on small mobile widths
+- Hero may reflow to `3–4` lines depending on width
+- Spacing may scale slightly, but hierarchy must remain intact
+
+### 14.3 Reuse with Talk page
+
+- Reuse top nav component from Talk page
+- Only change active tab state to Memory
+- Keep identical pill proportions and visual styling
+
+## 15. Final Visual Target
+
+The final result should feel like:
+
+- a calm premium AI wellness app
+- typographically strong
+- spacious and breathable
+- emotionally intelligent
+- UI-first, not poster-first
+- visually consistent with the Talk page
+- restrained but not dull
+- atmospheric but not flashy

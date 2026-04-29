@@ -88,8 +88,8 @@ The page fails if it feels like:
 ### 4.1 In Scope
 
 - one hero insight block
-- recurring themes module
-- take-action module
+- one recurring insights block with exactly three surfaced items in the current default main page
+- one take-action module with exactly three equal-weight options in the current default main page
 - lightweight empty states
 - lightweight error and fallback states
 - continuation back into Talk
@@ -182,8 +182,8 @@ type MemoryPageData = {
 Contract rules:
 
 - `recent_memory_summary` must be processed rather than transcript-based
-- the page renders `display_text` only for recurring themes
-- metadata must remain contextual and secondary
+- the page renders `display_text` and at most one short support sentence for recurring insights
+- upstream metadata fields may remain available in the contract, but the current default main page does not need to render them
 - `helpful_patterns` may remain part of upstream memory processing, but it is not a required standalone default section in the current main-page skeleton
 - `continue_actions` may carry processed continuation payload but must not expose internal reasoning
 - the frontend must not create new memory records locally
@@ -227,32 +227,22 @@ The Memory main page uses a single-column vertical structure.
 The default top-to-bottom order is fixed:
 
 1. Top Navigation
-2. Header
-3. Hero Insight
-4. Recurring Themes
-5. Take Action
-6. Bottom Safe Area
+2. Hero Insight
+3. Recurring Insights
+4. Take Action
+5. Bottom Safe Area
 
 The default main page must not insert additional summary strips, recommendation blocks, charts, media cards, or utility modules between these sections unless explicitly approved in the PRD.
 
 Fallback skeleton rules:
 
-- if Hero Insight is missing, keep Header -> Recurring Themes -> Take Action
-- if Recurring Themes are missing, keep Header -> Hero Insight -> Take Action
-- if all structured content is missing, use Header -> Empty State -> Take Action
+- if Hero Insight is missing, keep Recurring Insights -> Take Action beneath Top Navigation
+- if Recurring Insights are missing, keep Hero Insight -> Take Action beneath Top Navigation
+- if all structured content is missing, use Empty State -> Take Action beneath Top Navigation
 
 ## 9. Core Module Definitions
 
-### 9.1 Header
-
-The header contains:
-
-- page title
-- short atmospheric subtitle
-
-The header is page identity only. It is not the main insight.
-
-### 9.2 Hero Insight
+### 9.1 Hero Insight
 
 The Hero Insight block is the single most important reading area on the page.
 
@@ -266,29 +256,24 @@ No additional paragraph is allowed by default.
 
 The hero sentence must be the strongest line on the page and the first thing users notice after page entry.
 
-### 9.3 Recurring Themes
+The current default main page does not display a page title, subtitle, or additional section heading above the Hero Insight block.
 
-Recurring Themes comes after Hero Insight.
+### 9.2 Recurring Insights
+
+Recurring Insights comes after Hero Insight.
 
 It contains:
 
-- one section title
-- optional one-line section description
-- a small number of recurring theme items
+- exactly three recurring insight items in the current default main page
 
-Each recurring theme item contains exactly:
+Each recurring insight item contains exactly:
 
 - one theme title
 - one support sentence
-- one inline metadata line
 
-Metadata must remain in a single inline format such as:
+The current default main page does not display a recurring-section title, metadata line, badges, or management controls in this block.
 
-- `This week · 3 sessions`
-
-Metadata must not be split into multiple visual chips or detached fragments.
-
-### 9.4 Take Action
+### 9.3 Take Action
 
 Take Action is the required closing module.
 
@@ -359,7 +344,7 @@ Disallowed directions:
 ## 12. Error and Fallback Strategy
 
 - if Hero Insight is unavailable but other sections are available, keep the other sections and use lightweight fallback text
-- if Recurring Themes are unavailable, omit the section or use lightweight fallback; never fabricate themes
+- if Recurring Insights are unavailable, omit the section or use lightweight fallback; never fabricate themes
 - if Take Action data is unavailable, provide up to three generic equal-weight paths back to Talk
 - if there is not enough data yet, show a gentle empty state that explains Memory will form gradually through companionship, and keep a Talk entry point
 - if all structured content fails, show a page-level fallback while retaining a path to Talk
@@ -391,10 +376,11 @@ These decisions are confirmed for the current `/memory` implementation pass:
 1. the page uses a dark atmospheric reading-first background
 2. the first implementation uses local mock data while preserving the documented contract shape above
 3. top navigation follows the shared app navigation system
-4. the default main page uses exactly four major reading sections
+4. the default main page uses exactly three major reading sections beneath the shared top navigation
 5. the default main page does not render `helpful_patterns` as a standalone section
-6. the current default main page surfaces exactly three equal-weight actions
-7. the current default main page does not use strong management-style delete UI inside theme items
+6. the current default main page does not render a content-area page title, subtitle, or recurring-section title
+7. the current default main page does not render metadata lines or delete controls inside recurring insight items
+8. the current default main page surfaces exactly three equal-weight actions
 
 ## 15. Page-Level Acceptance Criteria
 
@@ -403,18 +389,18 @@ Acceptance requires all of the following:
 - the default main page displays processed companionship memory rather than raw transcript
 - the first thing users notice is one clear hero insight sentence
 - the hero insight block contains exactly one label, one hero sentence, and one support sentence
-- recurring theme items contain only one title, one support line, and one inline metadata line
-- metadata appears inline and is not fragmented into chips
-- the page contains exactly four major sections in the correct order
+- the current default main page does not display a content-area page title, subtitle, or recurring-section title
+- recurring insight items contain only one title and one support line
+- the current default main page shows exactly three recurring insight items
+- the page contains Top Navigation -> Hero Insight -> Recurring Insights -> Take Action in the correct order
 - the three action options appear visually equal and non-hierarchical
 - no long default explanation blocks are introduced
-- no text background plates are used to force emphasis
-- containers remain visually softer than the text they contain
+- no metadata, badges, or management controls are required to understand recurring insights
 - the page feels edited, reduced, and calm
 
 ## 16. Responsibility Boundaries
 
-- Memory is responsible for processed companionship reflection, recurring themes, and continuation entry points back to Talk
+- Memory is responsible for processed companionship reflection, recurring insights, and continuation entry points back to Talk
 - Talk is responsible for live interaction, current-session experience, response generation, and immediate companionship flow
 - Room is responsible for environment entry, atmosphere, and scene selection
 - Sleep Monitoring is responsible for sleep tracking and sleep-specific records or indicators
