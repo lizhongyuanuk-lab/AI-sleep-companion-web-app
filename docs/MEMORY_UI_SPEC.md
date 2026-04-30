@@ -29,8 +29,8 @@ The page should feel like a real product UI screen, not like a marketing poster 
 Text-first  
 The experience is primarily driven by text hierarchy, not by containers, icons, or illustrations.
 
-No content cards  
-The body content must not be placed inside cards, blocks, frosted panels, or filled text containers.
+No heavy content cards  
+The default reading view must not be built from heavy cards, large frosted panels, or filled text containers. A subtle shell behind one expanded recurring item is allowed in the current implementation as long as it remains secondary to the text.
 
 Strong hierarchy  
 The hero insight must be clearly dominant. The recurring insights must be clearly secondary. Supporting text must be clearly tertiary.
@@ -51,7 +51,7 @@ The page is composed of the following major zones, top to bottom:
 - Top safe area
 - Top navigation
 - Hero insight block
-- Recurring insights block (3 items)
+- Recurring insights block (3 visible items by default)
 - Bottom action area (3 equal actions)
 
 ## 4. Global Layout Rules
@@ -66,7 +66,7 @@ The page is composed of the following major zones, top to bottom:
 
 ### 4.2 Horizontal content width
 
-- main content alignment: left-aligned
+- main content alignment: center-aligned
 - content max width: approximately `78%–82%` of screen width
 - left padding: `24px`
 - right padding: `24px`
@@ -206,13 +206,18 @@ Inactive icons:
 
 ## 7. Typography System
 
-Use a clean UI sans-serif similar to Poppins.
+Use a clean UI sans-serif system.
 
 ### 7.1 Font family
 
 Preferred:
 
-- `Poppins`
+- Hero insight:
+  - `General Sans`
+  - `Satoshi`
+  - `Plus Jakarta Sans`
+- Supporting / recurring system:
+  - `Poppins`
 
 Fallback:
 
@@ -222,8 +227,8 @@ Fallback:
 
 ### 7.2 Weight usage
 
-- Hero insight: Bold / `700`
-- Recurring item titles: SemiBold / `600` or Bold / `700`
+- Hero insight: Bold / `800`
+- Recurring item titles: Bold / `800`
 - Supporting text: Regular / `400`
 - Context line: Regular / `400` or Medium / `500`
 - Bottom actions: Medium / `500` or SemiBold / `600`
@@ -256,21 +261,21 @@ for a gentler pace.
 
 Style:
 
-- `Poppins Bold`
+- `General Sans` / `Satoshi` / `Plus Jakarta Sans` Bold
 - largest text on page
-- 3 lines preferred on reference width
+- `3–4` lines preferred on reference width
 - strong visual dominance
-- warm soft white color
-- slight optical softness is okay
+- soft white color
+- a subtle hero-area focus zone / light field may support the text block
 - no text outline
 - no decorative font treatment
 - no glow directly on letters; only subtle background aura behind the hero area
 
 Recommended size:
 
-- `48px` on reference width
-- line height: `1.08–1.14`
-- letter spacing: slightly tight or default
+- `36px` on reference width
+- line height: approximately `42px`
+- letter spacing: slightly negative
 - maximum text block width: around `78%` of screen width
 
 ### Level 2 — Recurring Insight Titles
@@ -282,12 +287,12 @@ Each should be clearly visible, but much smaller than the hero.
 Example titles:
 
 - Mentally busy evenings
-- Wanting a lighter start
-- Quiet company over advice
+- Gentler evening starts
+- Quiet company first
 
 Style:
 
-- `Poppins SemiBold` or Bold
+- `Poppins Bold`
 - white / warm white
 - clean, calm, concise
 - maximum 8 words recommended
@@ -295,8 +300,8 @@ Style:
 
 Recommended size:
 
-- `28px`
-- line height: `1.20–1.26`
+- `30px`
+- line height: approximately `36px`
 
 ### Level 3 — Supporting Insight Text
 
@@ -322,8 +327,8 @@ Style:
 
 Recommended size:
 
-- `18px`
-- line height: `1.50–1.60`
+- hero support: `18px` / `26px`
+- recurring support: `17px` / `24px`
 
 ### Level 4 — Context Label
 
@@ -376,8 +381,8 @@ Shorter check-ins seemed to help.
 ### 9.2 Hero block spacing
 
 - Top nav to context line: `72px`
-- Context line to hero: `20px`
-- Hero to hero support: `28px`
+- Context line to hero: `24px`
+- Hero to hero support: `16px`
 - Hero block bottom to first recurring item: `96px`
 
 This large gap is important. The hero and recurring section should not feel crowded together.
@@ -394,7 +399,7 @@ Do not add:
 - cards
 - badges
 
-Show exactly 3 recurring insights in sequence.
+Show 3 recurring insights by default in the visible main page flow.
 
 Recurring item 1
 
@@ -410,7 +415,7 @@ Recurring item 2
 
 Title:
 
-Wanting a lighter start
+Gentler evening starts
 
 Support:
 
@@ -420,7 +425,7 @@ Recurring item 3
 
 Title:
 
-Quiet company over advice
+Quiet company first
 
 Support:
 
@@ -434,6 +439,15 @@ For each recurring item:
 - item to next item: `56px`
 
 The three items should feel like separate text moments, not list rows.
+
+Additional current implementation rules:
+
+- recurring items remain text-first in their collapsed state
+- a lightweight `View all memories` control may reveal more recurring items in the same page
+- only one recurring item may expand at a time
+- the expanded recurring item may reveal a very subtle soft-shell container behind that item only
+- expanded detail groups may include `Seen when`, `Appeared in`, and `Pattern note`
+- lightweight local `Agree` / `Delete` actions may appear inside the expanded recurring item shell
 
 ## 10. Bottom Action Area
 
@@ -559,8 +573,8 @@ Codex must not do any of the following:
 - Add page title `Memory`
 - Add subtitle `Things that have stayed with you lately.`
 - Add section title `Things that came up more than once`
-- Put content inside cards
-- Put content inside frosted glass text panels
+- Put all content inside heavy cards
+- Put recurring items inside always-visible frosted glass text panels
 - Add body illustrations or decorative floating art
 - Add album art or poster-like decorative objects
 - Add extra icons in content area
@@ -577,9 +591,10 @@ Codex must not do any of the following:
 ### 14.1 Layout behavior
 
 - The page should scroll naturally
-- Text blocks must stay left-aligned
-- Do not convert recurring items into cards or accordions in this version
-- Current version is static presentation of 3 recurring items
+- Text blocks stay center-aligned in the default reading view
+- Expanded recurring detail content may left-align inside the subtle expanded shell
+- Do not convert the recurring section into heavy cards or full accordion modules
+- Current version uses 3 visible recurring items by default, with same-page reveal for additional items
 
 ### 14.2 Responsive behavior
 

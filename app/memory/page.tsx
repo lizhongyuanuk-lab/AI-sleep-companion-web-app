@@ -1,226 +1,157 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { ShellTopNav } from "@/components/shell-top-nav";
 import { memoryPageMockData, type MemoryPageData } from "./memory-page-data";
 import styles from "./memory-page.module.css";
 
-const ACTION_RESTING_OFFSET = 32;
-const ACTION_DRAG_LIMIT = 44;
-
-type SwipeDirection = "left" | "right";
-type OpenSwipeState =
-  | {
-      id: string;
-      direction: SwipeDirection;
-    }
-  | null;
-
 type RecurringTopic = MemoryPageData["recurring_topics"][number];
 
-function clampOffset(value: number) {
-  return Math.max(-ACTION_DRAG_LIMIT, Math.min(ACTION_DRAG_LIMIT, value));
-}
+type RecurringMemoryDetail = {
+  seenWhen: string;
+  appearedIn: string;
+  patternNote: string;
+};
 
-function SwipeableRecurringItem({
+const recurringMemoryDetails: Record<string, RecurringMemoryDetail> = {
+  memory_topic_unfinished_evenings: {
+    seenWhen: "Most often after 10:30 PM",
+    appearedIn: "Seen in 3 of the last 7 nights",
+    patternNote: "More likely when your mind is still switching off",
+  },
+  memory_topic_sleep_entry_pressure: {
+    seenWhen: "Usually near the start of the night",
+    appearedIn: "Seen in 4 of the last 7 nights",
+    patternNote: "More common when the first minutes feel pressured",
+  },
+  memory_topic_quiet_company: {
+    seenWhen: "Most often once the room feels settled",
+    appearedIn: "Seen across the last few sessions",
+    patternNote: "More common when the tone stays calm and unhurried",
+  },
+  memory_topic_softer_openings: {
+    seenWhen: "Most visible in the first few exchanges",
+    appearedIn: "Seen in 3 recent sessions",
+    patternNote: "A gentler opening lowers the pressure to explain everything",
+  },
+  memory_topic_quieter_room_returns: {
+    seenWhen: "More often on lower-stimulation nights",
+    appearedIn: "Seen in 2 recent nights",
+    patternNote: "Quieter room energy seems to make returning feel easier",
+  },
+  memory_topic_briefer_loops: {
+    seenWhen: "Often after shorter nightly check-ins",
+    appearedIn: "Seen in 3 recent nights",
+    patternNote: "Brief loops seem easier to carry into the following night",
+  },
+};
+
+function ExpandableRecurringItem({
   topic,
-  openSwipe,
+  detail,
+  expanded,
   agreed,
-  onOpenChange,
-  onDelete,
+  canDelete,
+  onToggle,
   onAgree,
+  onDelete,
 }: {
   topic: RecurringTopic;
-  openSwipe: OpenSwipeState;
+  detail: RecurringMemoryDetail;
+  expanded: boolean;
   agreed?: boolean;
-  onOpenChange: (next: OpenSwipeState) => void;
-  onDelete: (id: string) => void;
+  canDelete?: boolean;
+  onToggle: () => void;
   onAgree: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
-  const dragStateRef = useRef<{
-    active: boolean;
-    locked: boolean;
-    pointerId: number | null;
-    startX: number;
-    startY: number;
-    baseOffset: number;
-  } | null>(null);
-  const [dragOffset, setDragOffset] = useState<number | null>(null);
-
-  const isOpen = openSwipe?.id === topic.memory_id;
-  const restingOffset = isOpen
-    ? openSwipe.direction === "right"
-      ? ACTION_RESTING_OFFSET
-      : -ACTION_RESTING_OFFSET
-    : 0;
-  const currentOffset = dragOffset ?? restingOffset;
-  const activeDirection =
-    currentOffset < -2 ? "left" : currentOffset > 2 ? "right" : null;
-  const dragging = dragOffset !== null;
-
-  const finishSwipe = () => {
-    const nextOffset = dragOffset ?? restingOffset;
-
-    if (nextOffset <= -18) {
-      onOpenChange({ id: topic.memory_id, direction: "left" });
-    } else if (nextOffset >= 18) {
-      onOpenChange({ id: topic.memory_id, direction: "right" });
-    } else {
-      onOpenChange(null);
-    }
-
-    setDragOffset(null);
-    dragStateRef.current = null;
-  };
-
   return (
-    <article
-      className={[
-        styles.recurringSwipeRow,
-        activeDirection === "left" ? styles.recurringSwipeRowRevealLeft : "",
-        activeDirection === "right" ? styles.recurringSwipeRowRevealRight : "",
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      onPointerDown={(event) => {
-        if (event.pointerType === "mouse" && event.button !== 0) {
-          return;
-        }
-
-        event.stopPropagation();
-        event.currentTarget.setPointerCapture(event.pointerId);
-        dragStateRef.current = {
-          active: true,
-          locked: false,
-          pointerId: event.pointerId,
-          startX: event.clientX,
-          startY: event.clientY,
-          baseOffset: isOpen ? restingOffset : 0,
-        };
-
-        if (openSwipe && openSwipe.id !== topic.memory_id) {
-          onOpenChange(null);
-        }
-      }}
-      onPointerMove={(event) => {
-        const state = dragStateRef.current;
-
-        if (!state?.active || state.pointerId !== event.pointerId) {
-          return;
-        }
-
-        const deltaX = event.clientX - state.startX;
-        const deltaY = event.clientY - state.startY;
-
-        if (!state.locked) {
-          if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) {
-            return;
-          }
-
-          if (Math.abs(deltaY) > Math.abs(deltaX)) {
-            if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-              event.currentTarget.releasePointerCapture(event.pointerId);
-            }
-
-            dragStateRef.current = null;
-            setDragOffset(null);
-            return;
-          }
-
-          state.locked = true;
-        }
-
-        setDragOffset(clampOffset(state.baseOffset + deltaX));
-      }}
-      onPointerUp={(event) => {
-        const state = dragStateRef.current;
-
-        if (!state?.active || state.pointerId !== event.pointerId) {
-          return;
-        }
-
-        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-          event.currentTarget.releasePointerCapture(event.pointerId);
-        }
-
-        finishSwipe();
-      }}
-      onPointerCancel={(event) => {
-        const state = dragStateRef.current;
-
-        if (!state?.active || state.pointerId !== event.pointerId) {
-          return;
-        }
-
-        if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-          event.currentTarget.releasePointerCapture(event.pointerId);
-        }
-
-        setDragOffset(null);
-        dragStateRef.current = null;
-      }}
-    >
+    <article className={styles.recurringMemoryItem}>
       <div
-        className={styles.rowActionsLeft}
-        aria-hidden={activeDirection !== "left"}
-      >
-        <button
-          type="button"
-          className={[
-            styles.rowActionButton,
-            styles.rowActionDestructive,
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={() => {
-            onDelete(topic.memory_id);
-            onOpenChange(null);
-          }}
-        >
-          Delete
-        </button>
-      </div>
-
-      <div
-        className={styles.rowActionsRight}
-        aria-hidden={activeDirection !== "right"}
-      >
-        <button
-          type="button"
-          className={[
-            styles.rowActionButton,
-            styles.rowActionPositive,
-            agreed ? styles.rowActionSelected : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          onPointerDown={(event) => event.stopPropagation()}
-          onClick={() => {
-            onAgree(topic.memory_id);
-            onOpenChange(null);
-          }}
-        >
-          Agree
-        </button>
-      </div>
-
-      <div
+        role="button"
+        tabIndex={0}
+        aria-expanded={expanded}
         className={[
-          styles.recurringItem,
-          dragging ? styles.recurringItemDragging : "",
+          styles.recurringMemoryButton,
+          expanded ? styles.recurringMemoryButtonExpanded : "",
         ]
           .filter(Boolean)
           .join(" ")}
-        style={{
-          transform: `translateX(${currentOffset}px)`,
+        onClick={onToggle}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            onToggle();
+          }
         }}
       >
-        <h2 className={styles.recurringTitle}>{topic.display_text}</h2>
-        {topic.continuation_hint ? (
-          <p className={styles.recurringSupport}>{topic.continuation_hint}</p>
-        ) : null}
+        <div className={styles.recurringMemoryContent}>
+          <div className={styles.recurringMemorySummary}>
+            <h2 className={styles.recurringTitle}>{topic.display_text}</h2>
+            {topic.continuation_hint ? (
+              <p className={styles.recurringSupport}>{topic.continuation_hint}</p>
+            ) : null}
+          </div>
+
+          {expanded ? (
+            <div className={styles.recurringMemoryDetails} aria-live="polite">
+              <div className={styles.recurringMemoryDetailGroup}>
+                <p className={styles.recurringMemoryDetailLabel}>Seen when</p>
+                <p className={styles.recurringMemoryDetailValue}>
+                  {detail.seenWhen}
+                </p>
+              </div>
+              <div className={styles.recurringMemoryDetailGroup}>
+                <p className={styles.recurringMemoryDetailLabel}>Appeared in</p>
+                <p className={styles.recurringMemoryDetailValue}>
+                  {detail.appearedIn}
+                </p>
+              </div>
+              <div className={styles.recurringMemoryDetailGroup}>
+                <p className={styles.recurringMemoryDetailLabel}>Pattern note</p>
+                <p className={styles.recurringMemoryDetailValue}>
+                  {detail.patternNote}
+                </p>
+              </div>
+
+              <div className={styles.recurringMemoryActions}>
+                <button
+                  type="button"
+                  className={[
+                    styles.recurringMemoryAction,
+                    agreed ? styles.recurringMemoryActionSelected : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onAgree(topic.memory_id);
+                  }}
+                >
+                  {agreed ? "Agreed" : "Agree"}
+                </button>
+                {canDelete ? (
+                  <button
+                    type="button"
+                    className={[
+                      styles.recurringMemoryAction,
+                      styles.recurringMemoryActionDestructive,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onDelete(topic.memory_id);
+                    }}
+                  >
+                    Delete
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </div>
       </div>
     </article>
   );
@@ -229,9 +160,14 @@ function SwipeableRecurringItem({
 export default function MemoryPage() {
   const data = memoryPageMockData;
   const [topics, setTopics] = useState(data.recurring_topics);
-  const [openSwipe, setOpenSwipe] = useState<OpenSwipeState>(null);
+  const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
+  const [showAllMemories, setShowAllMemories] = useState(false);
   const [agreedTopics, setAgreedTopics] = useState<Record<string, boolean>>({});
   const displayedThemes = topics.filter((topic) => !topic.is_deleted);
+  const visibleThemes = showAllMemories
+    ? displayedThemes
+    : displayedThemes.slice(0, 3);
+  const hasMoreThemes = displayedThemes.length > 3;
   const displayedActions = data.continue_actions.slice(0, 3);
 
   return (
@@ -245,14 +181,7 @@ export default function MemoryPage() {
           <ShellTopNav tone="memory" />
         </header>
 
-        <main
-          className={styles.scrollContent}
-          onPointerDown={() => {
-            if (openSwipe) {
-              setOpenSwipe(null);
-            }
-          }}
-        >
+        <main className={styles.scrollContent}>
           <div className={styles.contentColumn}>
             {data.memory_page_available && data.recent_memory_summary ? (
               <>
@@ -273,21 +202,25 @@ export default function MemoryPage() {
 
                 {displayedThemes.length > 0 ? (
                   <section className={styles.recurringList}>
-                    {displayedThemes.map((topic) => {
+                    {visibleThemes.map((topic) => {
+                      const detail =
+                        recurringMemoryDetails[topic.memory_id] ?? {
+                          seenWhen: "Seen in a recent evening check-in",
+                          appearedIn: `Seen in ${topic.supporting_session_count} recent sessions`,
+                          patternNote: "This memory keeps returning gently over time",
+                        };
+
                       return (
-                        <SwipeableRecurringItem
+                        <ExpandableRecurringItem
                           key={topic.memory_id}
                           topic={topic}
-                          openSwipe={openSwipe}
+                          detail={detail}
+                          expanded={expandedTopicId === topic.memory_id}
                           agreed={Boolean(agreedTopics[topic.memory_id])}
-                          onOpenChange={setOpenSwipe}
-                          onDelete={(memoryId) => {
-                            setTopics((current) =>
-                              current.map((currentTopic) =>
-                                currentTopic.memory_id === memoryId
-                                  ? { ...currentTopic, is_deleted: true }
-                                  : currentTopic,
-                              ),
+                          canDelete={data.memory_delete_capability}
+                          onToggle={() => {
+                            setExpandedTopicId((current) =>
+                              current === topic.memory_id ? null : topic.memory_id,
                             );
                           }}
                           onAgree={(memoryId) => {
@@ -296,9 +229,51 @@ export default function MemoryPage() {
                               [memoryId]: !current[memoryId],
                             }));
                           }}
+                          onDelete={(memoryId) => {
+                            setTopics((current) =>
+                              current.map((currentTopic) =>
+                                currentTopic.memory_id === memoryId
+                                  ? { ...currentTopic, is_deleted: true }
+                                  : currentTopic,
+                              ),
+                            );
+                            setExpandedTopicId((current) =>
+                              current === memoryId ? null : current,
+                            );
+                          }}
                         />
                       );
                     })}
+
+                    {hasMoreThemes ? (
+                      <div className={styles.viewAllRow}>
+                        <button
+                          type="button"
+                          className={styles.viewAllButton}
+                          onClick={() => {
+                            setShowAllMemories((current) => {
+                              const next = !current;
+
+                              if (!next) {
+                                const firstVisibleIds = displayedThemes
+                                  .slice(0, 3)
+                                  .map((topic) => topic.memory_id);
+
+                                setExpandedTopicId((expandedId) =>
+                                  expandedId && !firstVisibleIds.includes(expandedId)
+                                    ? null
+                                    : expandedId,
+                                );
+                              }
+
+                              return next;
+                            });
+                          }}
+                        >
+                          {showAllMemories ? "Show less" : "View all memories"}
+                        </button>
+                      </div>
+                    ) : null}
                   </section>
                 ) : null}
               </>

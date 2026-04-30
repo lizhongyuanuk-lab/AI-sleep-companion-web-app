@@ -88,7 +88,10 @@ The page fails if it feels like:
 ### 4.1 In Scope
 
 - one hero insight block
-- one recurring insights block with exactly three surfaced items in the current default main page
+- one recurring insights block with three surfaced items visible by default in the current main page
+- same-page reveal of additional recurring items through a lightweight inline control
+- lightweight inline expansion of one recurring memory item at a time
+- lightweight local detail view content and lightweight per-item actions inside the expanded recurring item in the current UI-only phase
 - one take-action module with exactly three equal-weight options in the current default main page
 - lightweight empty states
 - lightweight error and fallback states
@@ -183,12 +186,13 @@ Contract rules:
 
 - `recent_memory_summary` must be processed rather than transcript-based
 - the page renders `display_text` and at most one short support sentence for recurring insights
-- upstream metadata fields may remain available in the contract, but the current default main page does not need to render them
+- upstream metadata fields may remain available in the contract, but the current default main page does not need to render them in the collapsed reading view
 - `helpful_patterns` may remain part of upstream memory processing, but it is not a required standalone default section in the current main-page skeleton
 - `continue_actions` may carry processed continuation payload but must not expose internal reasoning
 - the frontend must not create new memory records locally
 - the current default main page should surface exactly three equal-weight actions and must not render action hierarchy even if upstream contract includes `visual_priority`
 - `memory_delete_capability` may remain part of the broader contract, but a strong management-style delete affordance is not part of the current default reading-first skeleton
+- the current UI-only implementation may use local view-model detail content for expanded recurring items until a dedicated recurring-memory detail contract is defined
 
 ## 7. Runtime States
 
@@ -264,14 +268,23 @@ Recurring Insights comes after Hero Insight.
 
 It contains:
 
-- exactly three recurring insight items in the current default main page
+- three recurring insight items visible by default in the current main page
+- a lightweight same-page reveal path for additional recurring memory items when more than three items are available
 
-Each recurring insight item contains exactly:
+Each recurring insight item contains, in its collapsed reading state:
 
 - one theme title
 - one support sentence
 
-The current default main page does not display a recurring-section title, metadata line, badges, or management controls in this block.
+The current default main page does not display a recurring-section title, metadata line, badges, or always-visible management controls in this block.
+
+The current implementation allows one recurring item at a time to expand inline. The expanded state may reveal:
+
+- one subtle hidden shell behind the current item only
+- concise supporting detail groups
+- lightweight local actions such as `Agree` and `Delete`
+
+These expanded controls are secondary to the reading flow and must not turn the Recurring Insights block into a dashboard or management list.
 
 ### 9.3 Take Action
 
@@ -379,8 +392,11 @@ These decisions are confirmed for the current `/memory` implementation pass:
 4. the default main page uses exactly three major reading sections beneath the shared top navigation
 5. the default main page does not render `helpful_patterns` as a standalone section
 6. the current default main page does not render a content-area page title, subtitle, or recurring-section title
-7. the current default main page does not render metadata lines or delete controls inside recurring insight items
-8. the current default main page surfaces exactly three equal-weight actions
+7. recurring insight items remain text-first and center-aligned in their collapsed state
+8. the current default view shows the first three recurring insight items, plus a lightweight same-page reveal control when more items exist
+9. the current implementation allows one recurring insight item at a time to expand inline inside a subtle shell
+10. expanded recurring items may show local mock detail groups plus lightweight `Agree` and `Delete` actions
+11. the current default main page surfaces exactly three equal-weight actions
 
 ## 15. Page-Level Acceptance Criteria
 
@@ -390,12 +406,14 @@ Acceptance requires all of the following:
 - the first thing users notice is one clear hero insight sentence
 - the hero insight block contains exactly one label, one hero sentence, and one support sentence
 - the current default main page does not display a content-area page title, subtitle, or recurring-section title
-- recurring insight items contain only one title and one support line
-- the current default main page shows exactly three recurring insight items
+- recurring insight items contain only one title and one support line in the collapsed reading view
+- the current default main page shows exactly three recurring insight items before the reveal-more control
+- additional recurring items, when present, are revealed in the same page rather than by route change or modal
+- at most one recurring insight item remains expanded at a time
 - the page contains Top Navigation -> Hero Insight -> Recurring Insights -> Take Action in the correct order
 - the three action options appear visually equal and non-hierarchical
 - no long default explanation blocks are introduced
-- no metadata, badges, or management controls are required to understand recurring insights
+- no metadata, badges, or management controls are required to understand recurring insights in their collapsed reading state
 - the page feels edited, reduced, and calm
 
 ## 16. Responsibility Boundaries

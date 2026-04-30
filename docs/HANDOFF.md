@@ -58,6 +58,8 @@
 2. `ui_shell_token_set_id` 仍是本地 token 标识，不是已对接的真实后端字段
 3. 背景准入规则、顶部亮度约束、用户自定义生图筛选逻辑，目前仍停留在文档层，不在这轮 Talk UI 实现内
 4. sound panel 的 instant-apply 与本地持久化已经可用，但仍属于前端本地行为，不代表后端已接入
+5. `/memory` 的 recurring expanded details 仍是本地 view-model 数据，不是后端已定义的 detail contract
+6. `/memory` 的 `Agree` / `Delete` 与 `View all memories / Show less` 仍是前端本地 demo 行为，不代表真实历史读取、确认回写或删除接口已接入
 
 ## Before Coding
 

@@ -32,6 +32,7 @@
 
 - 将 Memory PRD 和 UI 文档转为仓库内 `docs/*.md` 真源
 - 明确 `/memory` 的页面级 contract、骨架和 UI 规则
+- 同步当前 `/memory` 页面已存在的 reveal-more、inline expand 和本地 mock action 行为
 - 明确 Talk / Room / Memory 的页面级文档优先级
 - 不在这一步修改后端服务端或页面运行时代码
 

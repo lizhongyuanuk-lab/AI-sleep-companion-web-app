@@ -22,8 +22,9 @@
 解释：
 
 - `/memory` 的 PRD 和 UI 文档已从外部原件转入仓库内真源
-- 当前工作聚焦于页面级 source-of-truth 区分和实现前约束收口
-- `/memory` 的 UI 实现仍待开始，当前页面代码仍是 placeholder
+- 当前工作聚焦于把 Memory 文档真源同步到当前页面实现
+- `/memory` 已经有真实的前端页面实现，不再是 placeholder
+- 当前 `/memory` 仍以 mock 数据和本地 UI demo 行为驱动
 
 ## Confirmed Alignment Baseline
 
@@ -61,6 +62,23 @@
 - `/room`
 - 全局路由结构
 - 无关共享组件
+
+## Current Memory Implementation Snapshot
+
+当前 `/memory` 页面实现已经具备：
+
+1. center-aligned 的 reading-first hero
+2. dark atmospheric 背景与共享 top nav
+3. recurring insights 默认显示 3 条
+4. `View all memories` / `Show less` 的同页 reveal
+5. 单项 inline expand 的 subtle shell
+6. expanded recurring item 内的本地 mock `Agree` / `Delete`
+
+当前仍属 mock / demo 的部分：
+
+1. recurring expanded details 是本地 view-model 数据
+2. `Agree` / `Delete` 是前端本地行为
+3. `View all memories` 是前端同页 reveal，不代表真实分页或历史接口
 
 ## Remaining Review Focus
 
