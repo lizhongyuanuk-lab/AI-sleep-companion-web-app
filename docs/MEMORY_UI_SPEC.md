@@ -128,6 +128,29 @@ Only:
 - background
 - subtle hero-area glow
 
+### 5.5 Visual contract rules for effects
+
+Descriptive intent words such as `soft`, `subtle`, `calm`, `premium`, or `stronger highlight` are not sufficient on their own when they materially affect implementation.
+
+For Memory-specific effects, the visible outcome must define:
+
+- where the effect appears
+- what it is attached to
+- how strong it should feel
+- what it must not look like
+- what counts as visual failure
+
+For the hero-area glow in particular, failure includes:
+
+- the effect exists in code but is not visually perceptible
+- the effect is too weak to support hero hierarchy
+- the effect is too strong and becomes distracting
+- the effect looks muddy, patchy, or dirty against the background
+- the effect reduces readability
+- motion technically exists but does not create a visible, calm rhythm
+
+The hero-area glow is not considered complete merely because a gradient, blur, or animation exists in code. It is only complete if the visible result supports hero readability and hierarchy without reading as a card, plate, or poster effect.
+
 ## 6. Top Navigation Spec
 
 ### 6.1 Requirement

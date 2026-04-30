@@ -52,8 +52,7 @@ export const memoryPageMockData: MemoryPageData = {
   user_id: "user_demo_night_01",
   memory_page_available: true,
   recent_memory_summary: {
-    headline_summary:
-      "Lately, your nights\nhave been asking\nfor a gentler pace.",
+    headline_summary: "Lately, your nights have been asking for a gentler pace.",
     time_window_label: "From the last 7 nights",
     summary_confidence: "medium",
     source_session_count: 5,
@@ -71,7 +70,7 @@ export const memoryPageMockData: MemoryPageData = {
     },
     {
       memory_id: "memory_topic_sleep_entry_pressure",
-      display_text: "Wanting a lighter start",
+      display_text: "Gentler evening starts",
       supporting_session_count: 4,
       time_window_label: "This week",
       continuation_hint:
@@ -80,11 +79,38 @@ export const memoryPageMockData: MemoryPageData = {
     },
     {
       memory_id: "memory_topic_quiet_company",
-      display_text: "Quiet company over advice",
+      display_text: "Quiet company first",
       supporting_session_count: 2,
       time_window_label: "Last few sessions",
       continuation_hint:
         "You often stay longer when the tone feels calm and unhurried.",
+      is_deleted: false,
+    },
+    {
+      memory_id: "memory_topic_softer_openings",
+      display_text: "Softer openings help",
+      supporting_session_count: 3,
+      time_window_label: "This week",
+      continuation_hint:
+        "Gentle first minutes seem to lower the pressure to explain everything at once.",
+      is_deleted: false,
+    },
+    {
+      memory_id: "memory_topic_quieter_room_returns",
+      display_text: "Quieter rooms help",
+      supporting_session_count: 2,
+      time_window_label: "Recent nights",
+      continuation_hint:
+        "Lower stimulation seems to make it easier to stay present and come back again.",
+      is_deleted: false,
+    },
+    {
+      memory_id: "memory_topic_briefer_loops",
+      display_text: "Brief check-ins help",
+      supporting_session_count: 3,
+      time_window_label: "Recent nights",
+      continuation_hint:
+        "Shorter conversations have felt easier to carry into the following night.",
       is_deleted: false,
     },
   ],

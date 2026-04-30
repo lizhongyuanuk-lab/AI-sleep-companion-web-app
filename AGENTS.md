@@ -228,3 +228,44 @@ Each implementation summary must include:
 2. Use `package.json`, `next.config.*`, and current source files as the technical baseline.
 3. Keep the authoritative spec inside this repository.
 4. Do not treat placeholder content as permission to remove project rules.
+
+---
+
+## 13. Document Layer Separation
+
+1. `AGENTS.md` only defines repository-level execution rules, scope control, reporting rules, and verification discipline.
+2. Product definitions such as page responsibilities, page-to-page flows, data structures, API contracts, state models, and data sources must live in product docs such as PRD, non-UI delivery docs, or UI spec docs.
+3. Task-specific implementation instructions such as:
+   - which page section to modify
+   - which files are allowed in the current task
+   - what is mock vs real in the current round
+   - what should be completed in this round only
+   must not be treated as long-term repository rules; they belong in the current task brief or prompt.
+4. Review standards for evaluating whether a visual effect is successful or unsuccessful must not be embedded into repository-wide rules unless they are generic and durable. Page-specific visual review criteria belong in a separate review rubric.
+5. If a rule appears to belong to more than one layer, prefer the narrower and more local document rather than overloading `AGENTS.md`.
+
+---
+
+## 14. Mock vs Real Behavior Discipline
+
+1. Any implementation that uses mock data, placeholder state, simulated runtime, or local demo behavior must be explicitly identified as mock.
+2. Mock behavior must never be reported as completed production behavior.
+3. If a page currently renders from local config or front-end constants rather than backend contract, this must be stated explicitly in the implementation summary.
+4. If a task is `ui-only`, mock data is allowed, but it must not silently hard-code business rules that belong to backend or contract definitions.
+5. If current behavior is only a visual/demo state machine and not a real runtime implementation, the final report must say so explicitly.
+
+---
+
+## 15. UI Task Boundary Discipline
+
+1. A `ui-only` task is not permission to infer or redefine business logic.
+2. A `ui-only` task may implement layout, component structure, visual hierarchy, and mock state shells, but must not silently define:
+   - session creation timing
+   - memory write timing
+   - backend payload shapes
+   - runtime audio behavior
+3. If UI spec defines visual result but not data source, the implementation must preserve mock boundaries and report the missing product definition rather than inventing a permanent data source.
+4. If a page requires data-dependent UI and the data source is not yet defined in product docs, the implementation must:
+   - use clearly labeled mock data
+   - avoid implying that real wiring is complete
+   - report the unresolved dependency

@@ -60,12 +60,11 @@
 
 .topBand {
   position: absolute;
-  top: var(--safe-top);
+  top: calc(var(--safe-top) + 45px);
   right: 16px;
   left: 16px;
   z-index: 8;
   min-height: 58px;
-  padding-top: 12px;
 }
 
 .scrollContent {
@@ -73,7 +72,7 @@
   z-index: 1;
   min-height: 100svh;
   padding:
-    calc(var(--safe-top) + 142px)
+    calc(var(--safe-top) + 175px)
     24px
     calc(var(--safe-bottom) + 32px);
 }
@@ -81,61 +80,89 @@
 .contentColumn {
   display: flex;
   width: min(82vw, 20rem);
+  margin: 0 auto;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .heroBlock {
+  display: grid;
+  justify-items: center;
+  gap: 0;
   position: relative;
   width: 100%;
+  isolation: isolate;
+  text-align: center;
 }
 
 .heroGlow {
   position: absolute;
-  top: 42px;
-  left: -22px;
-  z-index: -1;
-  width: min(84vw, 22rem);
-  height: 18rem;
+  top: 12px;
+  left: 50%;
+  z-index: 0;
+  width: min(95vw, 25.5rem);
+  height: 13.75rem;
   border-radius: 999px;
   background:
     radial-gradient(
       circle,
-      rgba(196, 137, 92, 0.18) 0%,
-      rgba(196, 137, 92, 0.11) 18%,
-      rgba(94, 70, 104, 0.12) 44%,
-      transparent 72%
+      rgba(255, 249, 242, 0.34) 0%,
+      rgba(250, 228, 206, 0.22) 16%,
+      rgba(197, 153, 156, 0.12) 36%,
+      rgba(116, 95, 134, 0.055) 56%,
+      transparent 74%
     );
-  filter: blur(46px);
-  opacity: 0.58;
-  animation: hero-breathe 12s ease-in-out infinite;
+  pointer-events: none;
+  filter: blur(38px);
+  mix-blend-mode: screen;
+  opacity: 0.88;
+  will-change: opacity, filter;
+  animation: hero-breathe 6.8s ease-in-out infinite;
+  transform: translateX(-50%);
 }
 
 .contextLine {
   margin: 0;
-  color: rgba(214, 208, 226, 0.52);
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.4);
+  font-family: "Poppins", sans-serif;
   font-size: 1rem;
-  line-height: 1.4;
+  line-height: 22px;
+  letter-spacing: -0.01em;
+  text-align: center;
 }
 
 .heroInsight {
-  max-width: 100%;
-  margin: 20px 0 0;
-  color: rgba(255, 248, 243, 0.96);
-  font-size: clamp(2.75rem, 12.2vw, 3rem);
-  font-weight: 700;
-  line-height: 1.1;
-  letter-spacing: -0.05em;
+  max-width: min(100%, 35rem);
+  margin: 24px 0 0;
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.97);
+  font-family: "Poppins", sans-serif;
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 42px;
+  letter-spacing: -0.04em;
+  text-align: center;
+  text-shadow:
+    0 0 16px rgba(255, 244, 230, 0.07),
+    0 0 26px rgba(255, 220, 180, 0.03);
   text-wrap: balance;
-  white-space: pre-line;
 }
 
 .heroSupport {
-  max-width: 18rem;
-  margin: 28px 0 0;
-  color: rgba(214, 208, 226, 0.72);
+  max-width: min(100%, 32.5rem);
+  margin: 16px 0 0;
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.58);
+  font-family: "Poppins", sans-serif;
   font-size: 1.125rem;
-  line-height: 1.58;
+  font-weight: 400;
+  line-height: 26px;
+  letter-spacing: -0.01em;
+  text-align: center;
 }
 
 .recurringList {
@@ -145,28 +172,142 @@
   gap: 56px;
 }
 
+.recurringSwipeRow {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  touch-action: pan-y;
+}
+
+.recurringSwipeRowRevealLeft .rowActionsLeft,
+.recurringSwipeRowRevealRight .rowActionsRight {
+  opacity: 1;
+}
+
 .recurringItem {
   display: grid;
-  gap: 12px;
+  justify-items: center;
+  gap: 15px;
+  position: relative;
+  z-index: 1;
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.recurringItemDragging {
+  transition: none;
+}
+
+.rowActionsLeft,
+.rowActionsRight {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+  transition:
+    opacity 180ms ease-out,
+    transform 220ms ease-out;
+}
+
+.rowActionsLeft {
+  justify-content: flex-start;
+  gap: 10px;
+  padding-left: 8px;
+  transform: translateX(-8px);
+}
+
+.rowActionsRight {
+  justify-content: flex-end;
+  padding-right: 8px;
+  transform: translateX(8px);
+}
+
+.recurringSwipeRowRevealLeft .rowActionsLeft,
+.recurringSwipeRowRevealRight .rowActionsRight {
+  pointer-events: auto;
+  transform: translateX(0);
+}
+
+.rowActionButton {
+  min-width: 62px;
+  min-height: 36px;
+  padding: 0 15px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  background: rgba(16, 18, 30, 0.68);
+  color: rgba(243, 238, 231, 0.82);
+  font-family: "Poppins", sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  transition:
+    background-color 180ms ease-out,
+    border-color 180ms ease-out,
+    color 180ms ease-out,
+    transform 180ms ease-out;
+}
+
+.rowActionButton:hover,
+.rowActionButton:focus-visible {
+  border-color: rgba(255, 255, 255, 0.16);
+  outline: none;
+}
+
+.rowActionButton:active {
+  transform: scale(0.985);
+}
+
+.rowActionPositive {
+  background: rgba(32, 36, 54, 0.72);
+}
+
+.rowActionPositive:hover,
+.rowActionPositive:focus-visible {
+  background: rgba(42, 46, 68, 0.84);
+}
+
+.rowActionDestructive {
+  background: rgba(58, 33, 42, 0.78);
+  color: rgba(255, 242, 240, 0.84);
+}
+
+.rowActionDestructive:hover,
+.rowActionDestructive:focus-visible {
+  background: rgba(72, 40, 52, 0.86);
+}
+
+.rowActionSelected {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(54, 58, 84, 0.88);
+  color: rgba(255, 248, 243, 0.96);
 }
 
 .recurringTitle {
-  max-width: 17rem;
+  max-width: min(100%, 35rem);
   margin: 0;
-  color: rgba(255, 248, 243, 0.96);
-  font-size: clamp(1.5rem, 7vw, 1.75rem);
-  font-weight: 600;
-  line-height: 1.22;
-  letter-spacing: -0.04em;
+  color: rgba(255, 255, 255, 0.93);
+  font-family: "Poppins", sans-serif;
+  font-size: 1.875rem;
+  font-weight: 800;
+  line-height: 36px;
+  letter-spacing: -0.03em;
+  text-align: center;
   text-wrap: balance;
 }
 
 .recurringSupport {
-  max-width: 17.5rem;
+  max-width: min(100%, 32.5rem);
   margin: 0;
-  color: rgba(214, 208, 226, 0.72);
-  font-size: 1.125rem;
-  line-height: 1.58;
+  color: rgba(255, 255, 255, 0.54);
+  font-family: "Poppins", sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  text-align: center;
 }
 
 .actionsArea {
@@ -174,10 +315,12 @@
   width: 100%;
   margin-top: 72px;
   gap: 16px;
+  justify-items: center;
 }
 
 .actionLink {
   display: inline-flex;
+  width: 100%;
   min-height: 48px;
   align-items: center;
   justify-content: center;
@@ -231,11 +374,13 @@
 @keyframes hero-breathe {
   0%,
   100% {
-    opacity: 0.52;
+    opacity: 0.74;
+    filter: blur(34px);
   }
 
   50% {
-    opacity: 0.66;
+    opacity: 0.92;
+    filter: blur(40px);
   }
 }
 
@@ -250,16 +395,27 @@
   }
 
   .heroGlow {
-    left: -20px;
-    width: min(88vw, 19rem);
-    height: 16rem;
+    top: 14px;
+    width: min(90vw, 20rem);
+    height: 12rem;
+  }
+
+  .heroInsight {
+    max-width: min(100%, 18.5rem);
+    font-size: 2.25rem;
+  }
+
+  .recurringTitle {
+    max-width: min(100%, 18rem);
+    font-size: 1.875rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .heroGlow {
     animation: none;
-    opacity: 0.58;
+    opacity: 0.88;
+    filter: blur(38px);
   }
 
   .actionLink {

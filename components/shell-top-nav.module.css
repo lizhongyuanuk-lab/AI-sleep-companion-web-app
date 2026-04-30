@@ -10,6 +10,12 @@
   backdrop-filter: blur(20px);
 }
 
+.navCapsuleMemory {
+  border-color: rgba(255, 255, 255, 0.06);
+  background: rgba(39, 38, 60, 0.56);
+  box-shadow: 0 14px 30px rgba(5, 7, 18, 0.18);
+}
+
 .navList {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -49,6 +55,13 @@
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.72),
     0 8px 18px rgba(220, 201, 176, 0.14);
+}
+
+.navCapsuleMemory .navLinkActive {
+  background: #f3e7df;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 8px 18px rgba(231, 204, 184, 0.12);
 }
 
 .navIconAsset {
