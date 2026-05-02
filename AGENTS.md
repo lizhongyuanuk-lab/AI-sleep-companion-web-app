@@ -61,14 +61,25 @@ Page-specific source-of-truth mapping:
 6. current repository code and config
 7. local inference
 
+### `/sleep-monitoring`
+
+1. `docs/SLEEP_SPEC.md`
+2. `docs/SLEEP_UI_SPEC.md`
+3. `docs/ACCEPTANCE.md`
+4. `docs/TRACKING.md`
+5. `docs/HANDOFF.md`
+6. current repository code and config
+7. local inference
+
 ### Shared rules
 
 1. `docs/SPEC.md` and `docs/TALK_UI_SPEC.md` are the current Talk PRD and UI baseline only.
 2. `docs/ROOM_SPEC.md` and `docs/ROOM_UI_SPEC.md` are the current Room PRD and UI baseline only.
 3. `docs/MEMORY_SPEC.md` and `docs/MEMORY_UI_SPEC.md` are the current Memory PRD and UI baseline only.
-4. Do not treat older in-repo drafts or external copies as runtime truth once these files are vendored.
-5. If two sources conflict, follow the higher-priority source for the active page and explicitly report the conflict.
-6. Do not silently resolve spec ambiguity by expanding product behavior.
+4. `docs/SLEEP_SPEC.md` and `docs/SLEEP_UI_SPEC.md` are the current Sleep PRD and UI baseline only.
+5. Do not treat older in-repo drafts or external copies as runtime truth once these files are vendored.
+6. If two sources conflict, follow the higher-priority source for the active page and explicitly report the conflict.
+7. Do not silently resolve spec ambiguity by expanding product behavior.
 
 ---
 

@@ -19,6 +19,11 @@
 1. [docs/MEMORY_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/MEMORY_SPEC.md)
 2. [docs/MEMORY_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/MEMORY_UI_SPEC.md)
 
+### `/sleep-monitoring`
+
+1. [docs/SLEEP_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SLEEP_SPEC.md)
+2. [docs/SLEEP_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SLEEP_UI_SPEC.md)
+
 工程纠偏说明来自：
 
 3. 本次同步后的 [docs/TRACKING.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/TRACKING.md)
@@ -28,12 +33,12 @@
 
 ## Current Task Class
 
-当前文档层最新同步任务是 `/memory` 的 `content-only` 真源建立：
+当前文档层最新同步任务是 `/sleep-monitoring` 的 `content-only` 真源建立：
 
-- 将 Memory PRD 和 UI 文档转为仓库内 `docs/*.md` 真源
-- 明确 `/memory` 的页面级 contract、骨架和 UI 规则
-- 同步当前 `/memory` 页面已存在的 reveal-more、inline expand 和本地 mock action 行为
-- 明确 Talk / Room / Memory 的页面级文档优先级
+- 将 Sleep PRD / non-UI 规则与 UI / interaction 规则写入仓库内 `docs/*.md`
+- 明确 `/sleep-monitoring` 的页面级 source-of-truth、最小 contract、状态矩阵与 CTA fallback
+- 明确 `settings panel`、`rhythm card tap` 与 `CTA routing` 的单义规则
+- 同步 Talk / Room / Memory / Sleep 的页面级文档优先级
 - 不在这一步修改后端服务端或页面运行时代码
 
 ## Documentation Acceptance
@@ -47,7 +52,8 @@
 5. `docs/TALK_UI_SPEC.md` 明确所有 speaking feedback 只能出现在 dock 内
 6. `docs/TALK_UI_SPEC.md` 明确不使用 3D icon，改为单色线性 icon
 7. `docs/MEMORY_SPEC.md` 和 `docs/MEMORY_UI_SPEC.md` 明确 Memory 的默认骨架、contract 和继续回到 Talk 的闭环
-8. `docs/ACCEPTANCE.md`、`docs/TRACKING.md`、`docs/HANDOFF.md` 明确页面级 source-of-truth 已按 Talk / Room / Memory 区分
+8. `docs/SLEEP_SPEC.md` 和 `docs/SLEEP_UI_SPEC.md` 明确 Sleep 的页面定位、状态矩阵、最小 contract、UI 骨架和回流路径
+9. `docs/ACCEPTANCE.md`、`docs/TRACKING.md`、`docs/HANDOFF.md` 明确页面级 source-of-truth 已按 Talk / Room / Memory / Sleep 区分
 
 ## Future UI Acceptance
 
@@ -62,6 +68,17 @@
 7. 默认主页面没有 visible user transcript
 8. 所有 animated voice feedback 只出现在 dock 内
 9. 页面为单模式固定视觉，不做 runtime theme switching
+
+后续 `/sleep-monitoring` UI 真正对齐完成后，至少需要满足：
+
+1. 顶部导航固定为 `Talk / Room / Memory / Sleep`，且为 `icon-only`
+2. 左上保留独立 settings button，不并入 nav capsule
+3. Sleep 激活态必须是 `crescent moon icon + warm-white active chip`
+4. hero insight 必须先于 summary / chart cards 出现
+5. summary card 必须以 `Estimated sleep` 风格呈现非临床主数值
+6. rhythm card 默认标题必须为 `Sleep rhythm`
+7. chart 必须是柔和、低噪声、非临床的节律表达
+8. 页面必须提供一个明确路径回到今晚的 Room 或 Talk flow
 
 ## Verification Baseline
 

@@ -1,0 +1,675 @@
+.page {
+  position: relative;
+  min-height: 100svh;
+  overflow-x: hidden;
+  --safe-top: max(12px, env(safe-area-inset-top));
+  --safe-bottom: max(12px, env(safe-area-inset-bottom));
+  --shell-bg: rgba(255, 255, 255, 0.12);
+  --shell-bg-strong: rgba(255, 255, 255, 0.16);
+  --shell-bg-soft: rgba(255, 255, 255, 0.08);
+  --shell-border: rgba(255, 255, 255, 0.14);
+  --shell-border-strong: rgba(255, 255, 255, 0.2);
+  --shell-shadow: 0 12px 36px rgba(0, 0, 0, 0.22);
+  --text-primary: rgba(255, 255, 255, 0.96);
+  --text-secondary: rgba(255, 255, 255, 0.64);
+  --text-tertiary: rgba(255, 255, 255, 0.42);
+  --text-muted: rgba(255, 255, 255, 0.32);
+  --text-warm-primary: #fff3e6;
+  --active-chip-bg: rgba(255, 245, 235, 0.92);
+  --active-chip-text: #5e574f;
+  --active-chip-shadow: 0 0 24px rgba(255, 235, 210, 0.22);
+  font-family:
+    "Satoshi",
+    "General Sans",
+    "Plus Jakarta Sans",
+    var(--font-geist-sans),
+    var(--font-sans),
+    sans-serif;
+  background: #070a16;
+}
+
+.backdropBase,
+.backdropHaze,
+.backdropWarmth,
+.backdropNoise,
+.backdropVignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.backdropBase {
+  background:
+    linear-gradient(180deg, #070a16 0%, #0c1024 35%, #121632 100%);
+}
+
+.backdropHaze {
+  background:
+    radial-gradient(circle at 50% 12%, rgba(132, 116, 255, 0.18), transparent 30%),
+    radial-gradient(circle at 22% 38%, rgba(97, 104, 190, 0.1), transparent 24%),
+    radial-gradient(circle at 74% 58%, rgba(124, 118, 204, 0.12), transparent 28%);
+  opacity: 0.94;
+}
+
+.backdropWarmth {
+  background:
+    radial-gradient(circle at 52% 70%, rgba(255, 200, 148, 0.14), transparent 32%),
+    radial-gradient(circle at 78% 88%, rgba(255, 167, 114, 0.08), transparent 18%);
+}
+
+.backdropNoise {
+  opacity: 0.025;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.7) 0 0.55px, transparent 0.7px),
+    radial-gradient(circle at 80% 60%, rgba(255, 255, 255, 0.7) 0 0.55px, transparent 0.7px);
+  background-size: 18px 18px, 22px 22px;
+}
+
+.backdropVignette {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(2, 4, 10, 0.18) 0%,
+      rgba(2, 4, 10, 0.04) 18%,
+      transparent 38%,
+      rgba(2, 4, 10, 0.28) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(2, 4, 10, 0.15) 0%,
+      transparent 12%,
+      transparent 88%,
+      rgba(2, 4, 10, 0.15) 100%
+    );
+}
+
+.topBand {
+  position: absolute;
+  top: calc(var(--safe-top) + 45px);
+  right: 16px;
+  left: 16px;
+  z-index: 8;
+  min-height: 58px;
+}
+
+.scrollContent {
+  position: relative;
+  z-index: 1;
+  min-height: 100svh;
+  padding:
+    calc(var(--safe-top) + 175px)
+    16px
+    calc(var(--safe-bottom) + 32px);
+}
+
+.contentColumn {
+  display: flex;
+  width: min(100%, 361px);
+  margin: 0 auto;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.heroBlock {
+  position: relative;
+  min-height: 206px;
+  padding: 0 16px 0;
+}
+
+.heroGlow {
+  position: absolute;
+  inset: -8px 10px auto;
+  height: 208px;
+  border-radius: 999px;
+  background:
+    radial-gradient(
+      circle at 45% 55%,
+      rgba(255, 210, 170, 0.14),
+      rgba(132, 116, 255, 0.1) 35%,
+      transparent 70%
+    );
+  filter: blur(56px);
+  opacity: 0.92;
+}
+
+.contextLine,
+.contextLineStandalone {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 400;
+}
+
+.contextLineStandalone {
+  padding: 0 16px;
+}
+
+.heroEyebrow {
+  position: relative;
+  z-index: 1;
+  margin: 28px 0 0;
+  color: var(--text-tertiary);
+  font-size: 15px;
+  line-height: 22px;
+  font-weight: 400;
+}
+
+.heroTitle {
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 0;
+  color: var(--text-primary);
+  font-size: 36px;
+  line-height: 42px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.heroSupport {
+  position: relative;
+  z-index: 1;
+  margin: 16px 0 0;
+  color: var(--text-tertiary);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 400;
+}
+
+.cardLarge,
+.cardMedium {
+  position: relative;
+  overflow: hidden;
+  border-radius: 30px;
+  border: 1px solid var(--shell-border-strong);
+  background: var(--shell-bg-strong);
+  box-shadow: var(--shell-shadow);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.cardLarge {
+  min-height: 220px;
+  padding: 22px 22px 24px;
+}
+
+.cardMedium {
+  min-height: 190px;
+  padding: 22px;
+  border-radius: 28px;
+  background: var(--shell-bg);
+  border-color: var(--shell-border);
+}
+
+.cardAccent {
+  position: absolute;
+  inset: 0 auto 0 48%;
+  width: 58%;
+  background:
+    radial-gradient(circle at 62% 42%, rgba(255, 240, 227, 0.15), transparent 34%),
+    radial-gradient(circle at 74% 68%, rgba(168, 150, 255, 0.12), transparent 26%);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.cardHeader {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardEyebrow {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 540;
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 560;
+}
+
+.inlinePill,
+.errorPill {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 10px;
+  min-height: 24px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-tertiary);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.primaryMetric {
+  position: relative;
+  z-index: 1;
+  margin: 22px 0 0;
+  color: var(--text-warm-primary);
+  font-size: 64px;
+  line-height: 70px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  text-shadow: 0 0 24px rgba(255, 235, 210, 0.18);
+}
+
+.metricLabel {
+  position: relative;
+  z-index: 1;
+  margin: 8px 0 0;
+  color: var(--text-tertiary);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 450;
+}
+
+.inlineSupport {
+  position: relative;
+  z-index: 1;
+  margin: 16px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+  max-width: 280px;
+}
+
+.detailList {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0;
+  margin-top: 18px;
+}
+
+.detailRow {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 38px;
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.detailRow:first-child {
+  border-top: 0;
+}
+
+.detailIconCircle {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.74);
+}
+
+.detailIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.detailLabel {
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 450;
+}
+
+.detailValue {
+  color: var(--text-primary);
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 500;
+  text-align: right;
+}
+
+.chartWrap {
+  margin-top: 20px;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chartGuide {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+}
+
+.chartGlowPath {
+  fill: none;
+  stroke: rgba(168, 150, 255, 0.36);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: blur(7px);
+  opacity: 0.8;
+  animation: breatheGlow 1800ms ease-in-out infinite;
+}
+
+.chartPath {
+  fill: none;
+  stroke: rgba(242, 238, 255, 0.96);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chartPoint {
+  fill: rgba(255, 245, 235, 0.88);
+}
+
+.timeLabelRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.timeLabel {
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+}
+
+.chipRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chipRow::-webkit-scrollbar {
+  display: none;
+}
+
+.filterChip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-tertiary);
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 500;
+  transition:
+    transform 120ms ease-out,
+    background-color 180ms ease-out,
+    color 180ms ease-out,
+    box-shadow 180ms ease-out;
+}
+
+.filterChipActive {
+  background: var(--active-chip-bg);
+  color: var(--active-chip-text);
+  box-shadow: var(--active-chip-shadow);
+}
+
+.filterDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(170, 160, 255, 0.7);
+}
+
+.filterChipActive .filterDot {
+  background: rgba(115, 100, 220, 0.9);
+}
+
+.trendSupport {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.barChart {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  align-items: end;
+  gap: 12px;
+  height: 120px;
+  margin-top: 22px;
+}
+
+.barColumn {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.barValue {
+  width: 100%;
+  min-height: 36px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.barValueHighlight {
+  background: rgba(255, 245, 235, 0.82);
+  box-shadow: 0 0 16px rgba(255, 235, 210, 0.14);
+}
+
+.barLabel {
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.suggestionBody,
+.emptyBody,
+.errorBody {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 22px;
+}
+
+.primaryCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 24px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--active-chip-bg);
+  color: var(--active-chip-text);
+  box-shadow: var(--active-chip-shadow);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  transition:
+    transform 120ms ease-out,
+    filter 120ms ease-out;
+}
+
+.primaryCta:active {
+  transform: scale(0.98);
+  filter: brightness(0.97);
+}
+
+.ctaIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.emptyGlow {
+  position: absolute;
+  inset: auto -18% -30% 46%;
+  height: 180px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 231, 209, 0.22), transparent 52%);
+  filter: blur(48px);
+  opacity: 0.82;
+}
+
+.emptyTitle,
+.errorTitle {
+  position: relative;
+  z-index: 1;
+  margin: 18px 0 0;
+  color: var(--text-primary);
+  font-size: 28px;
+  line-height: 34px;
+  font-weight: 620;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.errorCard {
+  border-color: rgba(255, 220, 210, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 235, 225, 0.1) 0%, rgba(255, 255, 255, 0.08) 100%);
+}
+
+.errorPill {
+  background: rgba(255, 235, 225, 0.1);
+  color: rgba(255, 220, 210, 0.72);
+}
+
+.skeletonLine,
+.skeletonDetailRow,
+.skeletonChart,
+.skeletonChip {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.05) 0%,
+      rgba(255, 255, 255, 0.12) 50%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+  background-size: 220% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+.skeletonLine {
+  height: 16px;
+  border-radius: 999px;
+}
+
+.skeletonShort {
+  width: 110px;
+}
+
+.skeletonHero {
+  width: 92%;
+  height: 42px;
+  margin-top: 14px;
+}
+
+.skeletonHeroMedium {
+  width: 68%;
+  height: 22px;
+  margin-top: 18px;
+}
+
+.skeletonHeader {
+  width: 116px;
+}
+
+.skeletonMetric {
+  width: 188px;
+  height: 70px;
+  margin-top: 24px;
+}
+
+.skeletonSupport {
+  width: 144px;
+  margin-top: 12px;
+}
+
+.skeletonDetailList {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.skeletonDetailRow {
+  height: 38px;
+  border-radius: 18px;
+}
+
+.skeletonChart {
+  height: 128px;
+  margin-top: 20px;
+  border-radius: 24px;
+}
+
+.skeletonChipRow {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.skeletonChip {
+  width: 74px;
+  height: 36px;
+  border-radius: 999px;
+}
+
+@keyframes breatheGlow {
+  0%,
+  100% {
+    opacity: 0.58;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -20% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .filterChip,
+  .primaryCta,
+  .chartGlowPath,
+  .skeletonLine,
+  .skeletonDetailRow,
+  .skeletonChart,
+  .skeletonChip {
+    animation: none;
+    transition: none;
+  }
+}

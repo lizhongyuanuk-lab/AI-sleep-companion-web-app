@@ -7,6 +7,7 @@
 - Latest Talk UI spec vendored into `docs/TALK_UI_SPEC.md`: yes
 - Latest Room PRD + UI specs vendored into `docs/ROOM_SPEC.md` and `docs/ROOM_UI_SPEC.md`: yes
 - Latest Memory PRD + UI specs vendored into `docs/MEMORY_SPEC.md` and `docs/MEMORY_UI_SPEC.md`: yes
+- Latest Sleep PRD + UI specs vendored into `docs/SLEEP_SPEC.md` and `docs/SLEEP_UI_SPEC.md`: yes
 - Current `/talk` implementation aligned to the latest single-mode direction: yes
 
 ## Page Source Mapping
@@ -14,6 +15,7 @@
 1. `/talk` -> `docs/SPEC.md` + `docs/TALK_UI_SPEC.md`
 2. `/room` -> `docs/ROOM_SPEC.md` + `docs/ROOM_UI_SPEC.md`
 3. `/memory` -> `docs/MEMORY_SPEC.md` + `docs/MEMORY_UI_SPEC.md`
+4. `/sleep-monitoring` -> `docs/SLEEP_SPEC.md` + `docs/SLEEP_UI_SPEC.md`
 
 ## Current Task Classification
 
@@ -21,10 +23,10 @@
 
 解释：
 
-- `/memory` 的 PRD 和 UI 文档已从外部原件转入仓库内真源
-- 当前工作聚焦于把 Memory 文档真源同步到当前页面实现
-- `/memory` 已经有真实的前端页面实现，不再是 placeholder
-- 当前 `/memory` 仍以 mock 数据和本地 UI demo 行为驱动
+- `/sleep-monitoring` 的 PRD / non-UI 与 UI / interaction 真源已写入仓库内 `docs/`
+- 当前工作聚焦于为 Sleep 页面建立可实现、可 review 的文档基线
+- `/sleep-monitoring` 当前页面实现仍是 placeholder
+- Sleep 的 contract、状态矩阵和 CTA fallback 已在文档层明确，但尚未接入真实数据
 
 ## Confirmed Alignment Baseline
 
@@ -63,6 +65,19 @@
 - 全局路由结构
 - 无关共享组件
 
+## Current Sleep Documentation Snapshot
+
+当前 `/sleep-monitoring` 文档真源已经明确：
+
+1. Sleep 是 `gentle sleep reflection page`，不是 clinical dashboard
+2. 页面默认结构为 `Title -> Hero -> Summary -> Rhythm -> Trend -> Suggestion`
+3. 顶部沿用共享 shell family：独立 settings button + 4-item icon-only nav
+4. `Sleep rhythm` 是默认节律卡标题，不默认使用 `Sleep stages`
+5. CTA 只允许一个 primary action，并回到 `/room` 或 `/talk`
+6. 当前版本中 rhythm card body tap 为 `no-op`，不打开 detail 页面
+7. 当前版本中 settings 采用 compact floating panel 约束
+8. 当前版本允许 mock 数据，但不得报告为 production-wired behavior
+
 ## Current Memory Implementation Snapshot
 
 当前 `/memory` 页面实现已经具备：
@@ -89,6 +104,14 @@
 3. room name 的低位标签是否过深或过大
 4. 首屏 hydration 是否保持稳定
 5. Figma 回填后是否需要再做一次 1:1 spacing pass
+
+如果后续进入 Sleep 页面 UI 落地，优先 review：
+
+1. 顶部 settings / nav 是否保持与 Talk 同一 shell family
+2. hero insight 是否先于数据卡形成视觉主导
+3. summary 主时长是否比 chart 和 CTA 更强
+4. rhythm chart 是否足够柔和、非临床、非监控器风格
+5. CTA / active chip / active nav 是否维持统一 warm-white language
 
 ## Verification Rule
 

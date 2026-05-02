@@ -7,6 +7,7 @@
 - `/talk` -> [docs/SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SPEC.md) + [docs/TALK_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/TALK_UI_SPEC.md)
 - `/room` -> [docs/ROOM_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/ROOM_SPEC.md) + [docs/ROOM_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/ROOM_UI_SPEC.md)
 - `/memory` -> [docs/MEMORY_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/MEMORY_SPEC.md) + [docs/MEMORY_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/MEMORY_UI_SPEC.md)
+- `/sleep-monitoring` -> [docs/SLEEP_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SLEEP_SPEC.md) + [docs/SLEEP_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SLEEP_UI_SPEC.md)
 
 支持性过程文档为：
 
@@ -14,7 +15,7 @@
 - [docs/TRACKING.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/TRACKING.md)
 - 本文件
 
-不要再把旧版 Talk / Room / Memory 文档、旧 transcript 聊天式布局、旧双模式壳层和旧 3D icon 方向当作真源。
+不要再把旧版 Talk / Room / Memory / Sleep 文档、旧 transcript 聊天式布局、旧双模式壳层和旧 3D icon 方向当作真源。
 
 ## Current Repo Mapping
 
@@ -60,6 +61,9 @@
 4. sound panel 的 instant-apply 与本地持久化已经可用，但仍属于前端本地行为，不代表后端已接入
 5. `/memory` 的 recurring expanded details 仍是本地 view-model 数据，不是后端已定义的 detail contract
 6. `/memory` 的 `Agree` / `Delete` 与 `View all memories / Show less` 仍是前端本地 demo 行为，不代表真实历史读取、确认回写或删除接口已接入
+7. `/sleep-monitoring` 当前仍是 placeholder 页面，尚未按新 Sleep 文档真源完成 UI 落地
+8. `/sleep-monitoring` 的 summary / rhythm / trend / suggestion contract 当前仅在文档层定义，尚未接入真实后端数据
+9. `/sleep-monitoring` 的 CTA routing fallback、settings panel 行为与 rhythm card no-op 目前是文档规则，尚未通过运行时代码实现
 
 ## Before Coding
 
@@ -77,6 +81,13 @@
 2. 再确认顶部 icon、settings glyph 与 room name 的视觉权重
 3. 再确认 bottom dock 的 spacing、按钮比例和 label 基线
 4. 最后再做 speaking / listening 状态下的细微发光和波形调整
+
+如果后续开始做 Sleep 页面实现，建议优先顺序如下：
+
+1. 先落固定 top controls 和 dark-night shell
+2. 再落 title / hero / summary 的首屏层级
+3. 再落 rhythm / trend / suggestion cards
+4. 最后补 partial / empty / loading / error 的 inline states
 
 ## After Coding
 

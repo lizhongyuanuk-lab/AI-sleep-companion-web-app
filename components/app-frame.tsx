@@ -13,7 +13,9 @@ export function AppFrame({
     pathname === "/talk" ||
     pathname === "/room" ||
     pathname === "/memory" ||
-    pathname.startsWith("/memory/");
+    pathname.startsWith("/memory/") ||
+    pathname === "/sleep-monitoring" ||
+    pathname.startsWith("/sleep-monitoring/");
 
   return (
     <div
