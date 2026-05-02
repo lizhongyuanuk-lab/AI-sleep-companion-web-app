@@ -3,6 +3,7 @@
 ## Current Status
 
 - Mainline repository confirmed: `ai-companion-web`
+- Latest First Launch PRD + UI specs vendored into `docs/FIRST_LAUNCH_SPEC.md` and `docs/FIRST_LAUNCH_UI_SPEC.md`: yes
 - Latest Talk PRD + non-UI spec vendored into `docs/SPEC.md`: yes
 - Latest Talk UI spec vendored into `docs/TALK_UI_SPEC.md`: yes
 - Latest Room PRD + UI specs vendored into `docs/ROOM_SPEC.md` and `docs/ROOM_UI_SPEC.md`: yes
@@ -12,10 +13,11 @@
 
 ## Page Source Mapping
 
-1. `/talk` -> `docs/SPEC.md` + `docs/TALK_UI_SPEC.md`
-2. `/room` -> `docs/ROOM_SPEC.md` + `docs/ROOM_UI_SPEC.md`
-3. `/memory` -> `docs/MEMORY_SPEC.md` + `docs/MEMORY_UI_SPEC.md`
-4. `/sleep-monitoring` -> `docs/SLEEP_SPEC.md` + `docs/SLEEP_UI_SPEC.md`
+1. `/` -> `docs/FIRST_LAUNCH_SPEC.md` + `docs/FIRST_LAUNCH_UI_SPEC.md`
+2. `/talk` -> `docs/SPEC.md` + `docs/TALK_UI_SPEC.md`
+3. `/room` -> `docs/ROOM_SPEC.md` + `docs/ROOM_UI_SPEC.md`
+4. `/memory` -> `docs/MEMORY_SPEC.md` + `docs/MEMORY_UI_SPEC.md`
+5. `/sleep-monitoring` -> `docs/SLEEP_SPEC.md` + `docs/SLEEP_UI_SPEC.md`
 
 ## Current Task Classification
 
@@ -23,10 +25,23 @@
 
 解释：
 
-- `/sleep-monitoring` 的 PRD / non-UI 与 UI / interaction 真源已写入仓库内 `docs/`
-- 当前工作聚焦于为 Sleep 页面建立可实现、可 review 的文档基线
-- `/sleep-monitoring` 当前页面实现仍是 placeholder
-- Sleep 的 contract、状态矩阵和 CTA fallback 已在文档层明确，但尚未接入真实数据
+- `/` 首次登录链路的 PRD / non-UI 与 UI / interaction 真源已写入仓库内 `docs/`
+- 当前工作聚焦于为 first-launch flow 建立可实现、可 review 的文档基线
+- `/` 当前页面实现仍是 placeholder
+- first-launch gate、preset、generated room 与 register nudge 的 contract 已在文档层明确，但尚未接入真实运行时代码
+
+## Current First Launch Documentation Snapshot
+
+当前 `/` 首次登录链路文档真源已经明确：
+
+1. 首次链路固定为 Welcome → Onboarding Q1/Q2 → Result → create personal room 可选分支 → Room → 用户主动进入 Talk
+2. onboarding 只决定陪伴策略 preset，不决定 room
+3. personal room 是卖点但不是门槛，允许跳过，且不允许自由 prompt 输入
+4. 无论是否生成 personal room，进入 Talk 前都必须先经过 Room
+5. 只有用户在 Room 主动 tap 某个 room 时，Talk 才消费 `preset + room` 的合并数据
+6. 注册采用 `guest-first`、`value-before-auth`，不允许前置强制注册
+7. generated room 在 Room 中以 feed item 形式承接，不是 modal，也不自动选中高亮
+8. RegisterNudge 必须是轻量打断，不允许在 Talk 进行中做 full-screen gate
 
 ## Confirmed Alignment Baseline
 

@@ -4,6 +4,11 @@
 
 当前页面级产品真源固定为：
 
+### `/`
+
+1. [docs/FIRST_LAUNCH_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/FIRST_LAUNCH_SPEC.md)
+2. [docs/FIRST_LAUNCH_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/FIRST_LAUNCH_UI_SPEC.md)
+
 ### `/talk`
 
 1. [docs/SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SPEC.md)
@@ -33,12 +38,12 @@
 
 ## Current Task Class
 
-当前文档层最新同步任务是 `/sleep-monitoring` 的 `content-only` 真源建立：
+当前文档层最新同步任务是 `/` 首次登录链路的 `content-only` 真源建立：
 
-- 将 Sleep PRD / non-UI 规则与 UI / interaction 规则写入仓库内 `docs/*.md`
-- 明确 `/sleep-monitoring` 的页面级 source-of-truth、最小 contract、状态矩阵与 CTA fallback
-- 明确 `settings panel`、`rhythm card tap` 与 `CTA routing` 的单义规则
-- 同步 Talk / Room / Memory / Sleep 的页面级文档优先级
+- 将 first-launch PRD / non-UI 规则与 UI / interaction 规则写入仓库内 `docs/*.md`
+- 明确 Welcome、Onboarding、Result、create personal room、Room 承接、RegisterNudge 与 Room → Talk 的链路边界
+- 明确 first-launch gate、preset、generated room、register nudge 的 single source of truth 与生命周期
+- 同步 `/` 与 Talk / Room / Memory / Sleep 的页面级文档优先级
 - 不在这一步修改后端服务端或页面运行时代码
 
 ## Documentation Acceptance
@@ -53,7 +58,8 @@
 6. `docs/TALK_UI_SPEC.md` 明确不使用 3D icon，改为单色线性 icon
 7. `docs/MEMORY_SPEC.md` 和 `docs/MEMORY_UI_SPEC.md` 明确 Memory 的默认骨架、contract 和继续回到 Talk 的闭环
 8. `docs/SLEEP_SPEC.md` 和 `docs/SLEEP_UI_SPEC.md` 明确 Sleep 的页面定位、状态矩阵、最小 contract、UI 骨架和回流路径
-9. `docs/ACCEPTANCE.md`、`docs/TRACKING.md`、`docs/HANDOFF.md` 明确页面级 source-of-truth 已按 Talk / Room / Memory / Sleep 区分
+9. `docs/FIRST_LAUNCH_SPEC.md` 和 `docs/FIRST_LAUNCH_UI_SPEC.md` 明确首次登录链路的页面定位、状态矩阵、最小 contract、Room 承接与注册插入点
+10. `docs/ACCEPTANCE.md`、`docs/TRACKING.md`、`docs/HANDOFF.md` 明确页面级 source-of-truth 已按 `/` / Talk / Room / Memory / Sleep 区分
 
 ## Future UI Acceptance
 

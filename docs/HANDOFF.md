@@ -4,6 +4,7 @@
 
 当前页面级文档真源固定为：
 
+- `/` -> [docs/FIRST_LAUNCH_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/FIRST_LAUNCH_SPEC.md) + [docs/FIRST_LAUNCH_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/FIRST_LAUNCH_UI_SPEC.md)
 - `/talk` -> [docs/SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SPEC.md) + [docs/TALK_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/TALK_UI_SPEC.md)
 - `/room` -> [docs/ROOM_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/ROOM_SPEC.md) + [docs/ROOM_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/ROOM_UI_SPEC.md)
 - `/memory` -> [docs/MEMORY_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/MEMORY_SPEC.md) + [docs/MEMORY_UI_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/MEMORY_UI_SPEC.md)
@@ -15,11 +16,14 @@
 - [docs/TRACKING.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/TRACKING.md)
 - 本文件
 
-不要再把旧版 Talk / Room / Memory / Sleep 文档、旧 transcript 聊天式布局、旧双模式壳层和旧 3D icon 方向当作真源。
+不要再把旧版 first-launch / Talk / Room / Memory / Sleep 文档、旧 transcript 聊天式布局、旧双模式壳层和旧 3D icon 方向当作真源。
 
 ## Current Repo Mapping
 
-仓库里与 Talk 最直接相关的实现文件如下：
+仓库里与当前主线路最直接相关的实现文件如下：
+
+0. [app/page.tsx](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/page.tsx)
+   当前职责：根路由入口占位；后续首次登录链路实现入口应对齐 `docs/FIRST_LAUNCH_SPEC.md` 与 `docs/FIRST_LAUNCH_UI_SPEC.md`
 
 1. [app/talk/page.tsx](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/page.tsx)
    当前职责：Talk route 入口
@@ -55,15 +59,16 @@
 
 当前代码层仍有以下 mock / placeholder 风险需要明确标注：
 
-1. [app/talk/scene-config.ts](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/scene-config.ts) 仍是本地 scene mock，不是后端真实 room contract
-2. `ui_shell_token_set_id` 仍是本地 token 标识，不是已对接的真实后端字段
-3. 背景准入规则、顶部亮度约束、用户自定义生图筛选逻辑，目前仍停留在文档层，不在这轮 Talk UI 实现内
-4. sound panel 的 instant-apply 与本地持久化已经可用，但仍属于前端本地行为，不代表后端已接入
-5. `/memory` 的 recurring expanded details 仍是本地 view-model 数据，不是后端已定义的 detail contract
-6. `/memory` 的 `Agree` / `Delete` 与 `View all memories / Show less` 仍是前端本地 demo 行为，不代表真实历史读取、确认回写或删除接口已接入
-7. `/sleep-monitoring` 当前仍是 placeholder 页面，尚未按新 Sleep 文档真源完成 UI 落地
-8. `/sleep-monitoring` 的 summary / rhythm / trend / suggestion contract 当前仅在文档层定义，尚未接入真实后端数据
-9. `/sleep-monitoring` 的 CTA routing fallback、settings panel 行为与 rhythm card no-op 目前是文档规则，尚未通过运行时代码实现
+1. [app/page.tsx](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/page.tsx) 当前仍是入口占位页，尚未按首次登录链路文档实现 Welcome / Onboarding / Result / create personal room / RegisterNudge
+2. [app/talk/scene-config.ts](/Users/zhongyuanli/Documents/Playground/ai-companion-web/app/talk/scene-config.ts) 仍是本地 scene mock，不是后端真实 room contract
+3. `ui_shell_token_set_id` 仍是本地 token 标识，不是已对接的真实后端字段
+4. 背景准入规则、顶部亮度约束、用户自定义生图筛选逻辑，目前仍停留在文档层，不在这轮 Talk UI 实现内
+5. sound panel 的 instant-apply 与本地持久化已经可用，但仍属于前端本地行为，不代表后端已接入
+6. `/memory` 的 recurring expanded details 仍是本地 view-model 数据，不是后端已定义的 detail contract
+7. `/memory` 的 `Agree` / `Delete` 与 `View all memories / Show less` 仍是前端本地 demo 行为，不代表真实历史读取、确认回写或删除接口已接入
+8. `/sleep-monitoring` 当前仍是 placeholder 页面，尚未按新 Sleep 文档真源完成 UI 落地
+9. `/sleep-monitoring` 的 summary / rhythm / trend / suggestion contract 当前仅在文档层定义，尚未接入真实后端数据
+10. `/sleep-monitoring` 的 CTA routing fallback、settings panel 行为与 rhythm card no-op 目前是文档规则，尚未通过运行时代码实现
 
 ## Before Coding
 

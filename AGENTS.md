@@ -31,6 +31,16 @@
 
 Page-specific source-of-truth mapping:
 
+### `/`
+
+1. `docs/FIRST_LAUNCH_SPEC.md`
+2. `docs/FIRST_LAUNCH_UI_SPEC.md`
+3. `docs/ACCEPTANCE.md`
+4. `docs/TRACKING.md`
+5. `docs/HANDOFF.md`
+6. current repository code and config
+7. local inference
+
 ### `/talk`
 
 1. `docs/SPEC.md`
@@ -73,13 +83,14 @@ Page-specific source-of-truth mapping:
 
 ### Shared rules
 
-1. `docs/SPEC.md` and `docs/TALK_UI_SPEC.md` are the current Talk PRD and UI baseline only.
-2. `docs/ROOM_SPEC.md` and `docs/ROOM_UI_SPEC.md` are the current Room PRD and UI baseline only.
-3. `docs/MEMORY_SPEC.md` and `docs/MEMORY_UI_SPEC.md` are the current Memory PRD and UI baseline only.
-4. `docs/SLEEP_SPEC.md` and `docs/SLEEP_UI_SPEC.md` are the current Sleep PRD and UI baseline only.
-5. Do not treat older in-repo drafts or external copies as runtime truth once these files are vendored.
-6. If two sources conflict, follow the higher-priority source for the active page and explicitly report the conflict.
-7. Do not silently resolve spec ambiguity by expanding product behavior.
+1. `docs/FIRST_LAUNCH_SPEC.md` and `docs/FIRST_LAUNCH_UI_SPEC.md` are the current first-launch PRD and UI baseline only.
+2. `docs/SPEC.md` and `docs/TALK_UI_SPEC.md` are the current Talk PRD and UI baseline only.
+3. `docs/ROOM_SPEC.md` and `docs/ROOM_UI_SPEC.md` are the current Room PRD and UI baseline only.
+4. `docs/MEMORY_SPEC.md` and `docs/MEMORY_UI_SPEC.md` are the current Memory PRD and UI baseline only.
+5. `docs/SLEEP_SPEC.md` and `docs/SLEEP_UI_SPEC.md` are the current Sleep PRD and UI baseline only.
+6. Do not treat older in-repo drafts or external copies as runtime truth once these files are vendored.
+7. If two sources conflict, follow the higher-priority source for the active page and explicitly report the conflict.
+8. Do not silently resolve spec ambiguity by expanding product behavior.
 
 ---
 
@@ -181,10 +192,11 @@ Do not start implementation until this report is internally consistent with the 
 ## 8. Current Mainline Intent
 
 1. This repository is the active mainline for the web companion shell.
-2. `docs/SPEC.md` and `docs/TALK_UI_SPEC.md` are the current source of truth for Talk behavior and UI.
-3. The current implementation target is to align the Next.js app to the vendored Talk documents in a controlled way.
-4. Favor structure, consistency, reviewability, and handoff quality over speculative feature expansion.
-5. Prefer small, reviewable changes over broad rewrites.
+2. `docs/FIRST_LAUNCH_SPEC.md` and `docs/FIRST_LAUNCH_UI_SPEC.md` are the current source of truth for the first-launch flow on `/`.
+3. `docs/SPEC.md` and `docs/TALK_UI_SPEC.md` are the current source of truth for Talk behavior and UI.
+4. The current implementation target is to align the Next.js app to the vendored first-launch, Talk, Room, Memory, and Sleep documents in a controlled way.
+5. Favor structure, consistency, reviewability, and handoff quality over speculative feature expansion.
+6. Prefer small, reviewable changes over broad rewrites.
 
 ---
 
