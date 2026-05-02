@@ -2,8 +2,10 @@
   position: relative;
   min-height: 100svh;
   overflow-x: hidden;
-  --safe-top: max(12px, env(safe-area-inset-top));
-  --safe-bottom: max(12px, env(safe-area-inset-bottom));
+  --safe-top-inset: var(--app-safe-top-inset);
+  --safe-bottom-inset: var(--app-safe-bottom-inset);
+  --safe-top: calc(var(--safe-top-inset) + var(--app-top-band-offset));
+  --safe-bottom: calc(var(--safe-bottom-inset) + var(--app-bottom-offset));
   --shell-bg: rgba(255, 255, 255, 0.12);
   --shell-bg-strong: rgba(255, 255, 255, 0.16);
   --shell-bg-soft: rgba(255, 255, 255, 0.08);
@@ -85,11 +87,11 @@
 
 .topBand {
   position: absolute;
-  top: calc(var(--safe-top) + 45px);
-  right: 16px;
-  left: 16px;
+  top: var(--safe-top);
+  right: var(--app-page-padding-x);
+  left: var(--app-page-padding-x);
   z-index: 8;
-  min-height: 58px;
+  min-height: var(--app-control-height);
 }
 
 .scrollContent {
@@ -97,23 +99,25 @@
   z-index: 1;
   min-height: 100svh;
   padding:
-    calc(var(--safe-top) + 175px)
-    16px
+    calc(var(--safe-top) + var(--app-control-height) + var(--app-content-gap-after-nav))
+    var(--app-page-padding-x)
     calc(var(--safe-bottom) + 32px);
 }
 
 .contentColumn {
   display: flex;
-  width: min(100%, 361px);
+  width: 100%;
+  max-width: var(--app-card-column-max);
   margin: 0 auto;
   flex-direction: column;
-  gap: 16px;
+  gap: clamp(16px, 2.8vh, 20px);
+  min-width: 0;
 }
 
 .heroBlock {
   position: relative;
-  min-height: 206px;
-  padding: 0 16px 0;
+  min-height: clamp(180px, 24vh, 206px);
+  padding: 0 clamp(4px, 1.8vw, 16px) 0;
 }
 
 .heroGlow {
@@ -160,10 +164,11 @@
 .heroTitle {
   position: relative;
   z-index: 1;
+  width: 100%;
   margin: 12px 0 0;
   color: var(--text-primary);
-  font-size: 36px;
-  line-height: 42px;
+  font-size: clamp(2.25rem, 7.2vw, 3rem);
+  line-height: clamp(42px, 7.8vw, 54px);
   font-weight: 650;
   letter-spacing: -0.02em;
   text-wrap: balance;
@@ -172,16 +177,18 @@
 .heroSupport {
   position: relative;
   z-index: 1;
+  width: 100%;
   margin: 16px 0 0;
   color: var(--text-tertiary);
-  font-size: 16px;
-  line-height: 22px;
+  font-size: clamp(0.9375rem, 3.6vw, 1rem);
+  line-height: clamp(21px, 4.8vw, 22px);
   font-weight: 400;
 }
 
 .cardLarge,
 .cardMedium {
   position: relative;
+  width: 100%;
   overflow: hidden;
   border-radius: 30px;
   border: 1px solid var(--shell-border-strong);
@@ -193,12 +200,12 @@
 
 .cardLarge {
   min-height: 220px;
-  padding: 22px 22px 24px;
+  padding: clamp(20px, 4vw, 24px) clamp(20px, 4vw, 24px) clamp(22px, 4vw, 24px);
 }
 
 .cardMedium {
   min-height: 190px;
-  padding: 22px;
+  padding: clamp(20px, 4vw, 22px);
   border-radius: 28px;
   background: var(--shell-bg);
   border-color: var(--shell-border);
@@ -260,8 +267,8 @@
   z-index: 1;
   margin: 22px 0 0;
   color: var(--text-warm-primary);
-  font-size: 64px;
-  line-height: 70px;
+  font-size: clamp(3.35rem, 14vw, 4.5rem);
+  line-height: clamp(58px, 15vw, 74px);
   font-weight: 600;
   letter-spacing: -0.04em;
   text-shadow: 0 0 24px rgba(255, 235, 210, 0.18);

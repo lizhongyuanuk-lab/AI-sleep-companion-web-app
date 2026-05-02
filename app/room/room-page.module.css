@@ -3,7 +3,8 @@
   min-height: 100svh;
   overflow: hidden;
   font-family: var(--font-sans);
-  --safe-bottom: max(12px, env(safe-area-inset-bottom));
+  --safe-bottom-inset: var(--app-safe-bottom-inset);
+  --safe-bottom: calc(var(--safe-bottom-inset) + var(--app-bottom-offset));
   --shell-bg: rgba(255, 255, 255, 0.22);
   --shell-border: rgba(255, 255, 255, 0.18);
   --shell-text-primary: #786e66;
@@ -212,22 +213,22 @@
   pointer-events: none;
   padding:
     0
-    16px
+    var(--app-page-padding-x)
     calc(var(--safe-bottom) + 20px);
 }
 
 .infoCluster {
   position: absolute;
-  bottom: calc(var(--safe-bottom) + 98px);
-  left: 16px;
+  bottom: calc(var(--safe-bottom-inset) + clamp(84px, 11vh, 98px));
+  left: var(--app-page-padding-x);
   display: grid;
   gap: 10px;
-  max-width: min(280px, calc(100vw - 32px));
+  max-width: min(320px, calc(100vw - (var(--app-page-padding-x) * 2)));
 }
 
 .titlePill {
   width: fit-content;
-  max-width: min(280px, calc(100vw - 32px));
+  max-width: min(320px, calc(100vw - (var(--app-page-padding-x) * 2)));
   display: inline-flex;
   align-items: center;
   min-height: 46px;
@@ -278,8 +279,8 @@
   align-items: center;
   justify-content: flex-end;
   justify-items: center;
-  gap: 0.7rem;
-  padding-bottom: calc(var(--safe-bottom) + 110px);
+  gap: clamp(10px, 1.4vh, 14px);
+  padding-bottom: calc(var(--safe-bottom-inset) + clamp(92px, 11vh, 110px));
 }
 
 .swipeHint {
@@ -302,7 +303,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: clamp(166px, calc(18vh + 50px), 226px);
+  margin-bottom: clamp(118px, 15vh, 172px);
 }
 
 .swipeChevron {
@@ -329,7 +330,10 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  width: 200px;
+  width: min(
+    clamp(184px, 48vw, 200px),
+    calc(100vw - (var(--app-page-padding-x) * 2) - 24px)
+  );
   height: 50px;
   border: 1px solid rgba(255, 255, 255, 0.32);
   border-radius: 999px;

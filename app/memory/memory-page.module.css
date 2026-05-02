@@ -8,8 +8,10 @@
   overflow: hidden;
   isolation: isolate;
   font-family: "Poppins", var(--font-sans);
-  --safe-top: max(12px, env(safe-area-inset-top));
-  --safe-bottom: max(12px, env(safe-area-inset-bottom));
+  --safe-top-inset: var(--app-safe-top-inset);
+  --safe-bottom-inset: var(--app-safe-bottom-inset);
+  --safe-top: calc(var(--safe-top-inset) + var(--app-top-band-offset));
+  --safe-bottom: calc(var(--safe-bottom-inset) + var(--app-bottom-offset));
   background: #0b1020;
 }
 
@@ -60,11 +62,11 @@
 
 .topBand {
   position: absolute;
-  top: calc(var(--safe-top) + 45px);
-  right: 16px;
-  left: 16px;
+  top: var(--safe-top);
+  right: var(--app-page-padding-x);
+  left: var(--app-page-padding-x);
   z-index: 8;
-  min-height: 58px;
+  min-height: var(--app-control-height);
 }
 
 .scrollContent {
@@ -72,17 +74,19 @@
   z-index: 1;
   min-height: 100svh;
   padding:
-    calc(var(--safe-top) + 175px)
-    24px
+    calc(var(--safe-top) + var(--app-control-height) + var(--app-content-gap-after-nav))
+    max(20px, var(--app-page-padding-x))
     calc(var(--safe-bottom) + 32px);
 }
 
 .contentColumn {
   display: flex;
-  width: min(82vw, 20rem);
+  width: 100%;
+  max-width: var(--app-reading-column-max);
   margin: 0 auto;
   flex-direction: column;
   align-items: center;
+  min-width: 0;
 }
 
 .heroBlock {
@@ -100,8 +104,8 @@
   top: 2px;
   left: 50%;
   z-index: 0;
-  width: min(108vw, 31rem);
-  height: 17.5rem;
+  width: min(108vw, 38rem);
+  height: clamp(16rem, 32vh, 19rem);
   border-radius: 999px;
   background:
     radial-gradient(
@@ -155,6 +159,7 @@
 }
 
 .heroInsight {
+  width: 100%;
   max-width: min(100%, 35rem);
   margin: 24px 0 0;
   position: relative;
@@ -167,9 +172,9 @@
     var(--font-geist-sans),
     var(--font-sans),
     sans-serif;
-  font-size: 2.25rem;
+  font-size: clamp(2.25rem, 7vw, 3rem);
   font-weight: 800;
-  line-height: 42px;
+  line-height: clamp(42px, 7.6vw, 54px);
   letter-spacing: -0.045em;
   text-align: center;
   text-shadow: none;
@@ -177,15 +182,16 @@
 }
 
 .heroSupport {
+  width: 100%;
   max-width: min(100%, 32.5rem);
   margin: 16px 0 0;
   position: relative;
   z-index: 1;
   color: rgba(255, 255, 255, 0.58);
   font-family: "Poppins", sans-serif;
-  font-size: 1.125rem;
+  font-size: clamp(1rem, 3.8vw, 1.125rem);
   font-weight: 400;
-  line-height: 26px;
+  line-height: clamp(24px, 5vw, 26px);
   letter-spacing: -0.01em;
   text-align: center;
 }
@@ -193,8 +199,8 @@
 .recurringList {
   display: grid;
   width: 100%;
-  margin-top: 96px;
-  gap: 56px;
+  margin-top: var(--app-section-gap-large);
+  gap: var(--app-group-gap);
 }
 
 .recurringMemoryItem {
@@ -388,19 +394,21 @@
 }
 
 .recurringTitle {
+  width: 100%;
   max-width: min(100%, 35rem);
   margin: 0;
   color: rgba(255, 255, 255, 0.93);
   font-family: "Poppins", sans-serif;
-  font-size: 1.875rem;
+  font-size: clamp(1.75rem, 6vw, 2.25rem);
   font-weight: 800;
-  line-height: 36px;
+  line-height: clamp(34px, 6.8vw, 42px);
   letter-spacing: -0.03em;
   text-align: center;
   text-wrap: balance;
 }
 
 .recurringSupport {
+  width: 100%;
   max-width: min(100%, 32.5rem);
   margin: 0;
   color: rgba(255, 255, 255, 0.54);
@@ -415,8 +423,8 @@
 .actionsArea {
   display: grid;
   width: 100%;
-  margin-top: 72px;
-  gap: 16px;
+  margin-top: var(--app-section-gap-medium);
+  gap: clamp(14px, 2.4vh, 16px);
   justify-items: center;
 }
 
@@ -480,7 +488,7 @@
   }
 
   .contentColumn {
-    width: min(82vw, 18.75rem);
+    max-width: 18.75rem;
   }
 
   .heroGlow {

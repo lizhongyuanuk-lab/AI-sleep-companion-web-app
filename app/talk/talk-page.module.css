@@ -8,8 +8,10 @@
   overflow: hidden;
   isolation: isolate;
   font-family: var(--font-sans);
-  --safe-top: max(12px, env(safe-area-inset-top));
-  --safe-bottom: max(12px, env(safe-area-inset-bottom));
+  --safe-top-inset: var(--app-safe-top-inset);
+  --safe-bottom-inset: var(--app-safe-bottom-inset);
+  --safe-top: calc(var(--safe-top-inset) + var(--app-top-band-offset));
+  --safe-bottom: calc(var(--safe-bottom-inset) + var(--app-bottom-offset));
   --shell-bg: rgba(255, 255, 255, 0.28);
   --shell-bg-strong: rgba(255, 255, 255, 0.42);
   --shell-border: rgba(255, 255, 255, 0.24);
@@ -74,11 +76,18 @@
 
 .topBand {
   position: absolute;
-  top: calc(var(--safe-top) + 45px);
-  right: 16px;
-  left: 16px;
+  top: var(--safe-top);
+  right: var(--app-page-padding-x);
+  left: var(--app-page-padding-x);
   z-index: 8;
-  min-height: 58px;
+  min-height: var(--app-control-height);
+}
+
+.topNav {
+  width: min(
+    var(--app-nav-max-width),
+    calc(100% - var(--app-control-height) - var(--app-control-gap))
+  );
 }
 
 .settingsButton {
@@ -86,8 +95,8 @@
   top: 0;
   left: 0;
   display: inline-flex;
-  width: 56px;
-  height: 56px;
+  width: var(--app-control-height);
+  height: var(--app-control-height);
   align-items: center;
   justify-content: center;
   border: 1px solid var(--shell-border);
@@ -116,16 +125,16 @@
 }
 
 .utilityIcon {
-  width: 28px;
-  height: 28px;
+  width: clamp(20px, 4.8vw, 24px);
+  height: clamp(20px, 4.8vw, 24px);
 }
 
 .settingsPanel {
   position: absolute;
-  top: calc(var(--safe-top) + 105px);
-  left: 16px;
+  top: calc(var(--safe-top) + var(--app-control-height) + var(--app-control-gap));
+  left: var(--app-page-padding-x);
   z-index: 9;
-  width: min(280px, calc(100vw - 32px));
+  width: min(300px, calc(100vw - (var(--app-page-padding-x) * 2)));
   min-height: 220px;
   max-height: min(320px, 64vh);
   padding: 18px 16px 16px;
@@ -271,9 +280,9 @@
   z-index: 1;
   min-height: 100svh;
   padding:
-    calc(var(--safe-top) + 72px)
-    16px
-    calc(var(--safe-bottom) + 148px);
+    calc(var(--safe-top) + var(--app-control-height) + clamp(12px, 2.6vh, 20px))
+    var(--app-page-padding-x)
+    calc(var(--safe-bottom) + clamp(120px, 18vh, 148px));
 }
 
 .scenePresenceHalo {
@@ -287,13 +296,14 @@
 }
 
 .bottomLayer {
-  position: absolute;
-  right: 16px;
-  bottom: calc(var(--safe-bottom) + 15px);
-  left: 16px;
+  position: fixed;
+  left: 50%;
+  bottom: var(--safe-bottom);
+  width: min(calc(100vw - (var(--app-page-padding-x) * 2)), var(--app-dock-max-width));
+  transform: translateX(-50%);
   z-index: 6;
   display: grid;
-  gap: 8px;
+  gap: clamp(8px, 1.4vh, 12px);
 }
 
 .roomAnchor {
@@ -331,7 +341,7 @@
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 50px;
+  min-height: clamp(48px, 8.8vw, 50px);
   padding: 4px 8px 4px 6px;
   border: 1px solid var(--shell-border);
   border-radius: 999px;
@@ -465,8 +475,8 @@
 .micCircle {
   display: inline-flex;
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
+  width: clamp(40px, 8.8vw, 42px);
+  height: clamp(40px, 8.8vw, 42px);
   align-items: center;
   justify-content: center;
   border: 1px solid rgba(255, 244, 223, 0.72);
@@ -512,7 +522,7 @@
 .primaryLabel {
   display: block;
   color: #454545;
-  font-size: 16px;
+  font-size: clamp(15px, 3.8vw, 16px);
   font-weight: 500;
   line-height: 20px;
   text-align: left;
@@ -591,5 +601,11 @@
   .dockProcessing .waveBar,
   .dockSpeaking .waveBar {
     animation: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .topBand {
+    padding-left: calc(var(--app-control-height) + 12px);
   }
 }

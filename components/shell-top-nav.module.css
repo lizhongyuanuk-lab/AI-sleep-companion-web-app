@@ -1,13 +1,14 @@
 .navCapsule {
-  width: 301px;
-  min-height: 58px;
+  width: min(var(--app-nav-max-width), 100%);
+  min-height: var(--app-control-height);
   margin: 0 auto;
-  padding: 8px;
+  padding: clamp(6px, 1.8vw, 8px);
   border: 1px solid var(--shell-border);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.26);
   box-shadow: var(--shell-shadow);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .navCapsuleMemory {
@@ -20,7 +21,7 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2px;
-  min-height: 42px;
+  min-height: calc(var(--app-control-height) - clamp(12px, 3vw, 16px));
   padding: 0;
   margin: 0;
   list-style: none;
@@ -66,8 +67,8 @@
 
 .navIconAsset {
   display: block;
-  width: 24px;
-  height: 24px;
+  width: clamp(18px, 4.6vw, 22px);
+  height: clamp(18px, 4.6vw, 22px);
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
