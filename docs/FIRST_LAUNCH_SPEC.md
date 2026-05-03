@@ -1,9 +1,27 @@
 # 首次登录链路 主文档：PRD + 非 UI 交付规范
 
 for Codex · Web / PWA MVP  
-版本：V1.0（固定值已锁定）
+版本：V1.1（代码对齐版）
 
 适用范围：首次进入产品的完整链路，包括 Welcome、Onboarding、Result、可选生成 personal room、Room 承接、Room → Talk、guest-first 注册插入点。
+
+当前仓库代码已落地范围：
+
+- Welcome
+- Onboarding Q1 / Q2
+- Result
+- create personal room entry
+- theme selection
+- room generating
+- room preview
+- 完成后进入 Room
+- Room → Talk 的 preset handoff
+
+当前仍停留在规划 / 文档层、尚未进入运行时代码的部分：
+
+- `RoomFeedWithGeneratedCard`
+- `GenerateRoomNudge`
+- `RegisterNudge`
 
 ## 1. 文档目的
 
@@ -67,6 +85,7 @@ for Codex · Web / PWA MVP
 此阶段真正要验证的是：
 
 - 两题 onboarding 是否能提升首会话承接感
+- tap-to-advance 的轻交互是否比显式 `Continue` 更低摩擦
 - personal room 是否能作为核心卖点被理解与点击
 - Room 是否仍然作为统一入口保持成立
 - 注册是否能后置到价值节点，而不是前置流失点
@@ -184,8 +203,8 @@ Single source of truth：`has_completed_first_launch_flow: boolean`
 
 | 问题 | 固定文案 / 选项 |
 | --- | --- |
-| Q1 | 你现在更像是哪一种状态？｜很困，但就是睡不着；脑子停不下来，一直在想；有点焦虑 / 烦躁 / 情绪乱；有点孤单，想有人陪着 |
-| Q2 | 你现在更希望我怎么陪你？｜帮我快点睡着；先安抚我一下，陪我聊几句；冥想正念练习；不用多说，安静陪我 |
+| Q1 | `What feels closest right now?`｜`Sleepy, but still awake`；`My mind will not slow down`；`I feel tense or overstimulated`；`I do not want to be alone` |
+| Q2 | `How should I stay with you?`｜`Help me drift off`；`Soothe me first`；`Guide me into stillness`；`Stay quiet with me` |
 
 草稿真源：`firstLaunchFlowDraft`
 
@@ -219,6 +238,9 @@ Single source of truth：`postOnboardingSessionPreset`
 
 规则：
 
+- Q1 当前实现为 tap 选项后自动进入 Q2
+- Q2 当前实现为 tap 选项后立即生成 `postOnboardingSessionPreset` 并进入 Result
+- Q2 保留单一 `Back` 返回 Q1
 - 结果页生成并写入 session-level store
 - Room 只读，不重算、不改写
 - Talk 消费完整 preset，不得只拿 `preset_id` 再反查
@@ -336,9 +358,12 @@ Talk 必须接收 onboarding 侧字段与 Room 侧字段的合并对象。
 ## 11. 内容策略与文案规则
 
 - Onboarding 两题文案固定，不允许改写，不使用诊断性语言，不引入测评感
-- Result 页文案来自受控 copy 表，不用模型生成
+- 当前 MVP 代码为 English-first fixed copy
+- Q1 / Q2 与 theme options 文案来自 `FIRST_LAUNCH_ONBOARDING_OPTIONS_V1` 与 `PERSONAL_ROOM_THEME_OPTIONS_V1`
+- Welcome / Result / create room / generating / preview 的固定界面文案当前由前端受控维护，不用模型生成
+- Result 页 headline / support copy 来自 `postOnboardingSessionPreset`
 - create personal room 入口文案目标是露出卖点，但不压迫用户
-- 推荐表达：今晚，我也可以为你准备一个属于你的睡眠空间；你也可以先看看现成空间
+- 当前代码按钮表达：`Create my room` / `Browse rooms`
 - 视觉方向问题是视觉偏好题，不是新的情绪题
 - 注册提示文案必须绑定“保存 / 继续 / 保留资产”的理由，不得使用“先注册再体验”之类表达
 
@@ -426,7 +451,8 @@ Talk 必须接收 onboarding 侧字段与 Room 侧字段的合并对象。
 ### 15.1 功能验收
 
 - 首次进入能正确命中 `first-launch gate`
-- onboarding 两题完成后生成 preset
+- Q1 tap 后直接进入 Q2
+- Q2 tap 后直接生成 preset 并进入 Result
 - Result 页后能进入 create room entry
 - 用户可生成 personal room 或跳过
 - 生成成功后仍先进入 Room

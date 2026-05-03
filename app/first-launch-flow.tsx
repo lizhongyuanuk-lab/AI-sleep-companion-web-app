@@ -245,45 +245,31 @@ export function FirstLaunchFlow() {
   const handleSelectQ1 = (value: Q1State) => {
     updateDraft({
       q1_state: value,
-    });
-  };
-
-  const handleContinueToQ2 = () => {
-    if (!draft.q1_state) {
-      return;
-    }
-
-    updateDraft({
       current_step: "onboarding_q2",
     });
   };
 
   const handleSelectQ2 = (value: Q2SupportStyle) => {
+    if (!draft.q1_state) {
+      return;
+    }
+
+    const nextPreset = buildPostOnboardingSessionPreset({
+      q1State: draft.q1_state,
+      q2SupportStyle: value,
+    });
+
+    writePostOnboardingSessionPreset(nextPreset);
+    setPreset(nextPreset);
     updateDraft({
       q2_support_style: value,
+      current_step: "session_result",
     });
   };
 
   const handleBackToQ1 = () => {
     updateDraft({
       current_step: "onboarding_q1",
-    });
-  };
-
-  const handleContinueToResult = () => {
-    if (!draft.q1_state || !draft.q2_support_style) {
-      return;
-    }
-
-    const nextPreset = buildPostOnboardingSessionPreset({
-      q1State: draft.q1_state,
-      q2SupportStyle: draft.q2_support_style,
-    });
-
-    writePostOnboardingSessionPreset(nextPreset);
-    setPreset(nextPreset);
-    updateDraft({
-      current_step: "session_result",
     });
   };
 
@@ -452,16 +438,6 @@ export function FirstLaunchFlow() {
                   </button>
                 ))}
               </div>
-              <div className={styles.buttonStack}>
-                <button
-                  type="button"
-                  className={styles.primaryButton}
-                  onClick={handleContinueToQ2}
-                  disabled={!draft.q1_state}
-                >
-                  Continue
-                </button>
-              </div>
             </article>
           ) : null}
 
@@ -496,15 +472,7 @@ export function FirstLaunchFlow() {
               <div className={styles.buttonStack}>
                 <button
                   type="button"
-                  className={styles.primaryButton}
-                  onClick={handleContinueToResult}
-                  disabled={!draft.q2_support_style}
-                >
-                  Continue
-                </button>
-                <button
-                  type="button"
-                  className={styles.ghostButton}
+                  className={styles.backButton}
                   onClick={handleBackToQ1}
                 >
                   Back

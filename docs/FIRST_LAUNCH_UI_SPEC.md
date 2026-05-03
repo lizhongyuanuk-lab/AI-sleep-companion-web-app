@@ -1,9 +1,26 @@
 # 首次登录链路 UI / 交互 Spec
 
 for Codex · Web / PWA MVP  
-版本：V1.0（与主文档配套）
+版本：V1.1（代码对齐版）
 
 适用范围：Welcome、Onboarding、Result、create personal room、Room 承接、注册提示与 Room → Talk。
+
+当前仓库代码已落地的 UI 范围为：
+
+- Welcome
+- Onboarding Q1 / Q2
+- Result
+- create personal room entry
+- theme selection
+- room generating
+- room preview
+- 完成后进入 Room
+
+当前尚未在运行时代码中落地的部分：
+
+- `RoomFeedWithGeneratedCard`
+- `GenerateRoomNudge`
+- `RegisterNudge`
 
 ## 1. 文档目的
 
@@ -36,7 +53,7 @@ for Codex · Web / PWA MVP
 ### 3.2 `WelcomeCard`
 
 - 仅在 `current_step = welcome` 显示
-- 内容：标题、轻欢迎语与主按钮“开始”
+- 当前固定文案：`Start softly tonight.`、`Two quick steps. Then Room.`、主按钮 `Begin`
 - 点击后进入 `onboarding_q1`
 - 禁做项：不展示注册入口、不展示 room 介绍、不展示功能列表
 
@@ -49,15 +66,20 @@ for Codex · Web / PWA MVP
 ### 3.4 `QuestionBlock`
 
 - 在 `onboarding_q1` / `onboarding_q2` 显示
-- 包含：`QuestionTitle`、4 个 `OptionCard`、主 CTA、返回按钮（Q2 才显示）
+- 包含：`QuestionTitle`、4 个 `OptionCard`、返回按钮（仅 Q2 显示）
 - 数据来源：`FIRST_LAUNCH_ONBOARDING_OPTIONS_V1`
+- 当前实现：
+  - Q1 tap 选项后立即进入 Q2
+  - Q2 tap 选项后立即写入 `postOnboardingSessionPreset` 并进入 Result
+  - 不显示 `Continue`
 
 ### 3.5 `OptionCard`
 
-- 整卡可点；点击后 `selected`
-- 不自动推进
-- 状态：`default` / `pressed` / `selected` / `disabled`
-- 禁做项：不自动跳下一步、不展开长解释、不使用高刺激光效
+- 整卡可点
+- 在 `onboarding_q1` / `onboarding_q2` 中：点击即提交当前题答案并自动推进
+- 在 `select_room_theme` 中：点击后 `selected`，但不自动推进，仍需点击主按钮 `Generate this room`
+- 状态：`default` / `hover` / `pressed` / `selected` / `disabled`
+- 禁做项：不展开长解释、不使用高刺激光效
 
 ### 3.6 `ResultSummaryCard`
 
@@ -71,26 +93,27 @@ for Codex · Web / PWA MVP
 
 - 在 `create_room_entry` 显示
 - 内容为卖点承接文案与两个操作
-- A：生成我的空间 → `select_room_theme`
-- B：先看看现成空间 → 进入 Room
+- 当前固定按钮：
+  - A：`Create my room` → `select_room_theme`
+  - B：`Browse rooms` → 进入 Room
 - 禁做项：不自动进入生成流程
 
 ### 3.8 `ThemeSelectionBlock`
 
 - 在 `select_room_theme` 显示
-- 包含问题标题、4 个视觉方向选项、主按钮“生成这个空间”
+- 包含问题标题、4 个视觉方向选项、主按钮 `Generate this room`、弱按钮 `Browse rooms instead`
 - 禁做项：不允许自由文本输入、不允许 prompt 编辑、不允许参数设置面板
 
 ### 3.9 `RoomGeneratingView`
 
 - 在 `room_generating` 显示
-- 内容为低刺激 loading 与一句文案“我在为你准备这个空间”
-- 规则：不显示进度百分比，不显示技术状态码，超时后进入 fallback
+- 当前固定内容：标题 `Preparing your room.`，支持文案 `Soft light, more quiet, and a little more shelter.`，辅助文案 `No progress bar. No system noise.`
+- 规则：不显示进度百分比，不显示技术状态码，超时后回到 theme selection
 
 ### 3.10 `RoomPreviewCard`
 
 - 在 `room_generation_preview` 显示
-- 内容：预览图、主按钮“使用这个空间”、次按钮“重新生成”、弱按钮“先看其他空间”
+- 内容：预览图、主按钮 `Use this room`、次按钮 `Regenerate`、弱按钮 `See other rooms`
 - 禁做项：不自动进入 Talk、不直接跳设置页
 
 ### 3.11 `RoomFeedWithGeneratedCard`
@@ -121,6 +144,7 @@ for Codex · Web / PWA MVP
 ## 4. 布局规则
 
 - 通用布局：移动端优先、单列、内容区居中偏上、底部 CTA 遵守安全区
+- 顶部固定为两个轻量 framing chips：左侧 flow chip `First launch`，右侧 auth chip `Guest first / Signed in`
 - Welcome / Onboarding / Result / Create Entry：主内容卡置于中上区域，底部按钮区域固定，不出现多列复杂布局
 - Theme Selection：4 个选项纵向排列，不做 `2 × 2` 网格，不加二级说明面板
 - Preview：预览图居中，下方按钮组清晰分层，一主两辅即可
@@ -145,10 +169,10 @@ for Codex · Web / PWA MVP
 
 ## 6. 交互流转
 
-1. 跳过 personal room 路径：Welcome → Q1 → Q2 → Result → Create Room Entry → 先看看现成空间 → Room → 用户 tap room → Talk。
-2. 生成成功路径：Welcome → Q1 → Q2 → Result → Create Room Entry → 生成我的空间 → Theme Selection → Generating → Preview → 使用这个空间 → Room（第一张为 Your Room）→ 用户 tap → Talk。
-3. 生成后跳过使用：Preview → 先看其他空间 → Room。
-4. 生成失败路径：Generating → failed → 用户可重试或跳过 → Room。
+1. 跳过 personal room 路径：Welcome → `Begin` → Q1（tap 自动进 Q2）→ Q2（tap 自动进 Result）→ Result → Create Room Entry → `Browse rooms` → Room → 用户 tap room → Talk。
+2. 生成成功路径：Welcome → `Begin` → Q1 → Q2 → Result → Create Room Entry → `Create my room` → Theme Selection → `Generate this room` → Generating → Preview → `Use this room` → Room → 用户 tap → Talk。
+3. 生成后跳过使用：Preview → `See other rooms` → Room。
+4. 生成失败路径：Generating → failed → 返回 Theme Selection；用户可重试或改为跳过进入 Room。
 5. Room 内二次引导生成：Room（无 generated room）→ `swipe_count >= 3` → GenerateRoomNudge → 点击 → 进入 create room 分支。
 6. 注册软提示路径：personal room 成功后、Talk 达到价值点后（延迟到退出 Talk / 回到 Room）、第三次进入兜底条件满足时，展示 RegisterNudge。
 
@@ -165,10 +189,11 @@ for Codex · Web / PWA MVP
 
 ### 8.1 固定文案来源
 
-- Welcome 标题 / 说明
+- Welcome 标题 / 说明 / `Begin`
 - Q1 / Q2 题目与选项
-- create room entry 文案
-- theme selection 文案
+- Result info block 固定说明文案
+- create room entry 文案与按钮
+- theme selection 文案与按钮
 - generating 文案
 - preview 按钮文案
 - generate nudge 文案
@@ -176,15 +201,21 @@ for Codex · Web / PWA MVP
 
 ### 8.2 派生文案来源
 
-- Result 页文案来自 `postOnboardingSessionPreset`
+- Result headline / support copy 来自 `postOnboardingSessionPreset`
+- create room entry 的 bridge copy 来自 `postOnboardingSessionPreset.state_modifier`
 - Room 轻承接文案来自 preset，但不得复用 Result 原文
 - RegisterNudge 文案来自 `trigger_type` 模板，不由模型生成
 
 ### 8.3 禁做项
 
-- 不允许组件本地拼装文案
 - 不允许根据设备或浏览器随机改写
 - 不允许调用模型润色首次链路文案
+
+### 8.4 当前代码对齐说明
+
+- 当前 MVP 代码为 English-first fixed copy
+- Q1 / Q2 与 theme option 文案来自 `lib/first-launch.ts`
+- Welcome / Result / create room / generating / preview 的固定界面文案当前在 `app/first-launch-flow.tsx` 中受控维护
 
 ## 9. 边界与禁做项
 
@@ -215,7 +246,9 @@ for Codex · Web / PWA MVP
 
 ### 10.2 交互对齐
 
-- onboarding 不自动推进
+- Q1 / Q2 在当前实现中为 tap-to-advance
+- Q2 只保留 `Back`
+- theme selection 不自动推进，仍需明确点击 `Generate this room`
 - Result 主按钮不进 Talk
 - create room 为可选分支
 - Room 是统一入口
