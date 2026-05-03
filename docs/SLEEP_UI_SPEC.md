@@ -12,6 +12,11 @@ It defines the final visual direction, layout structure, component measurements,
 
 If this document conflicts with [docs/SLEEP_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/SLEEP_SPEC.md), the non-UI product document wins.
 
+Shared layout baseline:
+
+- [docs/GLOBAL_MOBILE_LAYOUT_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/GLOBAL_MOBILE_LAYOUT_SPEC.md) applies by default
+- Sleep is a hero-led content page with top navigation, so the shared mobile safe-area, hero-spacing, grouped-content, and bottom-action rules apply unless this spec explicitly overrides them
+
 ## 1. Page Role and Visual Intent
 
 The Sleep page is a gentle sleep reflection page.
@@ -236,7 +241,7 @@ Motion rules:
 
 Hard rule:
 
-The active nav chip, active stage chip, and primary CTA must share the same warm-white chip language.
+The active nav chip and active stage chip share the warm-white chip language.
 
 ### 5.5 Chart tokens
 
@@ -611,20 +616,21 @@ Allowed CTA labels:
 
 CTA style:
 
-- height: `44px`
-- min width: `144px`
+- height: `48px`
+- width: full card width
 - horizontal padding: `18px`
-- radius: `999px`
-- background: `active-chip-bg`
-- text color: `active-chip-text`
-- font: `15px / 20px / 600`
-- icon size: `16px`
-- shadow: `active-chip-shadow`
+- radius: `24px`
+- border: `1px solid rgba(255,255,255,0.10)`
+- background: `rgba(255,255,255,0.06)`
+- text color: `#F3EEE7`
+- font: `16px / 1.2 / 500`
+- no icon is required in the current version
 
 Interaction:
 
-- tap enters pressed state
-- pressed state = `scale(0.98)` + slight brightness reduction
+- default state remains dark and restrained
+- hover / focus may lift slightly and switch to a warm-white filled state
+- press state = `scale(0.985)`
 - release navigates
 
 Routing rule:
@@ -638,6 +644,7 @@ Hard rules:
 - no heavy gradient buttons
 - no multiple competing primary CTAs
 - do not make the CTA look like an upsell
+- keep the CTA in the same visual family as Memory bottom action buttons
 
 ## 16. Single-Mode Shell Rules
 
@@ -786,7 +793,8 @@ Before implementation, confirm:
 - main duration is the strongest data focal point
 - `Sleep rhythm` is the default rhythm title
 - chart is soft, low-noise, and non-clinical
-- active nav, active chip, and CTA share the same warm-white chip language
+- active nav and active chip share the same warm-white chip language
+- CTA matches the Memory bottom action-button language
 - no bottom chat dock appears on Sleep
 - no generic dashboard styling is introduced
 - full, partial, companion-only, empty, loading, and error states are supported
@@ -806,7 +814,7 @@ The implementation passes only if:
 - the main sleep duration is visually dominant when present
 - the rhythm chart feels soft and reflective, not clinical
 - the page does not imply unsupported medical precision
-- the CTA uses warm-white active-chip styling
+- the CTA matches the Memory action-button styling while staying in the same dark shell family
 - the page scrolls naturally and does not cram all modules into one screen
 - partial and empty states remain calm and useful
 - no visual component feels disconnected from the shared shell family

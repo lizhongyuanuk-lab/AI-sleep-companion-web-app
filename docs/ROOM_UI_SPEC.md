@@ -26,6 +26,12 @@ Priority order is fixed as:
 
 If any visual reference conflicts with the PRD or confirmed page behavior, the PRD and confirmed behavior win.
 
+Shared layout baseline:
+
+- [docs/GLOBAL_MOBILE_LAYOUT_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/GLOBAL_MOBILE_LAYOUT_SPEC.md) applies by default
+- Room is a no-nav, immersive full-bleed page, so top-nav-specific spacing rules are `N/A`
+- Room may keep edge-to-edge scene imagery; only overlay content is constrained by shared safe-area rules unless this spec overrides them
+
 ## 2. Reference Boundaries and Implementation Principles
 
 The final Talk page may be borrowed only as a visual language reference.

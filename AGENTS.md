@@ -5,6 +5,7 @@
 1. These rules apply to the current Git repository root and all child paths.
 2. The current V1 mainline scope is limited to:
    - `/`
+   - `/onboarding`
    - `/talk`
    - `/room`
    - `/memory`
@@ -32,6 +33,16 @@
 Page-specific source-of-truth mapping:
 
 ### `/`
+
+1. `docs/FIRST_LAUNCH_SPEC.md`
+2. `docs/FIRST_LAUNCH_UI_SPEC.md`
+3. `docs/ACCEPTANCE.md`
+4. `docs/TRACKING.md`
+5. `docs/HANDOFF.md`
+6. current repository code and config
+7. local inference
+
+### `/onboarding`
 
 1. `docs/FIRST_LAUNCH_SPEC.md`
 2. `docs/FIRST_LAUNCH_UI_SPEC.md`

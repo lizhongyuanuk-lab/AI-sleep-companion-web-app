@@ -24,6 +24,12 @@ iPhone 16 Portrait · Single-Mode Final Draft
 - 本文件决定这些内容怎么显示、怎么动、怎么切状态
 - 历史 Talk UI 说明、旧版冷蓝壳层、旧版 3D icon 方向均不再作为实现依据
 
+Shared layout baseline:
+
+- [docs/GLOBAL_MOBILE_LAYOUT_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/GLOBAL_MOBILE_LAYOUT_SPEC.md) applies by default
+- Talk may override the shared bottom-action spacing because it is a fixed-dock page
+- Talk may keep a full-bleed background because the global document constrains content overlay, not background imagery
+
 ## 1. Core Page Definition
 
 Talk main screen 必须表现为：

@@ -5,11 +5,11 @@ type IconProps = {
 export function SettingsIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <circle cx="12" cy="12" r="2.9" stroke="currentColor" strokeWidth="1.45" />
+      <circle cx="12" cy="12" r="2.9" stroke="currentColor" strokeWidth="1.75" />
       <path
         d="M12 5.2v1.55M12 17.25v1.55M5.2 12h1.55M17.25 12h1.55M7.18 7.18l1.08 1.08M15.74 15.74l1.08 1.08M16.82 7.18l-1.08 1.08M8.26 15.74l-1.08 1.08"
         stroke="currentColor"
-        strokeWidth="1.35"
+        strokeWidth="1.65"
         strokeLinecap="round"
       />
     </svg>

@@ -22,6 +22,11 @@ The experience should communicate:
 
 The page should feel like a real product UI screen, not like a marketing poster or editorial composition.
 
+Shared layout baseline:
+
+- [docs/GLOBAL_MOBILE_LAYOUT_SPEC.md](/Users/zhongyuanli/Documents/Playground/ai-companion-web/docs/GLOBAL_MOBILE_LAYOUT_SPEC.md) applies by default
+- Memory is a standard content page and should follow the shared safe-area, hero-spacing, grouped-content, and bottom-action rules unless this spec explicitly overrides them
+
 ## 2. Design Principles
 
 ### 2.1 Core principles

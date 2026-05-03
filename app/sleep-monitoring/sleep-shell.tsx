@@ -164,36 +164,6 @@ function DetailIcon({
   );
 }
 
-function ArrowIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className={styles.ctaIcon} aria-hidden="true">
-      <path
-        d="M4.5 10h9m0 0-3.3-3.3M13.5 10l-3.3 3.3"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function RetryIcon() {
-  return (
-    <svg viewBox="0 0 20 20" className={styles.ctaIcon} aria-hidden="true">
-      <path
-        d="M15.1 7.4A5.8 5.8 0 0 0 4.6 9.7m.3 3A5.8 5.8 0 0 0 15.4 10M4.6 9.7V5.6m0 4.1h4.1M15.4 10h-4.1m4.1 0v4.1"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 function SummaryCard({ pageData }: { pageData: SleepPageData }) {
   const summary = pageData.summary_card;
 
@@ -410,8 +380,7 @@ function SuggestionCard({
           onAction(suggestion);
         }}
       >
-        <span>{suggestion.cta_label}</span>
-        <ArrowIcon />
+        {suggestion.cta_label}
       </button>
     </section>
   );
@@ -437,8 +406,7 @@ function EmptyStateCard({
           onAction(suggestion);
         }}
       >
-        <span>{suggestion.cta_label}</span>
-        <ArrowIcon />
+        {suggestion.cta_label}
       </button>
     </section>
   );
@@ -475,8 +443,7 @@ function ErrorStateCard({
           onStartTonight();
         }}
       >
-        <span>{retryAvailable ? "Retry" : "Start tonight"}</span>
-        {retryAvailable ? <RetryIcon /> : <ArrowIcon />}
+        {retryAvailable ? "Retry" : "Start tonight"}
       </button>
     </section>
   );
