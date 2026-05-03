@@ -9,9 +9,14 @@ export function AppFrame({
   children: React.ReactNode;
 }>) {
   const pathname = usePathname();
-  const isImmersiveRoute =
+  const isFullBleedRoute =
+    pathname === "/" ||
     pathname === "/talk" ||
+    pathname.startsWith("/talk/") ||
     pathname === "/room" ||
+    pathname.startsWith("/room/");
+  const isImmersiveRoute =
+    isFullBleedRoute ||
     pathname === "/memory" ||
     pathname.startsWith("/memory/") ||
     pathname === "/sleep-monitoring" ||
@@ -20,10 +25,12 @@ export function AppFrame({
   return (
     <div
       className={[
-        "mx-auto flex min-h-screen w-full max-w-md flex-col",
-        isImmersiveRoute
+        "flex min-h-screen w-full flex-col",
+        isFullBleedRoute
           ? "overflow-hidden bg-transparent"
-          : "border-x border-white/60 bg-white/88 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur",
+          : isImmersiveRoute
+          ? "overflow-hidden bg-transparent"
+          : "mx-auto max-w-md border-x border-white/60 bg-white/88 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur",
       ].join(" ")}
     >
       <main className={isImmersiveRoute ? "flex-1" : "flex-1 px-5 pb-8 pt-6"}>

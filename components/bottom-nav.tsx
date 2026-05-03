@@ -14,6 +14,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   if (
+    pathname === "/" ||
     pathname === "/talk" ||
     pathname === "/room" ||
     pathname === "/memory" ||

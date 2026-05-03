@@ -1,0 +1,642 @@
+"use client";
+
+import { startTransition, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import styles from "./first-launch-flow.module.css";
+import {
+  FIRST_LAUNCH_ONBOARDING_OPTIONS_V1,
+  PERSONAL_ROOM_THEME_OPTIONS_V1,
+  buildGeneratedPersonalRoomRecord,
+  buildPostOnboardingSessionPreset,
+  clearFirstLaunchDraft,
+  clearPersonalRoomGenerationDraft,
+  createEmptyFirstLaunchDraft,
+  createPersonalRoomGenerationDraft,
+  ensureGuestAuthStatus,
+  readFirstLaunchDraft,
+  readGeneratedPersonalRoomRecord,
+  readHasCompletedFirstLaunchFlow,
+  readPersonalRoomGenerationDraft,
+  readPostOnboardingSessionPreset,
+  writeFirstLaunchDraft,
+  writeGeneratedPersonalRoomRecord,
+  writeHasCompletedFirstLaunchFlow,
+  writePersonalRoomGenerationDraft,
+  writePostOnboardingSessionPreset,
+  type FirstLaunchDraft,
+  type FirstLaunchStep,
+  type PersonalRoomTheme,
+  type PostOnboardingSessionPreset,
+  type Q1State,
+  type Q2SupportStyle,
+} from "@/lib/first-launch";
+
+const generationSuccessDelayMs = 1700;
+
+const progressStepOrder: FirstLaunchStep[] = [
+  "onboarding_q1",
+  "onboarding_q2",
+  "session_result",
+  "create_room_entry",
+  "select_room_theme",
+];
+
+function getNextDraftState(
+  draft: FirstLaunchDraft,
+  patch: Partial<FirstLaunchDraft>,
+): FirstLaunchDraft {
+  return {
+    ...draft,
+    ...patch,
+    updated_at: new Date().toISOString(),
+  };
+}
+
+function getProgressIndex(step: FirstLaunchStep) {
+  const visibleIndex = progressStepOrder.indexOf(step);
+  return visibleIndex < 0 ? -1 : visibleIndex;
+}
+
+function getThemePreviewClass(theme: PersonalRoomTheme | null) {
+  switch (theme) {
+    case "forest_nature":
+      return styles.previewThemeForest;
+    case "rainy_window":
+      return styles.previewThemeRain;
+    case "starry_open":
+      return styles.previewThemeStar;
+    case "warm_indoor":
+    default:
+      return styles.previewThemeWarm;
+  }
+}
+
+export function FirstLaunchFlow() {
+  const router = useRouter();
+  const generationTimerRef = useRef<number | null>(null);
+  const hydrationTimerRef = useRef<number | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const [hasCompletedFlow, setHasCompletedFlow] = useState(false);
+  const [authStatus, setAuthStatus] = useState<"guest" | "authenticated">("guest");
+  const [draft, setDraft] = useState<FirstLaunchDraft>(createEmptyFirstLaunchDraft());
+  const [preset, setPreset] = useState<PostOnboardingSessionPreset | null>(null);
+
+  useEffect(() => {
+    hydrationTimerRef.current = window.setTimeout(() => {
+      const nextAuthStatus = ensureGuestAuthStatus();
+
+      setAuthStatus(nextAuthStatus);
+      setDraft(readFirstLaunchDraft());
+      setPreset(readPostOnboardingSessionPreset());
+      readGeneratedPersonalRoomRecord();
+      readPersonalRoomGenerationDraft();
+      setHasCompletedFlow(readHasCompletedFirstLaunchFlow());
+      setIsHydrated(true);
+    }, 0);
+
+    return () => {
+      if (hydrationTimerRef.current !== null) {
+        window.clearTimeout(hydrationTimerRef.current);
+        hydrationTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated || !hasCompletedFlow) {
+      return;
+    }
+
+    startTransition(() => {
+      router.replace("/room");
+    });
+  }, [hasCompletedFlow, isHydrated, router]);
+
+  useEffect(() => {
+    if (!isHydrated || draft.current_step !== "room_generating") {
+      return;
+    }
+
+    generationTimerRef.current = window.setTimeout(() => {
+      if (!draft.selected_visual_theme) {
+        const generationDraft = createPersonalRoomGenerationDraft({
+          visual_theme: null,
+          generation_status: "failed",
+        });
+
+        writePersonalRoomGenerationDraft(generationDraft);
+        setDraft((currentDraft) =>
+          getNextDraftState(currentDraft, {
+            current_step: "select_room_theme",
+          }),
+        );
+        return;
+      }
+
+      const generationDraft = createPersonalRoomGenerationDraft({
+        visual_theme: draft.selected_visual_theme,
+        generation_seed_id: `seed-${Date.now()}`,
+        generation_job_id: `job-${Date.now()}`,
+        generation_status: "ready",
+        preview_asset_id:
+          PERSONAL_ROOM_THEME_OPTIONS_V1.find(
+            (option) => option.value === draft.selected_visual_theme,
+          )?.previewAssetId ?? null,
+      });
+
+      writePersonalRoomGenerationDraft(generationDraft);
+      writeGeneratedPersonalRoomRecord(
+        buildGeneratedPersonalRoomRecord(draft.selected_visual_theme),
+      );
+      setDraft((currentDraft) =>
+        getNextDraftState(currentDraft, {
+          current_step: "room_generation_preview",
+        }),
+      );
+    }, generationSuccessDelayMs);
+
+    return () => {
+      if (generationTimerRef.current !== null) {
+        window.clearTimeout(generationTimerRef.current);
+        generationTimerRef.current = null;
+      }
+    };
+  }, [draft.current_step, draft.selected_visual_theme, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated || hasCompletedFlow) {
+      return;
+    }
+
+    writeFirstLaunchDraft(draft);
+  }, [draft, hasCompletedFlow, isHydrated]);
+
+  const activeTheme = useMemo(
+    () =>
+      PERSONAL_ROOM_THEME_OPTIONS_V1.find(
+        (option) => option.value === draft.selected_visual_theme,
+      ) ?? null,
+    [draft.selected_visual_theme],
+  );
+  const progressIndex = getProgressIndex(draft.current_step);
+  const shouldRedirectToRoom = isHydrated && hasCompletedFlow;
+
+  const updateDraft = (patch: Partial<FirstLaunchDraft>) => {
+    setDraft((currentDraft) => getNextDraftState(currentDraft, patch));
+  };
+
+  const handleStart = () => {
+    updateDraft({
+      current_step: "onboarding_q1",
+    });
+  };
+
+  const handleSelectQ1 = (value: Q1State) => {
+    updateDraft({
+      q1_state: value,
+    });
+  };
+
+  const handleContinueToQ2 = () => {
+    if (!draft.q1_state) {
+      return;
+    }
+
+    updateDraft({
+      current_step: "onboarding_q2",
+    });
+  };
+
+  const handleSelectQ2 = (value: Q2SupportStyle) => {
+    updateDraft({
+      q2_support_style: value,
+    });
+  };
+
+  const handleBackToQ1 = () => {
+    updateDraft({
+      current_step: "onboarding_q1",
+    });
+  };
+
+  const handleContinueToResult = () => {
+    if (!draft.q1_state || !draft.q2_support_style) {
+      return;
+    }
+
+    const nextPreset = buildPostOnboardingSessionPreset({
+      q1State: draft.q1_state,
+      q2SupportStyle: draft.q2_support_style,
+    });
+
+    writePostOnboardingSessionPreset(nextPreset);
+    setPreset(nextPreset);
+    updateDraft({
+      current_step: "session_result",
+    });
+  };
+
+  const handleOpenCreateRoomEntry = () => {
+    updateDraft({
+      current_step: "create_room_entry",
+    });
+  };
+
+  const completeAndEnterRoom = () => {
+    writeHasCompletedFirstLaunchFlow(true);
+    clearFirstLaunchDraft();
+    clearPersonalRoomGenerationDraft();
+    setHasCompletedFlow(true);
+    updateDraft({
+      current_step: "room_page",
+    });
+  };
+
+  const handleSeeExistingRooms = () => {
+    completeAndEnterRoom();
+  };
+
+  const handleEnterCreateRoomBranch = () => {
+    updateDraft({
+      current_step: "select_room_theme",
+      entered_create_room_branch: true,
+    });
+  };
+
+  const handleSelectTheme = (theme: PersonalRoomTheme) => {
+    updateDraft({
+      selected_visual_theme: theme,
+    });
+  };
+
+  const handleGenerateRoom = () => {
+    if (!draft.selected_visual_theme) {
+      return;
+    }
+
+    writePersonalRoomGenerationDraft(
+      createPersonalRoomGenerationDraft({
+        visual_theme: draft.selected_visual_theme,
+        generation_status: "generating",
+        generation_seed_id: `seed-${Date.now()}`,
+        generation_job_id: `job-${Date.now()}`,
+      }),
+    );
+    updateDraft({
+      current_step: "room_generating",
+    });
+  };
+
+  const handleRegenerateRoom = () => {
+    handleGenerateRoom();
+  };
+
+  const handleUseGeneratedRoom = () => {
+    completeAndEnterRoom();
+  };
+
+  const handlePreviewSkip = () => {
+    completeAndEnterRoom();
+  };
+
+  if (!isHydrated || shouldRedirectToRoom) {
+    return (
+      <section className={styles.shell}>
+        <div className={styles.backgroundGlow} />
+        <div className={styles.backgroundGlowSecondary} />
+        <div className={styles.redirectState}>
+          <div className={styles.redirectCard}>
+            <h1 className={styles.redirectTitle}>正在进入你的空间</h1>
+            <p className={styles.redirectCopy}>
+              首次链路已完成，接下来会直接回到 Room。
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className={styles.shell}>
+      <div className={styles.backgroundGlow} />
+      <div className={styles.backgroundGlowSecondary} />
+      <div className={styles.content}>
+        <div className={styles.topMeta}>
+          <span className={styles.eyebrow}>
+            <span className={styles.eyebrowDot} />
+            First launch
+          </span>
+          <span className={styles.authPill}>
+            {authStatus === "authenticated" ? "Signed in" : "Guest first"}
+          </span>
+        </div>
+
+        <div className={styles.hero}>
+          <h1 className={styles.heroTitle}>今晚先从被接住开始。</h1>
+          <p className={styles.heroDescription}>
+            我们先用很短的一段首次链路，帮你把今晚更需要的陪伴方式放稳，再把你送进 Room。
+          </p>
+          {progressIndex >= 0 ? (
+            <div className={styles.progress} aria-label="Flow progress">
+              {progressStepOrder.map((step, index) => (
+                <span key={step} className={styles.progressTrack}>
+                  <span
+                    className={styles.progressFill}
+                    style={{
+                      width:
+                        index < progressIndex
+                          ? "100%"
+                          : index === progressIndex
+                          ? "64%"
+                          : "0%",
+                    }}
+                  />
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div className={styles.panelWrap}>
+          {draft.current_step === "welcome" ? (
+            <article className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <p className={styles.panelKicker}>Welcome</p>
+                <h2 className={styles.panelTitle}>先用两步，帮今晚的陪伴找到更合适的入口。</h2>
+                <p className={styles.panelDescription}>
+                  不需要注册，也不会立刻把你送进聊天。我们只先确认你现在更需要怎样被接住。
+                </p>
+              </div>
+              <div className={styles.buttonStack}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={handleStart}
+                >
+                  开始
+                </button>
+              </div>
+            </article>
+          ) : null}
+
+          {draft.current_step === "onboarding_q1" ? (
+            <article className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <p className={styles.panelKicker}>Question 1</p>
+                <h2 className={styles.panelTitle}>
+                  {FIRST_LAUNCH_ONBOARDING_OPTIONS_V1.q1.title}
+                </h2>
+                <p className={styles.panelDescription}>
+                  只选一个最接近的就好，不需要把自己解释完整。
+                </p>
+              </div>
+              <div className={styles.optionList}>
+                {FIRST_LAUNCH_ONBOARDING_OPTIONS_V1.q1.options.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={[
+                      styles.optionButton,
+                      draft.q1_state === option.value ? styles.optionButtonSelected : "",
+                    ].join(" ")}
+                    onClick={() => handleSelectQ1(option.value)}
+                  >
+                    <p className={styles.optionTitle}>{option.label}</p>
+                  </button>
+                ))}
+              </div>
+              <div className={styles.buttonStack}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={handleContinueToQ2}
+                  disabled={!draft.q1_state}
+                >
+                  继续
+                </button>
+              </div>
+            </article>
+          ) : null}
+
+          {draft.current_step === "onboarding_q2" ? (
+            <article className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <p className={styles.panelKicker}>Question 2</p>
+                <h2 className={styles.panelTitle}>
+                  {FIRST_LAUNCH_ONBOARDING_OPTIONS_V1.q2.title}
+                </h2>
+                <p className={styles.panelDescription}>
+                  这一步只决定今晚的陪伴节奏，不会替你自动选房间。
+                </p>
+              </div>
+              <div className={styles.optionList}>
+                {FIRST_LAUNCH_ONBOARDING_OPTIONS_V1.q2.options.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={[
+                      styles.optionButton,
+                      draft.q2_support_style === option.value
+                        ? styles.optionButtonSelected
+                        : "",
+                    ].join(" ")}
+                    onClick={() => handleSelectQ2(option.value)}
+                  >
+                    <p className={styles.optionTitle}>{option.label}</p>
+                  </button>
+                ))}
+              </div>
+              <div className={styles.buttonStack}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={handleContinueToResult}
+                  disabled={!draft.q2_support_style}
+                >
+                  继续
+                </button>
+                <button
+                  type="button"
+                  className={styles.ghostButton}
+                  onClick={handleBackToQ1}
+                >
+                  返回上一题
+                </button>
+              </div>
+            </article>
+          ) : null}
+
+          {draft.current_step === "session_result" && preset ? (
+            <article className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <p className={styles.panelKicker}>Result</p>
+                <h2 className={styles.panelTitle}>{preset.result_headline}</h2>
+                <p className={styles.panelDescription}>
+                  {preset.result_supporting_copy}
+                </p>
+              </div>
+              <ul className={styles.resultList}>
+                <li className={styles.resultItem}>
+                  这只会先生成今晚的一份陪伴 preset，不会直接把你送进 Talk。
+                </li>
+                <li className={styles.resultItem}>
+                  接下来你可以直接去看现成空间，也可以先为今晚做一个更私人的 Room 方向。
+                </li>
+              </ul>
+              <div className={styles.buttonStack}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={handleOpenCreateRoomEntry}
+                >
+                  继续
+                </button>
+              </div>
+            </article>
+          ) : null}
+
+          {draft.current_step === "create_room_entry" && preset ? (
+            <article className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <p className={styles.panelKicker}>Create personal room</p>
+                <h2 className={styles.panelTitle}>
+                  今晚，我也可以为你准备一个属于你的睡眠空间。
+                </h2>
+                <p className={styles.panelDescription}>
+                  {preset.room_bridge_copy}
+                </p>
+              </div>
+              <div className={styles.buttonStack}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={handleEnterCreateRoomBranch}
+                >
+                  生成我的空间
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={handleSeeExistingRooms}
+                >
+                  先看看现成空间
+                </button>
+              </div>
+            </article>
+          ) : null}
+
+          {draft.current_step === "select_room_theme" ? (
+            <article className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <p className={styles.panelKicker}>Theme selection</p>
+                <h2 className={styles.panelTitle}>你希望今晚的空间更像哪一种方向？</h2>
+                <p className={styles.panelDescription}>
+                  这里只决定视觉氛围，不会变成自由 prompt 工具。
+                </p>
+              </div>
+              <div className={styles.optionList}>
+                {PERSONAL_ROOM_THEME_OPTIONS_V1.map((theme) => (
+                  <button
+                    key={theme.value}
+                    type="button"
+                    className={[
+                      styles.optionButton,
+                      draft.selected_visual_theme === theme.value
+                        ? styles.optionButtonSelected
+                        : "",
+                    ].join(" ")}
+                    onClick={() => handleSelectTheme(theme.value)}
+                  >
+                    <p className={styles.optionTitle}>{theme.title}</p>
+                    <p className={styles.optionMeta}>{theme.description}</p>
+                  </button>
+                ))}
+              </div>
+              <div className={styles.buttonStack}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={handleGenerateRoom}
+                  disabled={!draft.selected_visual_theme}
+                >
+                  生成这个空间
+                </button>
+                <button
+                  type="button"
+                  className={styles.ghostButton}
+                  onClick={handleSeeExistingRooms}
+                >
+                  先看现成空间
+                </button>
+              </div>
+            </article>
+          ) : null}
+
+          {draft.current_step === "room_generating" ? (
+            <article className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <p className={styles.panelKicker}>Preparing room</p>
+                <h2 className={styles.panelTitle}>我在为你准备这个空间。</h2>
+              </div>
+              <div className={styles.loadingView}>
+                <div className={styles.loadingHalo} />
+                <p className={styles.loadingCopy}>
+                  先把光线、留白和包裹感放稳，让它更像今晚适合停留的一个房间。
+                </p>
+                <p className={styles.loadingMeta}>
+                  这一步只展示低刺激 loading，不显示进度条和技术状态。
+                </p>
+              </div>
+            </article>
+          ) : null}
+
+          {draft.current_step === "room_generation_preview" && activeTheme ? (
+            <article className={styles.panel}>
+              <div className={styles.panelHeader}>
+                <p className={styles.panelKicker}>Preview</p>
+                <h2 className={styles.panelTitle}>这是今晚为你准备的空间方向。</h2>
+                <p className={styles.panelDescription}>
+                  你可以使用它，也可以重新生成，或者先去看其他现成空间。
+                </p>
+              </div>
+              <div className={styles.previewFrame}>
+                <div className={getThemePreviewClass(activeTheme.value)} />
+                <div className={styles.previewGlow} />
+                <div className={styles.previewWindow} />
+                <div className={styles.previewInterior} />
+                <div className={styles.previewCopy}>
+                  <span className={styles.previewPill}>{activeTheme.label}</span>
+                  <h3 className={styles.previewTitle}>Your Room</h3>
+                  <p className={styles.previewDescription}>{activeTheme.description}</p>
+                </div>
+              </div>
+              <div className={styles.buttonStack}>
+                <button
+                  type="button"
+                  className={styles.primaryButton}
+                  onClick={handleUseGeneratedRoom}
+                >
+                  使用这个空间
+                </button>
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={handleRegenerateRoom}
+                >
+                  重新生成
+                </button>
+                <button
+                  type="button"
+                  className={styles.ghostButton}
+                  onClick={handlePreviewSkip}
+                >
+                  先看其他空间
+                </button>
+              </div>
+            </article>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}

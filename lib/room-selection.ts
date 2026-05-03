@@ -20,13 +20,16 @@ export function resolveRoomId(value: string | null | undefined): RoomId | null {
 export function getInitialRoomId({
   lastEnteredRoomId,
   storedRoomId,
+  weakLandingRoomId,
 }: {
   lastEnteredRoomId?: string | null;
   storedRoomId?: string | null;
+  weakLandingRoomId?: string | null;
 }) {
   return (
     resolveRoomId(lastEnteredRoomId) ??
     resolveRoomId(storedRoomId) ??
+    resolveRoomId(weakLandingRoomId) ??
     defaultRoomId
   );
 }

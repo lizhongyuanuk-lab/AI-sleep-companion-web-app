@@ -1,6 +1,7 @@
 "use client";
 
 import { startTransition, useEffect, useRef, useState } from "react";
+import { useMemo } from "react";
 import { ShellTopNav } from "@/components/shell-top-nav";
 import {
   defaultSceneId,
@@ -21,6 +22,11 @@ import {
   readStoredSceneId,
   writeStoredSceneId,
 } from "@/lib/scene-selection";
+import {
+  clearFirstLaunchTalkEntryContext,
+  readFirstLaunchTalkEntryContext,
+  type FirstLaunchTalkEntryContext,
+} from "@/lib/first-launch";
 
 type TalkUiState =
   | "idle_default"
@@ -53,6 +59,105 @@ const environmentSoundOptions = [
   { value: true, label: "On" },
   { value: false, label: "Off" },
 ] as const;
+
+const firstLaunchOpeningCopyMap: Record<
+  FirstLaunchTalkEntryContext["opening_copy_id"],
+  string
+> = {
+  sleep_soft_landing: "今晚先慢一点，我们可以轻一点开始。",
+  slow_the_room: "今晚不用急着把一切说清，先把房间慢下来。",
+  steady_the_breath: "先把呼吸放稳，剩下的我会跟上。",
+  stay_with_you: "你不用马上开口很多，我会先在这里陪着你。",
+};
+
+function getFirstLaunchTiming(context: FirstLaunchTalkEntryContext | null) {
+  if (!context) {
+    return {
+      standbyDelayMs: 1400,
+      quietDelayMs: 9000,
+    };
+  }
+
+  switch (context.base_mode) {
+    case "meditative":
+      return {
+        standbyDelayMs: 1100,
+        quietDelayMs: 6200,
+      };
+    case "sleep_settling":
+      return {
+        standbyDelayMs: 1200,
+        quietDelayMs: 6800,
+      };
+    case "quiet_presence":
+      return {
+        standbyDelayMs: 1300,
+        quietDelayMs: 7200,
+      };
+    case "gentle_grounding":
+    default:
+      return {
+        standbyDelayMs: 1500,
+        quietDelayMs: 9800,
+      };
+  }
+}
+
+function getVoiceFlowTiming(
+  context: FirstLaunchTalkEntryContext | null,
+  voiceTurnCount: number,
+) {
+  if (!context) {
+    return {
+      recordingDurationMs: 1800,
+      processingDurationMs: 1200,
+      speakingDurationMs: 3400,
+      postResponseQuietDelayMs: 9000,
+    };
+  }
+
+  const withinFirstThreeTurns = voiceTurnCount < 3;
+  const baseSpeakingDurationMs =
+    context.reply_length_default === "short" ? 2800 : 3800;
+  const questionBudgetAdjustmentMs =
+    withinFirstThreeTurns && context.question_budget_first_3_turns === 0
+      ? -380
+      : withinFirstThreeTurns && context.question_budget_first_3_turns === 1
+      ? 260
+      : 0;
+
+  switch (context.base_mode) {
+    case "meditative":
+      return {
+        recordingDurationMs: 1700,
+        processingDurationMs: 1000,
+        speakingDurationMs: baseSpeakingDurationMs + questionBudgetAdjustmentMs - 220,
+        postResponseQuietDelayMs: 5200,
+      };
+    case "sleep_settling":
+      return {
+        recordingDurationMs: 1650,
+        processingDurationMs: 1050,
+        speakingDurationMs: baseSpeakingDurationMs + questionBudgetAdjustmentMs - 320,
+        postResponseQuietDelayMs: context.sleep_transition_enabled ? 4800 : 6800,
+      };
+    case "quiet_presence":
+      return {
+        recordingDurationMs: 1750,
+        processingDurationMs: 950,
+        speakingDurationMs: baseSpeakingDurationMs + questionBudgetAdjustmentMs - 420,
+        postResponseQuietDelayMs: 5600,
+      };
+    case "gentle_grounding":
+    default:
+      return {
+        recordingDurationMs: 1900,
+        processingDurationMs: 1300,
+        speakingDurationMs: baseSpeakingDurationMs + questionBudgetAdjustmentMs + 180,
+        postResponseQuietDelayMs: 8400,
+      };
+  }
+}
 
 function clampVolume(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
@@ -147,6 +252,7 @@ function getHint(
   uiState: TalkUiState,
   imageAttached: boolean,
   settingsOpen: boolean,
+  firstLaunchHint: string | null,
 ) {
   if (uiState === "error_permission") {
     return "Microphone access is unavailable";
@@ -162,6 +268,15 @@ function getHint(
 
   if (imageAttached && uiState !== "voice_recording") {
     return "Image attached";
+  }
+
+  if (
+    firstLaunchHint &&
+    (uiState === "idle_default" ||
+      uiState === "standby_for_voice" ||
+      uiState === "quiet_mode")
+  ) {
+    return firstLaunchHint;
   }
 
   return null;
@@ -196,11 +311,36 @@ export function TalkShell({
   const [sceneStorageReady, setSceneStorageReady] = useState(
     Boolean(initialSceneParam),
   );
+  const [firstLaunchContext, setFirstLaunchContext] =
+    useState<FirstLaunchTalkEntryContext | null>(null);
+  const [voiceTurnCount, setVoiceTurnCount] = useState(0);
+  const [firstLaunchIntroDismissed, setFirstLaunchIntroDismissed] =
+    useState(false);
   const [soundSettings, setSoundSettings] = useState<SoundDefaults>(
     sceneConfigMap[initialSceneId].soundDefaults,
   );
+  const firstLaunchHint = useMemo(
+    () =>
+      firstLaunchContext && !firstLaunchIntroDismissed
+        ? firstLaunchOpeningCopyMap[firstLaunchContext.opening_copy_id]
+        : null,
+    [firstLaunchContext, firstLaunchIntroDismissed],
+  );
+  const firstLaunchTiming = useMemo(
+    () => getFirstLaunchTiming(firstLaunchContext),
+    [firstLaunchContext],
+  );
+  const voiceFlowTiming = useMemo(
+    () => getVoiceFlowTiming(firstLaunchContext, voiceTurnCount),
+    [firstLaunchContext, voiceTurnCount],
+  );
 
-  const stateHint = getHint(uiState, imageAttached, settingsOpen);
+  const stateHint = getHint(
+    uiState,
+    imageAttached,
+    settingsOpen,
+    firstLaunchHint,
+  );
   const hintTone = getHintTone(uiState);
   const primaryLabel = getPrimaryLabel(uiState);
   const settingsUnavailable = uiState === "voice_recording";
@@ -222,16 +362,18 @@ export function TalkShell({
     timersRef.current.push(timerId);
   };
 
-  const scheduleQuietMode = (delayMs = 9000) => {
+  const scheduleQuietMode = (delayMs = firstLaunchTiming.quietDelayMs) => {
     queueTransition(() => {
       setUiState("quiet_mode");
     }, delayMs);
   };
 
-  const enterStandby = () => {
+  const enterStandby = (
+    quietDelayMs = firstLaunchTiming.quietDelayMs,
+  ) => {
     clearQueuedTransitions();
     setUiState("standby_for_voice");
-    scheduleQuietMode();
+    scheduleQuietMode(quietDelayMs);
   };
 
   const ensureVoiceRuntime = () => {
@@ -261,10 +403,10 @@ export function TalkShell({
     setUiState("processing");
     queueTransition(() => {
       setUiState("ai_speaking");
-    }, 1200);
+    }, voiceFlowTiming.processingDurationMs);
     queueTransition(() => {
-      enterStandby();
-    }, 4600);
+      enterStandby(voiceFlowTiming.postResponseQuietDelayMs);
+    }, voiceFlowTiming.processingDurationMs + voiceFlowTiming.speakingDurationMs);
   };
 
   const startVoiceFlow = () => {
@@ -275,9 +417,11 @@ export function TalkShell({
     clearQueuedTransitions();
     setSettingsOpen(false);
     setUiState("voice_recording");
+    setFirstLaunchIntroDismissed(true);
+    setVoiceTurnCount((currentCount) => currentCount + 1);
     queueTransition(() => {
       beginProcessingFlow();
-    }, 1800);
+    }, voiceFlowTiming.recordingDurationMs);
   };
 
   const handlePrimaryAction = () => {
@@ -354,6 +498,23 @@ export function TalkShell({
   };
 
   useEffect(() => {
+    const context = readFirstLaunchTalkEntryContext();
+
+    if (!context) {
+      return;
+    }
+
+    const hydrationTimer = window.setTimeout(() => {
+      setFirstLaunchContext(context);
+      clearFirstLaunchTalkEntryContext();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(hydrationTimer);
+    };
+  }, []);
+
+  useEffect(() => {
     if (initialSceneParam) {
       startTransition(() => {
         setActiveSceneId(getInitialSceneId(initialSceneParam));
@@ -402,10 +563,10 @@ export function TalkShell({
     } else {
       queueTransition(() => {
         setUiState("standby_for_voice");
-      }, 1400);
+      }, firstLaunchTiming.standbyDelayMs);
       queueTransition(() => {
         setUiState("quiet_mode");
-      }, 9000);
+      }, firstLaunchTiming.quietDelayMs);
     }
 
     const handleOffline = () => {
@@ -419,7 +580,7 @@ export function TalkShell({
       setUiState("standby_for_voice");
       queueTransition(() => {
         setUiState("quiet_mode");
-      }, 9000);
+      }, firstLaunchTiming.quietDelayMs);
     };
 
     window.addEventListener("offline", handleOffline);
@@ -430,7 +591,7 @@ export function TalkShell({
       window.removeEventListener("online", handleOnline);
       clearQueuedTransitions();
     };
-  }, []);
+  }, [firstLaunchTiming.quietDelayMs, firstLaunchTiming.standbyDelayMs]);
 
   useEffect(() => {
     skipNextSoundPersistRef.current = true;
@@ -535,7 +696,7 @@ export function TalkShell({
             <SettingsIcon className={styles.utilityIcon} />
           </button>
 
-          <ShellTopNav />
+          <ShellTopNav className={styles.topNav} />
         </div>
 
         {settingsOpen ? (

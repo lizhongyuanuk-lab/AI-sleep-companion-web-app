@@ -11,6 +11,15 @@ import {
 import { useRouter } from "next/navigation";
 import { sceneQueryParam, writeStoredSceneId } from "@/lib/scene-selection";
 import {
+  getWeakLandingRoomIdFromPreset,
+  getWeakLandingRoomIdFromTheme,
+  clearFirstLaunchTalkEntryContext,
+  markPostOnboardingSessionPresetConsumed,
+  readGeneratedPersonalRoomRecord,
+  readPostOnboardingSessionPreset,
+  writeFirstLaunchTalkEntryContext,
+} from "@/lib/first-launch";
+import {
   getInitialRoomId,
   readLastEnteredRoomId,
   readStoredRoomId,
@@ -187,9 +196,15 @@ export default function RoomPage() {
     hydrateTimerRef.current = window.setTimeout(() => {
       const lastEnteredRoomId = readLastEnteredRoomId();
       const storedRoomId = readStoredRoomId();
+      const activePreset = readPostOnboardingSessionPreset();
+      const generatedRoom = readGeneratedPersonalRoomRecord();
+      const weakLandingRoomId =
+        getWeakLandingRoomIdFromTheme(generatedRoom?.visual_theme) ??
+        getWeakLandingRoomIdFromPreset(activePreset);
       const nextInitialRoomId = getInitialRoomId({
         lastEnteredRoomId,
         storedRoomId,
+        weakLandingRoomId,
       });
 
       setInitialRoomId(nextInitialRoomId);
@@ -396,6 +411,32 @@ export default function RoomPage() {
     writeStoredRoomId(roomId);
     writeLastEnteredRoomId(roomId);
     writeStoredSceneId(room.talkSceneId);
+
+    const activePreset = readPostOnboardingSessionPreset();
+
+    if (activePreset?.status === "active") {
+      writeFirstLaunchTalkEntryContext({
+        preset_id: activePreset.preset_id,
+        q1_state: activePreset.q1_state,
+        q2_support_style: activePreset.q2_support_style,
+        base_mode: activePreset.base_mode,
+        state_modifier: activePreset.state_modifier,
+        opening_copy_id: activePreset.opening_copy_id,
+        reply_length_default: activePreset.reply_length_default,
+        question_budget_first_3_turns:
+          activePreset.question_budget_first_3_turns,
+        sleep_transition_enabled: activePreset.sleep_transition_enabled,
+        fallback_chain: activePreset.fallback_chain,
+        room_id: room.id,
+        room_source: "library",
+        background_asset_id: room.backgroundAsset,
+        room_theme: room.visualTone,
+        room_entry_action: "room_surface_tap",
+      });
+      markPostOnboardingSessionPresetConsumed();
+    } else {
+      clearFirstLaunchTalkEntryContext();
+    }
 
     enterTimerRef.current = window.setTimeout(() => {
       startTransition(() => {
