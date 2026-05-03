@@ -8,6 +8,7 @@ import {
   PERSONAL_ROOM_THEME_OPTIONS_V1,
   buildGeneratedPersonalRoomRecord,
   buildPostOnboardingSessionPreset,
+  clearFirstLaunchFlowStorage,
   clearFirstLaunchDraft,
   clearPersonalRoomGenerationDraft,
   createEmptyFirstLaunchDraft,
@@ -71,6 +72,48 @@ function getThemePreviewClass(theme: PersonalRoomTheme | null) {
   }
 }
 
+function getResultHeadline(preset: PostOnboardingSessionPreset) {
+  switch (preset.base_mode) {
+    case "sleep_settling":
+      return "Tonight stays lighter.";
+    case "meditative":
+      return "We can narrow the room first.";
+    case "quiet_presence":
+      return "You do not have to carry this out loud.";
+    case "gentle_grounding":
+    default:
+      return "We can settle this gently.";
+  }
+}
+
+function getResultSupportingCopy(preset: PostOnboardingSessionPreset) {
+  switch (preset.base_mode) {
+    case "sleep_settling":
+      return "Shorter prompts. Less friction. An easier slide toward sleep.";
+    case "meditative":
+      return "Less explanation, more breath, and a steadier pace.";
+    case "quiet_presence":
+      return "More presence, fewer words, and no pressure to perform a mood.";
+    case "gentle_grounding":
+    default:
+      return "A softer pace first, then a little more room to exhale.";
+  }
+}
+
+function getRoomBridgeCopy(preset: PostOnboardingSessionPreset) {
+  switch (preset.state_modifier) {
+    case "overthinking":
+      return "Pick a room first. Let the environment do some of the quieting.";
+    case "emotionally_full":
+      return "You still keep the choice. The room only gives the feeling somewhere to land.";
+    case "needs_company":
+      return "Choose a room that feels close enough to stay in for a while.";
+    case "low_energy":
+    default:
+      return "Start with a room that feels easy to stay inside.";
+  }
+}
+
 export function FirstLaunchFlow() {
   const router = useRouter();
   const generationTimerRef = useRef<number | null>(null);
@@ -83,6 +126,14 @@ export function FirstLaunchFlow() {
 
   useEffect(() => {
     hydrationTimerRef.current = window.setTimeout(() => {
+      const searchParams = new URLSearchParams(window.location.search);
+
+      if (searchParams.get("reset-first-launch") === "1") {
+        clearFirstLaunchFlowStorage();
+        writeHasCompletedFirstLaunchFlow(false);
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+
       const nextAuthStatus = ensureGuestAuthStatus();
 
       setAuthStatus(nextAuthStatus);
@@ -306,10 +357,8 @@ export function FirstLaunchFlow() {
         <div className={styles.backgroundGlowSecondary} />
         <div className={styles.redirectState}>
           <div className={styles.redirectCard}>
-            <h1 className={styles.redirectTitle}>正在进入你的空间</h1>
-            <p className={styles.redirectCopy}>
-              首次链路已完成，接下来会直接回到 Room。
-            </p>
+            <h1 className={styles.redirectTitle}>Heading back to Room</h1>
+            <p className={styles.redirectCopy}>Your first entry is already set.</p>
           </div>
         </div>
       </section>
@@ -332,10 +381,8 @@ export function FirstLaunchFlow() {
         </div>
 
         <div className={styles.hero}>
-          <h1 className={styles.heroTitle}>今晚先从被接住开始。</h1>
-          <p className={styles.heroDescription}>
-            我们先用很短的一段首次链路，帮你把今晚更需要的陪伴方式放稳，再把你送进 Room。
-          </p>
+          <h1 className={styles.heroTitle}>Start softly tonight.</h1>
+          <p className={styles.heroDescription}>Two quick steps. Then Room.</p>
           {progressIndex >= 0 ? (
             <div className={styles.progress} aria-label="Flow progress">
               {progressStepOrder.map((step, index) => (
@@ -362,9 +409,9 @@ export function FirstLaunchFlow() {
             <article className={styles.panel}>
               <div className={styles.panelHeader}>
                 <p className={styles.panelKicker}>Welcome</p>
-                <h2 className={styles.panelTitle}>先用两步，帮今晚的陪伴找到更合适的入口。</h2>
+                <h2 className={styles.panelTitle}>A gentler way in.</h2>
                 <p className={styles.panelDescription}>
-                  不需要注册，也不会立刻把你送进聊天。我们只先确认你现在更需要怎样被接住。
+                  No sign-up. No chat wall. Just a quick read on what you need tonight.
                 </p>
               </div>
               <div className={styles.buttonStack}>
@@ -373,7 +420,7 @@ export function FirstLaunchFlow() {
                   className={styles.primaryButton}
                   onClick={handleStart}
                 >
-                  开始
+                  Begin
                 </button>
               </div>
             </article>
@@ -387,7 +434,7 @@ export function FirstLaunchFlow() {
                   {FIRST_LAUNCH_ONBOARDING_OPTIONS_V1.q1.title}
                 </h2>
                 <p className={styles.panelDescription}>
-                  只选一个最接近的就好，不需要把自己解释完整。
+                  Pick the closest one. No need to explain everything.
                 </p>
               </div>
               <div className={styles.optionList}>
@@ -412,7 +459,7 @@ export function FirstLaunchFlow() {
                   onClick={handleContinueToQ2}
                   disabled={!draft.q1_state}
                 >
-                  继续
+                  Continue
                 </button>
               </div>
             </article>
@@ -426,7 +473,7 @@ export function FirstLaunchFlow() {
                   {FIRST_LAUNCH_ONBOARDING_OPTIONS_V1.q2.title}
                 </h2>
                 <p className={styles.panelDescription}>
-                  这一步只决定今晚的陪伴节奏，不会替你自动选房间。
+                  This shapes the pace, not the room.
                 </p>
               </div>
               <div className={styles.optionList}>
@@ -453,14 +500,14 @@ export function FirstLaunchFlow() {
                   onClick={handleContinueToResult}
                   disabled={!draft.q2_support_style}
                 >
-                  继续
+                  Continue
                 </button>
                 <button
                   type="button"
                   className={styles.ghostButton}
                   onClick={handleBackToQ1}
                 >
-                  返回上一题
+                  Back
                 </button>
               </div>
             </article>
@@ -470,26 +517,26 @@ export function FirstLaunchFlow() {
             <article className={styles.panel}>
               <div className={styles.panelHeader}>
                 <p className={styles.panelKicker}>Result</p>
-                <h2 className={styles.panelTitle}>{preset.result_headline}</h2>
+                <h2 className={styles.panelTitle}>{getResultHeadline(preset)}</h2>
                 <p className={styles.panelDescription}>
-                  {preset.result_supporting_copy}
+                  {getResultSupportingCopy(preset)}
                 </p>
               </div>
-              <ul className={styles.resultList}>
-                <li className={styles.resultItem}>
-                  这只会先生成今晚的一份陪伴 preset，不会直接把你送进 Talk。
-                </li>
-                <li className={styles.resultItem}>
-                  接下来你可以直接去看现成空间，也可以先为今晚做一个更私人的 Room 方向。
-                </li>
-              </ul>
+              <div className={styles.resultInfoBlock}>
+                <p className={styles.resultInfoLine}>
+                  This shapes tonight&apos;s session preset. It does not drop you into Talk.
+                </p>
+                <p className={styles.resultInfoLine}>
+                  Next you can browse rooms, or make one that feels a little more personal.
+                </p>
+              </div>
               <div className={styles.buttonStack}>
                 <button
                   type="button"
                   className={styles.primaryButton}
                   onClick={handleOpenCreateRoomEntry}
                 >
-                  继续
+                  Continue
                 </button>
               </div>
             </article>
@@ -499,11 +546,9 @@ export function FirstLaunchFlow() {
             <article className={styles.panel}>
               <div className={styles.panelHeader}>
                 <p className={styles.panelKicker}>Create personal room</p>
-                <h2 className={styles.panelTitle}>
-                  今晚，我也可以为你准备一个属于你的睡眠空间。
-                </h2>
+                <h2 className={styles.panelTitle}>I can make a room for tonight too.</h2>
                 <p className={styles.panelDescription}>
-                  {preset.room_bridge_copy}
+                  {getRoomBridgeCopy(preset)}
                 </p>
               </div>
               <div className={styles.buttonStack}>
@@ -512,14 +557,14 @@ export function FirstLaunchFlow() {
                   className={styles.primaryButton}
                   onClick={handleEnterCreateRoomBranch}
                 >
-                  生成我的空间
+                  Create my room
                 </button>
                 <button
                   type="button"
                   className={styles.secondaryButton}
                   onClick={handleSeeExistingRooms}
                 >
-                  先看看现成空间
+                  Browse rooms
                 </button>
               </div>
             </article>
@@ -529,9 +574,9 @@ export function FirstLaunchFlow() {
             <article className={styles.panel}>
               <div className={styles.panelHeader}>
                 <p className={styles.panelKicker}>Theme selection</p>
-                <h2 className={styles.panelTitle}>你希望今晚的空间更像哪一种方向？</h2>
+                <h2 className={styles.panelTitle}>What kind of room feels right tonight?</h2>
                 <p className={styles.panelDescription}>
-                  这里只决定视觉氛围，不会变成自由 prompt 工具。
+                  This is only a visual direction.
                 </p>
               </div>
               <div className={styles.optionList}>
@@ -559,14 +604,14 @@ export function FirstLaunchFlow() {
                   onClick={handleGenerateRoom}
                   disabled={!draft.selected_visual_theme}
                 >
-                  生成这个空间
+                  Generate this room
                 </button>
                 <button
                   type="button"
                   className={styles.ghostButton}
                   onClick={handleSeeExistingRooms}
                 >
-                  先看现成空间
+                  Browse rooms instead
                 </button>
               </div>
             </article>
@@ -576,15 +621,15 @@ export function FirstLaunchFlow() {
             <article className={styles.panel}>
               <div className={styles.panelHeader}>
                 <p className={styles.panelKicker}>Preparing room</p>
-                <h2 className={styles.panelTitle}>我在为你准备这个空间。</h2>
+                <h2 className={styles.panelTitle}>Preparing your room.</h2>
               </div>
               <div className={styles.loadingView}>
                 <div className={styles.loadingHalo} />
                 <p className={styles.loadingCopy}>
-                  先把光线、留白和包裹感放稳，让它更像今晚适合停留的一个房间。
+                  Soft light, more quiet, and a little more shelter.
                 </p>
                 <p className={styles.loadingMeta}>
-                  这一步只展示低刺激 loading，不显示进度条和技术状态。
+                  No progress bar. No system noise.
                 </p>
               </div>
             </article>
@@ -594,9 +639,9 @@ export function FirstLaunchFlow() {
             <article className={styles.panel}>
               <div className={styles.panelHeader}>
                 <p className={styles.panelKicker}>Preview</p>
-                <h2 className={styles.panelTitle}>这是今晚为你准备的空间方向。</h2>
+                <h2 className={styles.panelTitle}>A room for tonight.</h2>
                 <p className={styles.panelDescription}>
-                  你可以使用它，也可以重新生成，或者先去看其他现成空间。
+                  Use it, regenerate it, or keep browsing.
                 </p>
               </div>
               <div className={styles.previewFrame}>
@@ -616,21 +661,21 @@ export function FirstLaunchFlow() {
                   className={styles.primaryButton}
                   onClick={handleUseGeneratedRoom}
                 >
-                  使用这个空间
+                  Use this room
                 </button>
                 <button
                   type="button"
                   className={styles.secondaryButton}
                   onClick={handleRegenerateRoom}
                 >
-                  重新生成
+                  Regenerate
                 </button>
                 <button
                   type="button"
                   className={styles.ghostButton}
                   onClick={handlePreviewSkip}
                 >
-                  先看其他空间
+                  See other rooms
                 </button>
               </div>
             </article>
