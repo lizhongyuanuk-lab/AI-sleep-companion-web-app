@@ -12,6 +12,53 @@ This project should now move from UI-first prototype quality toward production-r
 - Replace mock behavior gradually behind stable interfaces
 - Prefer small, testable steps
 
+## Next 3 Suggested Tasks for a New Codex
+
+These are the most practical near-term tasks if a new Codex needs to pick up work immediately.
+
+### Task 1: Replace the default README with a real project README
+
+- Goal: make the repository understandable without opening multiple source files first
+- Main files:
+  - `README.md`
+  - `CODEX.md`
+  - `CODEX_HANDOFF.md`
+- Do not touch:
+  - page runtime files
+  - CSS modules
+  - route structure
+- Definition of done:
+  - README explains the product, routes, scripts, local run steps, and current mock/backend status
+
+### Task 2: Decide and document backend direction before wiring production data
+
+- Goal: reduce future rework by choosing auth, database, and API direction early
+- Main files:
+  - `TODO.md`
+  - `CODEX_HANDOFF.md`
+  - optionally a new architecture note in `docs/`
+- Do not touch:
+  - visual implementation files
+  - existing route UI unless the user explicitly asks
+- Definition of done:
+  - the team has a documented decision for auth, database, deployment, and API contract approach
+
+### Task 3: Productionize first-launch persistence with minimal UI disruption
+
+- Goal: replace the most important local-only product state with a real backend boundary
+- Main files:
+  - `app/first-launch-flow.tsx`
+  - `lib/first-launch.ts`
+  - any future API or server files
+- Do not touch:
+  - existing layout structure
+  - current page visual language
+  - Talk / Room visual shell unless required by real data wiring
+- Definition of done:
+  - onboarding progress and preset creation no longer rely only on localStorage
+  - first-launch to Room to Talk handoff still works
+  - existing UI remains visually unchanged
+
 ## Phase 1: Stabilize the Engineering Baseline
 
 - [ ] Update `README.md` so it reflects the real product instead of the default Next.js template

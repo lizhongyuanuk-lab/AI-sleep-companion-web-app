@@ -81,6 +81,86 @@ Current project phase:
   - CTA routing is wired to existing routes, but data is not real
   - No real sleep pipeline, report generation, retry backend, or analytics
 
+## 2.1 Current Runtime Flow Map
+
+This section is the quickest way for a new Codex to understand how the app currently works without reading the entire repo first.
+
+### First launch to Talk flow
+
+1. `/` renders `app/page.tsx`, which mounts `FirstLaunchFlow` from `app/first-launch-flow.tsx`
+2. `FirstLaunchFlow` reads and writes local state through `lib/first-launch.ts`
+3. The onboarding flow creates a local `PostOnboardingSessionPreset`
+4. Optional personal room generation is simulated locally
+5. When the first-launch flow is completed, the user is redirected to `/room`
+6. `/room` reads onboarding context and selects an initial room using `lib/room-selection.ts`
+7. On room entry, `/room` writes a Talk entry context via `writeFirstLaunchTalkEntryContext(...)`
+8. `/talk` reads that context, applies intro timing and copy, then clears the handoff storage
+
+### Room and scene persistence
+
+- current room persistence lives in `lib/room-selection.ts`
+- current Talk scene persistence lives in `lib/scene-selection.ts`
+- selected room and selected Talk scene are localStorage-backed
+
+### Memory and Sleep flow
+
+- `/memory` reads `memoryPageMockData` from `app/memory/memory-page-data.ts`
+- `/sleep-monitoring` reads `sleepMockCases` from `app/sleep-monitoring/sleep-page-data.ts`
+- both pages are currently frontend-driven and do not fetch from a backend
+
+## 2.2 Current localStorage Keys and Client State Bridges
+
+Important storage and client-state bridges:
+
+- `ai-companion-web.first-launch.completed`
+- `ai-companion-web.first-launch.draft`
+- `ai-companion-web.first-launch.preset`
+- `ai-companion-web.first-launch.generation-draft`
+- `ai-companion-web.first-launch.generated-room`
+- `ai-companion-web.first-launch.talk-entry-context`
+- `ai-companion-web.auth-status`
+- `ai-companion-web.active-room`
+- `ai-companion-web.last-entered-room`
+- `ai-companion-web.room-swipe-hint-dismissed`
+- `ai-companion-web.active-scene`
+- `ai-companion-web.talk-sound-settings`
+
+These are temporary frontend persistence layers, not production-ready data architecture.
+
+## 2.3 High-Value Contract Shapes Already Present in Code
+
+These frontend types are the best current reference points for future backend/API contract work:
+
+- `FirstLaunchDraft`
+  - location: `lib/first-launch.ts`
+  - purpose: local progress state for the first-launch flow
+- `PostOnboardingSessionPreset`
+  - location: `lib/first-launch.ts`
+  - purpose: onboarding result used to shape the initial Talk experience
+- `GeneratedPersonalRoomRecord`
+  - location: `lib/first-launch.ts`
+  - purpose: simulated generated-room artifact
+- `FirstLaunchTalkEntryContext`
+  - location: `lib/first-launch.ts`
+  - purpose: room-to-Talk handoff payload
+- `RoomConfig`
+  - location: `app/room/room-config.ts`
+  - purpose: room catalog and Talk-scene mapping
+- `SceneConfig`
+  - location: `app/talk/scene-config.ts`
+  - purpose: Talk scene catalog, room identity, and sound defaults
+- `MemoryPageData`
+  - location: `app/memory/memory-page-data.ts`
+  - purpose: Memory page display contract
+- `SleepPageData`
+  - location: `app/sleep-monitoring/sleep-page-data.ts`
+  - purpose: Sleep page display contract
+
+Strong recommendation:
+
+- when backend work begins, evolve these into shared API types instead of inventing unrelated shapes from scratch
+- replace data sources first, not the page structures
+
 ### Mock and placeholder summary
 
 - first-launch state is stored in localStorage
@@ -126,6 +206,7 @@ Notes:
 
 - Tailwind is installed, but the product UI is primarily built with CSS Modules and route-specific styles
 - No server actions, API routes, or external SDK integrations are currently in use
+- There is currently no confirmed server-only app layer such as `app/api/*`
 
 ## 4. Directory Structure
 
@@ -163,6 +244,10 @@ Important files:
   - scripts and dependency baseline
 - `README.md`
   - still mostly default Next.js content and should not be treated as the main product source of truth
+- `AGENTS.md`
+  - repository-level execution rules and verification discipline
+- `CODEX.md`
+  - Codex operating rules added for long-term handoff continuity
 
 ## 5. Pages
 
@@ -250,6 +335,29 @@ Important files:
   - Critical visual component: yes
   - Do not casually modify: yes
 
+### Supporting client-side logic files
+
+- `lib/first-launch.ts`
+  - Purpose: first-launch types, onboarding options, preset logic, room recommendation mapping, and localStorage helpers
+  - Reusable: yes
+  - Depends on mock/local data: yes
+  - Critical visual component: indirectly yes because page flow depends on it
+  - Do not casually modify: yes
+
+- `lib/room-selection.ts`
+  - Purpose: local room persistence and initial-room resolution
+  - Reusable: yes
+  - Depends on mock/local data: yes
+  - Critical visual component: medium
+  - Do not casually modify: moderate caution
+
+- `lib/scene-selection.ts`
+  - Purpose: local Talk scene persistence and URL-scene resolution
+  - Reusable: yes
+  - Depends on mock/local data: yes
+  - Critical visual component: medium
+  - Do not casually modify: moderate caution
+
 ### Config and mock-contract files
 
 - `app/room/room-config.ts`
@@ -328,6 +436,26 @@ Recommended direction:
 - keep Memory mocks in `app/memory/`
 - keep Sleep mocks in `app/sleep-monitoring/`
 - only centralize shared demo fixtures if multiple routes start consuming the same mock dataset
+
+## 7.1 Recommended API Insertion Points
+
+When converting the app from demo-grade frontend logic to real product logic, use these insertion points:
+
+- first-launch persistence and preset creation
+  - current boundary: `lib/first-launch.ts`
+  - future direction: replace or wrap local helpers with server/API-backed calls
+- room recommendation and room continuation
+  - current boundary: `app/room/room-config.ts` plus `lib/room-selection.ts`
+  - future direction: keep UI structure, replace recommendation source and persistence
+- Talk session lifecycle
+  - current boundary: `app/talk/talk-shell.tsx`
+  - future direction: keep state UI, replace timer simulation with async request lifecycle
+- Memory page data
+  - current boundary: `app/memory/memory-page-data.ts`
+  - future direction: replace page mock with fetch-backed data loader
+- Sleep page data
+  - current boundary: `app/sleep-monitoring/sleep-page-data.ts`
+  - future direction: replace mock case source with backend-driven response states
 
 ## 8. Environment Variables
 
@@ -416,6 +544,15 @@ Highest-value next steps for a new Codex:
 6. Integrate AI capabilities for Talk using a secure server-side API path.
 7. Prepare deployment, monitoring, and analytics.
 
+Recommended execution order for implementation work:
+
+1. keep current UI intact
+2. define or confirm API contract
+3. add backend boundary
+4. swap data source from local/mock to real
+5. add robust loading, empty, error, and retry behavior
+6. only then consider deeper internal cleanup if still needed
+
 ## 11. Known Constraints and Cautions
 
 - README is still mostly default Next.js boilerplate
@@ -424,3 +561,4 @@ Highest-value next steps for a new Codex:
 - there is no backend yet, so many polished flows are still demo-grade under the hood
 - shared shell files are cross-route sensitive and should be edited cautiously
 - `app/layout.tsx` currently injects an external Figma capture script; keep this in mind when reviewing CSP, performance, and production deployment requirements
+- a new Codex should read `AGENTS.md`, `CODEX.md`, and the active page specs before touching implementation
