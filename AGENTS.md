@@ -303,3 +303,34 @@ Each implementation summary must include:
    - use clearly labeled mock data
    - avoid implying that real wiring is complete
    - report the unresolved dependency
+
+---
+
+## 16. Local PR Review Workflow Rules
+
+1. All agents must use a feature branch and review work through a PR or explicit diff before any merge decision.
+2. Automatic merge is forbidden. Agents must not merge, auto-merge, or report merge completion unless a human has done it.
+3. After completing a task, every agent must output:
+   - `Branch`
+   - `PR`
+   - `Summary`
+   - `Changed files`
+   - `Commands run`
+   - `Technical check result`
+   - `Local verification steps`
+   - `Visual QA checklist`
+   - `Known risks`
+   - `Merge status`
+4. Any UI change must explicitly check:
+   - desktop
+   - mobile
+   - first launch
+   - returning user
+   - loading
+   - empty
+   - error
+   - animation
+   - console errors
+5. Required technical checks for PR review work are:
+   - `npm run lint`
+   - `npm run build`
