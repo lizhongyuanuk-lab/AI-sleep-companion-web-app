@@ -1,4 +1,4 @@
-import { FirstLaunchFlow } from "./first-launch-flow";
+import { FirstLaunchFlow } from "@/src/features/first-launch";
 
 export default function Home() {
   return <FirstLaunchFlow />;

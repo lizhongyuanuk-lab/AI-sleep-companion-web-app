@@ -30,7 +30,7 @@ import {
   type PostOnboardingSessionPreset,
   type Q1State,
   type Q2SupportStyle,
-} from "@/lib/first-launch";
+} from "./first-launch";
 
 const generationSuccessDelayMs = 1700;
 
