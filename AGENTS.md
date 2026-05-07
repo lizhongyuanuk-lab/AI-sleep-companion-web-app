@@ -334,3 +334,40 @@ Each implementation summary must include:
 5. Required technical checks for PR review work are:
    - `npm run lint`
    - `npm run build`
+
+## Real GitHub PR Requirement
+
+A task is not complete unless a real GitHub pull request has been created and a real PR URL is provided.
+
+A prepared PR title/body, local commit, local branch, "Open Pull Request" button, or "View changes" button is not sufficient.
+
+The final delivery must include a real GitHub PR URL in this format:
+
+https://github.com/<owner>/<repo>/pull/<number>
+
+If the agent cannot create a real PR because `origin` is missing, GitHub access fails, network access is blocked, or permissions are unavailable, it must stop and report the blocker before claiming the task is complete.
+
+The agent must not ask the user to run `git remote add origin` or `git push` unless it has first confirmed that it cannot create the PR itself.
+
+For this repository, the expected remote is:
+
+https://github.com/lizhongyuanuk-lab/AI-sleep-companion-web-app.git
+
+The expected base branch for product work is:
+
+main
+
+After completing any code task, the required final output must include:
+
+- Branch
+- Real PR URL
+- Summary
+- Changed files
+- Commands run
+- Technical check result
+- Local verification steps
+- Visual QA checklist, if UI changed
+- Known risks
+- Merge status
+
+If there is no real PR URL, the task is not delivered.
