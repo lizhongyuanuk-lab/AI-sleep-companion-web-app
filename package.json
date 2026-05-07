@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "review:pr": "bash scripts/review-pr.sh",
+    "qa": "npm run lint && npm run build"
   },
   "dependencies": {
     "next": "16.2.3",
