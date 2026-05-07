@@ -7,12 +7,21 @@ import { ShellTopNav } from "@/components/shell-top-nav";
 import { sceneQueryParam, writeStoredSceneId } from "@/lib/scene-selection";
 import { resolveRoomId, writeStoredRoomId } from "@/lib/room-selection";
 import {
-  defaultSleepMockCase,
+  fullRhythmPoints,
+  partialRhythmPoints,
   sleepLoadingState,
-  sleepMockCases,
-  type SleepMockCaseKey,
   type SleepPageData,
 } from "./sleep-page-data";
+import type { SleepRoutine, SleepSession, UserSleepProfile } from "@/src/contracts/sleep";
+import { createDefaultSleepCompanionSeed } from "@/src/mocks/createDefaultSleepCompanionSeed";
+import {
+  getCompanionProfile,
+  getRoomState as getLocalRoomState,
+  getSleepSessions,
+  getUserProfile,
+  setRoomState as setLocalRoomState,
+  setSleepSessions,
+} from "@/src/mocks/localSleepStore";
 import styles from "./sleep-page.module.css";
 
 const RHYTHM_FILTERS = [
@@ -114,6 +123,276 @@ function buildSleepHint(pageData: SleepPageData) {
   }
 
   return null;
+}
+
+function formatDuration(minutes: number) {
+  const safeMinutes = Math.max(1, minutes);
+  const hours = Math.floor(safeMinutes / 60);
+  const remainderMinutes = safeMinutes % 60;
+
+  if (hours === 0) {
+    return `${remainderMinutes}m`;
+  }
+
+  return `${hours}h ${remainderMinutes}m`;
+}
+
+function formatClock(isoValue: string | undefined) {
+  if (!isoValue) {
+    return null;
+  }
+
+  const date = new Date(isoValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function formatSessionContextLabel(isoValue: string) {
+  const date = new Date(isoValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Last sleep session";
+  }
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  }).format(date);
+}
+
+function getSessionDurationMinutes(session: SleepSession) {
+  const startedAt = Date.parse(session.startedAt);
+  const endedAt = Date.parse(session.endedAt ?? new Date().toISOString());
+
+  if (Number.isNaN(startedAt) || Number.isNaN(endedAt)) {
+    return 0;
+  }
+
+  return Math.max(1, Math.round((endedAt - startedAt) / 60000));
+}
+
+function getDefaultRoutine(profile: UserSleepProfile): SleepRoutine {
+  switch (profile.sleepGoal) {
+    case "build_routine":
+      return "breathing";
+    case "reduce_anxiety":
+      return "ambient";
+    case "companionship":
+      return "companion_chat";
+    case "fall_asleep":
+    default:
+      return "story";
+  }
+}
+
+function getDefaultMood(profile: UserSleepProfile): SleepSession["moodBefore"] {
+  switch (profile.sleepGoal) {
+    case "reduce_anxiety":
+      return "anxious";
+    case "build_routine":
+      return "calm";
+    case "companionship":
+      return "restless";
+    case "fall_asleep":
+    default:
+      return "tired";
+  }
+}
+
+function getSuggestedRoomId(sleepGoal: UserSleepProfile["sleepGoal"]) {
+  switch (sleepGoal) {
+    case "reduce_anxiety":
+      return "harbor_hush";
+    case "build_routine":
+      return "moon_tide";
+    case "companionship":
+      return "sea_light";
+    case "fall_asleep":
+    default:
+      return "alpine_quiet";
+  }
+}
+
+function buildTrendBars(completedSessions: SleepSession[]) {
+  const sourceSessions = completedSessions.slice(0, 7).reverse();
+
+  if (sourceSessions.length === 0) {
+    return null;
+  }
+
+  const durations = sourceSessions.map(getSessionDurationMinutes);
+  const maxDuration = Math.max(...durations, 1);
+
+  return {
+    title: "Last 7 nights" as const,
+    supporting_line: "Your local sleep sessions are starting to form a calmer pattern.",
+    bars: sourceSessions.map((session, index) => ({
+      night_id: session.id,
+      day_label: new Intl.DateTimeFormat("en-US", {
+        weekday: "short",
+      }).format(new Date(session.startedAt)),
+      height: clamp(durations[index] / maxDuration, 0.24, 1),
+      emphasis: index === sourceSessions.length - 1 ? ("highlight" as const) : ("base" as const),
+    })),
+  };
+}
+
+function buildLocalSleepPageData({
+  sessions,
+  userProfile,
+  companionName,
+}: {
+  sessions: SleepSession[];
+  userProfile: UserSleepProfile;
+  companionName: string;
+}): {
+  activeSession: SleepSession | null;
+  pageData: SleepPageData;
+} {
+  const sortedSessions = [...sessions].sort(
+    (left, right) =>
+      Date.parse(right.startedAt || "") - Date.parse(left.startedAt || ""),
+  );
+  const activeSession =
+    sortedSessions.find((session) => session.status === "active") ?? null;
+  const completedSessions = sortedSessions.filter(
+    (session) => session.status === "completed" && session.endedAt,
+  );
+  const suggestedRoomId = getSuggestedRoomId(userProfile.sleepGoal);
+  const suggestedRoomName = roomConfigMap[suggestedRoomId].title;
+
+  if (activeSession) {
+    const activeDuration = getSessionDurationMinutes(activeSession);
+
+    return {
+      activeSession,
+      pageData: {
+        user_id: userProfile.id,
+        page_state: "companion_only",
+        record_confidence: "low",
+        record_type: "companion_only",
+        record_context_label: "Tonight · Active now",
+        hero_insight: {
+          eyebrow: "Sleep mode is active",
+          title: `${companionName} is keeping tonight slow and quiet.`,
+          supporting_line: "End the session when you're ready to save a local reflection.",
+        },
+        summary_card: {
+          status_label: "Companion only",
+          duration_label: "Companion session",
+          companion_session_duration_display: formatDuration(activeDuration),
+          quiet_time_display: formatDuration(Math.max(1, activeDuration - 4)),
+        },
+        rhythm_card: null,
+        trend_card: buildTrendBars(completedSessions),
+        suggestion_card: {
+          title: "Session in progress",
+          body: "This mock sleep session is running locally on this device only.",
+          cta_label: "End session",
+          target_route: "/room",
+        },
+        retry_available: false,
+        last_updated_at: activeSession.startedAt,
+      },
+    };
+  }
+
+  if (completedSessions.length === 0) {
+    return {
+      activeSession: null,
+      pageData: {
+        user_id: userProfile.id,
+        page_state: "empty_state",
+        record_confidence: "low",
+        record_type: "empty",
+        record_context_label: "No reflection yet",
+        hero_insight: null,
+        summary_card: null,
+        rhythm_card: null,
+        trend_card: null,
+        suggestion_card: {
+          title: "Sleep mode is ready",
+          body: `Start a local session with ${companionName} tonight and your reflection will appear here afterward.`,
+          cta_label: "Start sleep mode",
+          target_route: "/room",
+        },
+        retry_available: false,
+        last_updated_at: null,
+      },
+    };
+  }
+
+  const latestSession = completedSessions[0];
+  const durationMinutes = getSessionDurationMinutes(latestSession);
+  const isPartial = durationMinutes < 240;
+  const recordContext = formatSessionContextLabel(latestSession.startedAt);
+  const rhythmPoints = isPartial ? partialRhythmPoints : fullRhythmPoints;
+  const pageState = isPartial ? "partial_record" : "full_record";
+  const statusLabel = isPartial ? "Partial record" : "Estimated";
+
+  return {
+    activeSession: null,
+    pageData: {
+      user_id: userProfile.id,
+      page_state: pageState,
+      record_confidence: isPartial ? "low" : "medium",
+      record_type: isPartial ? "partial" : "full",
+      record_context_label: `Last session · ${recordContext}`,
+      hero_insight: {
+        eyebrow: "From your latest local session",
+        title: isPartial
+          ? `${companionName} still helped the night feel a little quieter.`
+          : "Your sleep found a steadier rhythm after a softer start.",
+        supporting_line: isPartial
+          ? "Even a shorter wind-down can still leave a calmer trace."
+          : "The last completed local session settled into a calmer pace.",
+      },
+      summary_card: {
+        status_label: statusLabel,
+        duration_display: formatDuration(durationMinutes),
+        duration_label: "Estimated sleep",
+        fell_asleep_at: formatClock(latestSession.startedAt),
+        woke_up_at: formatClock(latestSession.endedAt),
+        quiet_time_display: formatDuration(Math.max(1, durationMinutes - 18)),
+      },
+      rhythm_card: {
+        title: "Sleep rhythm",
+        status_label: statusLabel,
+        available: true,
+        active_filter: isPartial ? "awake" : "light",
+        points: rhythmPoints,
+        time_labels: [
+          formatClock(latestSession.startedAt) ?? "Start",
+          "2 AM",
+          "4 AM",
+          formatClock(latestSession.endedAt) ?? "End",
+        ],
+      },
+      trend_card: buildTrendBars(completedSessions),
+      suggestion_card: {
+        title: "Tonight's suggestion",
+        body: `${suggestedRoomName} may help you keep that quieter pace going tonight.`,
+        cta_label: `Use ${suggestedRoomName} Tonight`,
+        target_route: "/room",
+        target_payload: {
+          continuation_source: "sleep",
+          recommended_room_id: suggestedRoomId,
+          recommended_room_name: suggestedRoomName,
+          recommendation_type: "room",
+          sleep_context_label: userProfile.sleepGoal,
+        },
+      },
+      retry_available: false,
+      last_updated_at: latestSession.endedAt ?? latestSession.startedAt,
+    },
+  };
 }
 
 function DetailIcon({
@@ -484,13 +763,10 @@ function LoadingState() {
 
 export function SleepShell() {
   const router = useRouter();
-  const [activeMockKey, setActiveMockKey] =
-    useState<SleepMockCaseKey>(defaultSleepMockCase);
-  const [isLoading, setIsLoading] = useState(true);
   const [activeFilterOverride, setActiveFilterOverride] =
     useState<RhythmFilterKey | null>(null);
-
-  const pageData = isLoading ? sleepLoadingState : sleepMockCases[activeMockKey];
+  const [pageData, setPageData] = useState<SleepPageData>(sleepLoadingState);
+  const [activeSession, setActiveSession] = useState<SleepSession | null>(null);
   const activeFilter =
     activeFilterOverride ?? pageData.rhythm_card?.active_filter ?? "light";
   const suggestion = pageData.suggestion_card;
@@ -512,9 +788,24 @@ export function SleepShell() {
     pageData.page_state !== "empty_state" &&
     !(pageData.page_state === "error_state" && pageData.retry_available);
 
+  const refreshSleepView = () => {
+    const fallbackSeed = createDefaultSleepCompanionSeed();
+    const userProfile = getUserProfile() ?? fallbackSeed.userProfile;
+    const companionProfile =
+      getCompanionProfile() ?? fallbackSeed.companionProfile;
+    const nextView = buildLocalSleepPageData({
+      sessions: getSleepSessions(),
+      userProfile,
+      companionName: companionProfile.name,
+    });
+
+    setPageData(nextView.pageData);
+    setActiveSession(nextView.activeSession);
+  };
+
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setIsLoading(false);
+      refreshSleepView();
     }, INITIAL_LOADING_MS);
 
     return () => {
@@ -525,6 +816,60 @@ export function SleepShell() {
   const handleSuggestionAction = (
     nextSuggestion: NonNullable<SleepPageData["suggestion_card"]>,
   ) => {
+    if (activeSession) {
+      const nowIso = new Date().toISOString();
+      const nextSessions = getSleepSessions().map((session) =>
+        session.id === activeSession.id
+          ? {
+              ...session,
+              endedAt: nowIso,
+              status: "completed" as const,
+            }
+          : session,
+      );
+      const currentRoomState = getLocalRoomState();
+
+      setSleepSessions(nextSessions);
+
+      if (currentRoomState) {
+        setLocalRoomState({
+          ...currentRoomState,
+          companionMood: "calm",
+          currentPhase: "pre_sleep",
+          suggestedAction: "review_memory",
+          lastUpdatedAt: nowIso,
+        });
+      }
+
+      refreshSleepView();
+      return;
+    }
+
+    if (pageData.page_state === "empty_state") {
+      const fallbackSeed = createDefaultSleepCompanionSeed();
+      const userProfile = getUserProfile() ?? fallbackSeed.userProfile;
+      const nowIso = new Date().toISOString();
+      const nextSession: SleepSession = {
+        id: `sleep_session_${Date.now()}`,
+        startedAt: nowIso,
+        moodBefore: getDefaultMood(userProfile),
+        selectedRoutine: getDefaultRoutine(userProfile),
+        status: "active",
+      };
+      const currentRoomState = getLocalRoomState() ?? fallbackSeed.roomState;
+
+      setSleepSessions([...getSleepSessions(), nextSession]);
+      setLocalRoomState({
+        ...currentRoomState,
+        companionMood: "sleepy",
+        currentPhase: "sleep",
+        suggestedAction: "start_sleep",
+        lastUpdatedAt: nowIso,
+      });
+      refreshSleepView();
+      return;
+    }
+
     const roomId = resolveRoomId(nextSuggestion.target_payload?.recommended_room_id);
 
     if (roomId) {
@@ -561,12 +906,12 @@ export function SleepShell() {
   };
 
   const handleRetry = () => {
-    setIsLoading(true);
+    setPageData(sleepLoadingState);
+    setActiveSession(null);
     setActiveFilterOverride(null);
 
     window.setTimeout(() => {
-      setActiveMockKey(defaultSleepMockCase);
-      setIsLoading(false);
+      refreshSleepView();
     }, RETRY_LOADING_MS);
   };
 
