@@ -31,6 +31,22 @@ import {
   type Q1State,
   type Q2SupportStyle,
 } from "@/lib/first-launch";
+import { createDefaultSleepCompanionSeed } from "@/src/mocks/createDefaultSleepCompanionSeed";
+import {
+  getCompanionProfile,
+  getMemories,
+  getOnboardingCompleted,
+  getRoomState,
+  getSleepSessions,
+  getUserProfile,
+  resetLocalSleepData,
+  setCompanionProfile,
+  setMemories,
+  setOnboardingCompleted,
+  setRoomState,
+  setSleepSessions,
+  setUserProfile,
+} from "@/src/mocks/localSleepStore";
 
 const generationSuccessDelayMs = 1700;
 
@@ -114,6 +130,43 @@ function getRoomBridgeCopy(preset: PostOnboardingSessionPreset) {
   }
 }
 
+function ensureLocalSleepSeed({
+  q1State,
+  q2SupportStyle,
+  selectedVisualTheme,
+}: {
+  q1State?: Q1State | null;
+  q2SupportStyle?: Q2SupportStyle | null;
+  selectedVisualTheme?: PersonalRoomTheme | null;
+}) {
+  const hasCoreState = Boolean(
+    getUserProfile() &&
+      getCompanionProfile() &&
+      getRoomState() &&
+      getMemories().length > 0,
+  );
+
+  if (hasCoreState) {
+    return;
+  }
+
+  const seed = createDefaultSleepCompanionSeed({
+    q1State,
+    q2SupportStyle,
+    selectedVisualTheme,
+    nowIso: new Date().toISOString(),
+  });
+
+  setUserProfile(seed.userProfile);
+  setCompanionProfile(seed.companionProfile);
+  setRoomState(seed.roomState);
+  setMemories(seed.memories);
+
+  if (getSleepSessions().length === 0) {
+    setSleepSessions([]);
+  }
+}
+
 export function FirstLaunchFlow() {
   const router = useRouter();
   const generationTimerRef = useRef<number | null>(null);
@@ -130,18 +183,32 @@ export function FirstLaunchFlow() {
 
       if (searchParams.get("reset-first-launch") === "1") {
         clearFirstLaunchFlowStorage();
+        resetLocalSleepData();
         writeHasCompletedFirstLaunchFlow(false);
         window.history.replaceState({}, "", window.location.pathname);
       }
 
       const nextAuthStatus = ensureGuestAuthStatus();
+      const nextDraft = readFirstLaunchDraft();
+      const nextPreset = readPostOnboardingSessionPreset();
+      const hasLegacyCompletedFlow = readHasCompletedFirstLaunchFlow();
+      const hasCompletedStage3Onboarding =
+        getOnboardingCompleted() || hasLegacyCompletedFlow;
+
+      if (hasCompletedStage3Onboarding) {
+        ensureLocalSleepSeed({
+          q1State: nextPreset?.q1_state ?? nextDraft.q1_state,
+          q2SupportStyle: nextPreset?.q2_support_style ?? nextDraft.q2_support_style,
+          selectedVisualTheme: readGeneratedPersonalRoomRecord()?.visual_theme ?? nextDraft.selected_visual_theme,
+        });
+        setOnboardingCompleted(true);
+      }
 
       setAuthStatus(nextAuthStatus);
-      setDraft(readFirstLaunchDraft());
-      setPreset(readPostOnboardingSessionPreset());
-      readGeneratedPersonalRoomRecord();
+      setDraft(nextDraft);
+      setPreset(nextPreset);
       readPersonalRoomGenerationDraft();
-      setHasCompletedFlow(readHasCompletedFirstLaunchFlow());
+      setHasCompletedFlow(hasCompletedStage3Onboarding);
       setIsHydrated(true);
     }, 0);
 
@@ -280,6 +347,20 @@ export function FirstLaunchFlow() {
   };
 
   const completeAndEnterRoom = () => {
+    const seed = createDefaultSleepCompanionSeed({
+      q1State: draft.q1_state,
+      q2SupportStyle: draft.q2_support_style,
+      selectedVisualTheme: draft.selected_visual_theme,
+      nowIso: new Date().toISOString(),
+    });
+
+    resetLocalSleepData();
+    setUserProfile(seed.userProfile);
+    setCompanionProfile(seed.companionProfile);
+    setRoomState(seed.roomState);
+    setMemories(seed.memories);
+    setSleepSessions([]);
+    setOnboardingCompleted(true);
     writeHasCompletedFirstLaunchFlow(true);
     clearFirstLaunchDraft();
     clearPersonalRoomGenerationDraft();
