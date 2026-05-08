@@ -1,5 +1,5 @@
-import { FirstLaunchFlow } from "./first-launch-flow";
+import { AppEntryResolver } from "./app-entry-resolver";
 
-export default function Home() {
-  return <FirstLaunchFlow />;
+export default function Page() {
+  return <AppEntryResolver />;
 }
