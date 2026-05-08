@@ -1,5 +1,5 @@
-import { HomeEntry } from "./home-entry";
+import { AppEntryResolver } from "./app-entry-resolver";
 
-export default function Home() {
-  return <HomeEntry />;
+export default function Page() {
+  return <AppEntryResolver />;
 }
