@@ -1,5 +1,5 @@
-import { FirstLaunchFlow } from "./first-launch-flow";
+import { HomeEntry } from "./home-entry";
 
 export default function Home() {
-  return <FirstLaunchFlow />;
+  return <HomeEntry />;
 }
