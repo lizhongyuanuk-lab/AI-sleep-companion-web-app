@@ -15,6 +15,25 @@ Rule:
 - If `product-logic.md` defines broader Stage 3 product rules than `home.md`, follow `product-logic.md` and explicitly document the relationship in review notes.
 - Workers must cite `product-logic.md` in their source-read report and implementation summary.
 
+Source priority order:
+
+1. `docs/stage-3/product-logic.md`
+2. `docs/stage-3/page-logic/home.md`
+3. `docs/stage-3/data-flow-audit.md`
+4. `docs/stage-3/data-contract.md`
+5. `src/contracts/*`
+6. `src/mocks/stage3MockData.ts`
+7. current app implementation
+8. existing repo docs
+
+Runtime implementation and existing repo docs cannot override Stage 3 product logic or canonical contract rules.
+
+Hard fail:
+
+- `FAIL` if a worker treats current runtime naming as canonical when it conflicts with `product-logic.md` or `data-contract.md`.
+- `FAIL` if existing repo docs are used to override Stage 3 source docs.
+- `FAIL` if source priority is not stated in the final review.
+
 ## 1. Stage 3 Source-of-Truth Gate
 
 Pass all checks:
@@ -38,6 +57,41 @@ Required source-read checks:
 - `wc -l docs/stage-3/page-logic/home.md`
 - `git hash-object docs/stage-3/product-logic.md`
 - `git hash-object docs/stage-3/page-logic/home.md`
+
+Per-worker source-read requirements:
+
+- A must read:
+  - `docs/stage-3/product-logic.md`
+  - `docs/stage-3/page-logic/home.md`
+- B must read:
+  - `docs/stage-3/product-logic.md`
+  - `docs/stage-3/page-logic/home.md`
+  - `docs/stage-3/data-flow-audit.md` if available
+- C must read:
+  - `docs/stage-3/product-logic.md`
+  - `docs/stage-3/page-logic/home.md`
+  - existing Stage 3 worker plan or review rules if available
+- D must read:
+  - `docs/stage-3/product-logic.md`
+  - `docs/stage-3/page-logic/home.md`
+  - `docs/stage-3/data-flow-audit.md`
+  - `docs/stage-3/data-contract.md`
+  - `docs/stage-3/acceptance-checklist.md`
+- review workers must read:
+  - `docs/stage-3/product-logic.md`
+  - `docs/stage-3/page-logic/home.md`
+  - `docs/stage-3/data-flow-audit.md`
+  - `docs/stage-3/data-contract.md`
+  - `docs/stage-3/acceptance-checklist.md`
+  - `docs/stage-3/contract-implementation-notes.md`
+  - `src/contracts/*`
+  - `src/mocks/stage3MockData.ts`
+
+Hard fail:
+
+- `FAIL` if a worker claims `PASS` without reading the required source files for that worker.
+- `FAIL` if D does not read `data-contract.md` and `data-flow-audit.md` before changing contract files or mocks.
+- `FAIL` if review workers do not read contracts and mocks before issuing integration judgment.
 
 Required canonical rule extraction:
 
@@ -503,3 +557,30 @@ For documentation and contract workers, also include:
 - explicit conflict notes
 - unverified assumptions
 - known risks
+
+## 21. Final Stage 3 Review Report Format
+
+The final Stage 3 review must include:
+
+- Stage 3 result: `PASS` / `PARTIAL` / `FAIL`
+- A result
+- B result
+- C result
+- D result
+- source-trace result
+- integration result
+- changed-file scope result
+- contract alignment result
+- mock scenario coverage result
+- validation command result
+- unresolved contradictions
+- unresolved assumptions
+- whether E is unlocked
+- whether Stage 3 is complete
+- next safe action
+
+Hard fail:
+
+- `FAIL` if the final report says only that E is unlocked but does not explicitly state whether Stage 3 is complete.
+- `FAIL` if the final report omits unresolved assumptions or contradictions.
+- `FAIL` if the final report omits changed-file scope, source-trace, contract alignment, or mock coverage results.
