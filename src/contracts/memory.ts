@@ -54,3 +54,18 @@ export type MemoryItem = {
   createdAt: ISODateTimeString;
   updatedAt: ISODateTimeString;
 };
+
+export type MemoryFeedbackEventAction = "agree" | "disagree" | "hide" | "unhide";
+
+export type MemoryFeedbackEventSource = "memory_page" | "talk" | "home";
+
+export type MemoryFeedbackEvent = {
+  id: EntityId;
+  memoryItemId: EntityId;
+  action: MemoryFeedbackEventAction;
+  previousStatus: MemoryItem["status"];
+  resultingStatus: MemoryItem["status"];
+  excludeFromPersonalization: boolean;
+  source: MemoryFeedbackEventSource;
+  createdAt: ISODateTimeString;
+};

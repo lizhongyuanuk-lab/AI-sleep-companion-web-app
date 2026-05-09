@@ -1,4 +1,5 @@
 import type { EntityId, ISODateString, ISODateTimeString } from "./shared";
+import type { TalkEntryContext } from "./conversation";
 
 export type SleepGoal = {
   id: EntityId;
@@ -53,4 +54,49 @@ export type SleepCheckIn = {
   source: SleepCheckInSource;
   createdAt: ISODateTimeString;
   updatedAt: ISODateTimeString;
+};
+
+export type SleepInsightPeriod =
+  | "single_night"
+  | "3_day"
+  | "7_day"
+  | "14_day";
+
+export type SleepInsightConfidence = "low" | "medium" | "high";
+
+export type SleepInsightSuggestionType =
+  | "keep_consistent_bedtime"
+  | "try_gentler_talk"
+  | "use_quiet_room"
+  | "reduce_late_stimulation"
+  | "short_checkin"
+  | "no_change_needed"
+  | "collect_more_data";
+
+export type SleepInsightCta = {
+  label: string;
+  target: "talk" | "room" | "sleep_checkin";
+  entryContext?: TalkEntryContext;
+};
+
+export type SleepInsight = {
+  id: EntityId;
+  period: SleepInsightPeriod;
+  startDate: ISODateString;
+  endDate: ISODateString;
+  title: string;
+  body: string;
+  confidence: SleepInsightConfidence;
+  basedOn: {
+    sleepCheckInIds: EntityId[];
+    sleepSessionId?: EntityId;
+    talkSessionIds?: EntityId[];
+    roomSessionIds?: EntityId[];
+    memoryItemIds?: EntityId[];
+    memoryFeedbackIds?: EntityId[];
+  };
+  suggestionType: SleepInsightSuggestionType;
+  cta?: SleepInsightCta;
+  homeEligible: boolean;
+  createdAt: ISODateTimeString;
 };

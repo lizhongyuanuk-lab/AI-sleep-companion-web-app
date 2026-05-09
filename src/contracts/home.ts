@@ -36,31 +36,27 @@ export type RouteDecision = {
 
 export type HomeStateStatus =
   | "entry_guard_redirect"
-  | "default_recommendation_ready"
-  | "continuity_available"
-  | "memory_eligible_continuity"
-  | "sleep_eligible_continuity"
-  | "system_default_fallback"
-  | "data_partial_fallback"
-  | "error_safe_fallback";
+  | "recommendation_ready"
+  | "fallback_ready";
 
-export type HomeNavTarget = "talk" | "room" | "memory" | "sleep";
+export type HomeContinuitySource = "memory" | "sleep" | "talk" | "room" | "none";
+
+export type HomeDiagnosticsNavTarget = "talk" | "room" | "memory" | "sleep";
 
 export type HomeState = {
   id: EntityId;
   route: "/home";
   status: HomeStateStatus;
+  continuitySource?: HomeContinuitySource;
   entryContextId: EntityId;
   mainRecommendationId: EntityId;
   mainCtaId: EntityId;
   continuitySummary?: string;
-  availableNavTargets: HomeNavTarget[];
+  diagnosticsNavTargets?: HomeDiagnosticsNavTarget[];
   createdAt: ISODateTimeString;
 };
 
 export type HomeRecommendationType =
-  | "complete_onboarding"
-  | "enter_room"
   | "review_memory"
   | "start_talk"
   | "sleep_checkin"
@@ -89,22 +85,13 @@ export type HomeRecommendationFallbackKind =
   | "data_partial_fallback"
   | "error_safe_fallback";
 
-export type HomeCtaTarget = "onboarding" | "room" | "talk" | "memory" | "sleep";
-
-export type HomeCtaTargetPath =
-  | "/onboarding"
-  | "/room"
-  | "/talk"
-  | "/memory"
-  | "/sleep-monitoring";
-
 export type HomeCTA = {
   id: EntityId;
   label: string;
-  target: HomeCtaTarget;
-  targetPath: HomeCtaTargetPath;
+  target: "talk";
+  targetPath: "/talk";
   homeRecommendationId: EntityId;
-  entryContext?: TalkEntryContext;
+  entryContext: TalkEntryContext;
   createdAt: ISODateTimeString;
 };
 

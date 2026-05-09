@@ -1,64 +1,68 @@
 # Stage 3 Contract Implementation Notes
 
-## Source order
+## Source-of-truth docs used
 
-1. `docs/stage-3/product-logic.md` is the P0 product source of truth.
-2. `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-contract-spec/docs/stage-3/data-contract.md` is the canonical TypeScript contract source.
-3. `docs/stage-3/page-logic/home.md` is the secondary Home-specific reference.
-4. Current runtime naming is compatibility-only and is not canonical.
+- `docs/stage-3/product-logic.md`
+- `docs/stage-3/page-logic/home.md`
+- `docs/stage-3/data-flow-audit.md`
+- `docs/stage-3/data-contract.md`
+- `docs/stage-3/acceptance-checklist.md`
 
-## What this patch implements
+## Mapping summary
 
-- Canonical Stage 3 contracts in `src/contracts/`
-- MVP mock data in `src/mocks/stage3MockData.ts`
-- No UI wiring
-- No runtime route changes
-- No storage implementation changes
+- `RouteDecision`
+  - Mapped from canonical app-entry routing in `docs/stage-3/data-contract.md`, including stale preset handling and canonical `"/home"` rather than runtime `"/"`.
+- `HomeState`
+  - Mapped to the local contract’s simplified top-level Home render states: `entry_guard_redirect`, `recommendation_ready`, and `fallback_ready`, with optional `continuitySource` and non-visual `diagnosticsNavTargets`.
+- `HomeEntryContext`
+  - Mapped with route trace, source recommendation trace, `latestSleepCheckInId`, `eligibleMemoryId`, `missingDataKeys`, `staleDataKeys`, and active preset state.
+- `HomeRecommendation`
+  - Mapped as the only active recommendation domain, with `source`, `sourceId`, `sourceDomain`, `surface`, `fallbackKind`, and one linked CTA.
+- `Onboarding`
+  - Mapped through `OnboardingState` and `OnboardingPreset` with completion state, active/consumed/expired lifecycle, and stale-as-derived behavior.
+- `Room`
+  - Mapped across `RoomOption`, `RoomView`, `RoomSession`, and `RoomState` so room catalog, entry exposure, selected-room session, and continuity state remain separate.
+- `SleepCheckIn`
+  - Mapped as the canonical morning check-in object backing `SleepLog` semantics, with lightweight `SleepSession` and `SleepInsight` continuity support.
+- `MemoryItem`
+  - Mapped with canonical persisted statuses plus `excludeFromPersonalization`, and with `MemoryFeedbackEvent` for auditable agree/disagree/hide history.
+- `Conversation/Talk`
+  - Mapped through `TalkEntryContext`, `CompanionConversation`, and `ConversationMessage`, keeping session/message/memory separate and preserving handoff traceability.
 
-## Canonical decisions preserved
+## Skeleton-only boundaries
 
-- Canonical Home route remains `"/home"` even though the current runtime still renders root `"/"` in [app/page.tsx](/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-skeleton/app/page.tsx).
-- `RouteDecision` preserves stale preset handling as a derived state rather than a persisted preset status.
-- `HomeEntryContext` includes route trace fields plus `latestSleepCheckInId`, `eligibleMemoryId`, `missingDataKeys`, and `staleDataKeys`.
-- `HomeRecommendation` is the only active Stage 3 recommendation contract. `Recommendation` is an alias, not a second domain object.
-- `HomeRecommendation.fallbackKind` explicitly models:
-  - `system_default_fallback`
-  - `data_partial_fallback`
-  - `error_safe_fallback`
-- `HomeCTA` preserves canonical Home-to-Talk handoff rules through `TalkEntryContext`.
-- `MemoryItem` preserves canonical persisted statuses:
-  - `active`
-  - `weakened`
-  - `contradicted`
-  - `hidden`
-  - `archived`
-- `blocked`, `expired`, and `disagreed` are not introduced as persisted memory statuses. In the mock file they are represented only as derived exclusion scenarios.
-- `SleepGoal` and `Ritual` remain explicit future-only placeholders.
+This worker implemented contracts and mock data only.
 
-## Naming and field mapping notes
+It did not implement:
 
-The canonical contract document is written in TypeScript-style field names, so the implementation kept camelCase names directly.
+- runtime routing
+- UI behavior
+- persistence
+- API calls
+- recommendation algorithms
+- memory scoring
+- runtime storage adapters
 
-Equivalent trace fields requested for review:
+## Known implementation notes
 
-- `latest_sleep_check_in_id` -> `latestSleepCheckInId`
-- `eligible_memory_id` -> `eligibleMemoryId`
-- `missing_data_keys` -> `missingDataKeys`
-- `stale_data_keys` -> `staleDataKeys`
+- Current runtime root `"/"` is treated only as a compatibility surface; canonical Home remains `"/home"`.
+- `Recommendation` exists only as an alias to `HomeRecommendation`.
+- `HomeCTA` follows the current local canonical contract where normal Stage 3 Home handoff targets Talk only.
+- `blocked`, `expired`, and `disagreed` are not persisted `MemoryItem.status` values. They are represented only as derived exclusion scenarios or feedback history.
+- The local data contract uses `MemoryFeedbackEvent`; this skeleton follows that canonical shape rather than inventing a separate runtime-only feedback model.
 
-## Runtime boundary
+## Validation
 
-- Contracts are not wired into UI components or route handlers yet.
-- No runtime behavior changed in this patch.
-- Current runtime code should be treated as a future integration target, not as the naming authority.
+Commands run:
 
-## Worker sequencing boundary
+- `npm run lint`
+- `npm run build`
 
-- Worker E `local-data-foundation` must not start until Worker D passes source trace review.
-- These files establish logical shapes first; persistence adapters and runtime translation belong to the next stage.
+Results:
 
-## Validation and caveats
-
-- This branch did not contain an existing `src/` tree, so `src/contracts/` and `src/mocks/` were created from scratch within the allowed scope.
-- `SleepInsight` is referenced by product logic and by some contract ids, but it was not listed among Worker D's required top-level files or required domains. The contracts therefore preserve `latestSleepInsightId` references without inventing a separate `SleepInsight` contract here.
-- Validation results are recorded after lint, type-check, and build are run for this branch.
+- `npm run lint`: failed
+  - Error: `Cannot find package 'eslint-config-next' imported from .../eslint.config.mjs`
+  - Assessment: this is a pre-existing workspace/dependency-resolution issue, not caused by the contract or mock files added here.
+- `npm run build`: failed
+  - Error: `next: command not found`
+  - Assessment: this is a pre-existing environment/dependency availability issue, not caused by the contract or mock files added here.
