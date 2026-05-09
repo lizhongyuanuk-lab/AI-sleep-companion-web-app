@@ -34,7 +34,7 @@ Stage 3 的目标不是继续优化视觉 UI，而是把产品的数据闭环定
   ↓
 Onboarding 两个问题
   ↓
-生成一次性的 postOnboardingSessionPreset
+生成一次性的 OnboardingSessionPreset
   ↓
 进入 Room 页面
   ↓
@@ -216,11 +216,15 @@ OnboardingSessionPreset
 
 Persistent store
 长期业务对象
-RoomSession、TalkSession、MemoryItem、SleepLog
+RoomSession、TalkSession、MemoryItem、MemoryFeedback、SleepLog
+
+Derived snapshot store
+由持久数据派生，但一旦生成并对用户暴露后，需要保留稳定 ID 以支持追踪、CTA 和审计
+SleepInsight、HomeRecommendation
 
 Derived runtime
-根据持久数据生成，可重算
-SleepInsight、HomeRecommendation
+根据持久数据或 snapshot 生成，可重算
+page view model、result view model、TonightSuggestion presentation state
 
 Analytics store
 产品事件与留存验证
@@ -231,6 +235,21 @@ ProductEvent
 - 不要把 session preset 当长期画像。
 - 不要把 onboarding answer 直接当 sleep recommendation 来源。
 - 不要把 hidden memory 放进后续 Talk personalization context。
+
+### 4.1 持久化归属补充规则
+
+为避免 Stage 3 worker 对 store 层理解不一致，以下对象的归属明确如下：
+
+- `MemoryFeedback` 是 persistent business object，不是临时 UI action。它必须可跨天保留，因为后续 Talk / Sleep / Home 需要读取其效果与审计记录。
+- `SleepInsight` 是 derived snapshot，不是原始真源数据。它由 `SleepLog` 等持久对象派生，但一旦生成并展示给用户，应保留稳定 `id` 与 `basedOn`，以支持 view / click traceability。
+- `HomeRecommendation` 是 derived snapshot，不是长期画像对象。它由入口上下文和上游业务对象派生，但一旦成为当前 Home 主推荐，应保留稳定 `id` 至少覆盖该次 recommendation 生命周期，以支持曝光、点击与来源追溯。
+- `Derived runtime` 只用于纯展示层派生结果，不承担稳定追踪 ID，也不作为跨页面 contract 真源。
+
+换句话说：
+
+- `MemoryFeedback` 要持久存储。
+- `SleepInsight` / `HomeRecommendation` 可以重算，但已生成并曝光的 snapshot 需要保留稳定标识。
+- 只有 UI 层 view-model 才是纯 runtime ephemeral。
 
 ## 5. App Entry Resolver
 
@@ -673,7 +692,8 @@ type TalkSession = UserScoped & {
   emotionalTone?: "calm" | "anxious" | "sad" | "neutral" | "restless";
   sleepRelated?: boolean;
 
-  memoryExtractionRunId?: string;
+  latestMemoryExtractionRunId?: string;
+  completedMemoryExtractionRunId?: string;
   memoryExtractionStatus:
     | "not_started"
     | "running"
@@ -708,6 +728,14 @@ skipped
 extraction 失败
 `TalkSession` 保存，`status = failed`
 
+Memory extraction run 指针规则：
+
+1. `latestMemoryExtractionRunId` 永远指向最近一次 run，不论该 run 是 running / skipped / completed / failed。
+2. `completedMemoryExtractionRunId` 只在存在成功 completed run 时填写，并始终指向当前生效的成功 run。
+3. retry 时必须新建 `MemoryExtractionRun`，并更新 `latestMemoryExtractionRunId`；只有 retry 成功后，才更新 `completedMemoryExtractionRunId`。
+4. `memoryExtractionStatus` 表示 latest run 的当前结果，不表示历史所有 run 的聚合状态。
+5. `generatedMemoryItemIds` 默认表示 `completedMemoryExtractionRunId` 产出的最终结果；若不存在成功 run，则应为空或缺省。
+
 ### 6.11 MemoryExtractionRun
 
 用于保证 `TalkSession` memory extraction 幂等。
@@ -733,6 +761,8 @@ type MemoryExtractionRun = UserScoped & {
 - 如果 `status = running`，不得重复启动 extraction。
 - 如果 `status = completed`，不得再次生成 `MemoryItem`。
 - 如果 `status = failed`，可以由明确 retry action 重试，但必须记录新的 run。
+- 一个 `TalkSession` 可以有多个 failed run，但同一时刻只能有一个 latest run。
+- 历史 run 必须可按 `talkSessionId` 查询，不能只保留最后一次状态后覆盖掉审计链路。
 
 ### 6.12 MemoryItem
 
@@ -854,6 +884,12 @@ confidence 降低，status = contradicted，作为纠错约束
 hide
 status = hidden，influenceWeight = 0，excludeFromPersonalization = true
 
+持久化规则：
+
+- `MemoryFeedback` 必须持久保存。
+- `MemoryItem` 的 `status`、`excludeFromPersonalization`、`hiddenAt` 等结果必须与对应 feedback 一致更新。
+- 后续 Talk / Sleep / Home 读取行为，应基于已持久化 feedback 结果，而不是仅依赖当前页面本地状态。
+
 ### 6.14 SleepLog
 
 ```ts
@@ -939,6 +975,12 @@ type SleepInsight = UserScoped & {
 3. `OnboardingAnswer` / `OnboardingSessionPreset` 不得直接作为 `SleepInsight` 来源。
 4. Hidden Memory 不得进入 `memoryItemIds`。
 
+生命周期规则：
+
+- `SleepInsight` 属于 derived snapshot。
+- 它可以被后续规则重新计算，但一旦已展示给用户，本次 snapshot 的 `id`、`basedOn`、`suggestionType` 与 `cta` 应保持稳定，以支持事件追踪与 recommendation source traceability。
+- 新一轮生成的新 insight 应创建新的 `SleepInsight.id`，而不是覆写旧曝光记录的身份。
+
 ### 6.16 SuggestionRuleResult
 
 用于 Sleep suggestion 多规则冲突时排序。
@@ -999,6 +1041,13 @@ type HomeRecommendation = UserScoped & {
 3. Home 不做复杂信息流。
 4. Home 不做外部 push。
 5. Tonight's suggestion 可以被 Home 读取并展示。
+
+生命周期规则：
+
+- `HomeRecommendation` 属于 derived snapshot。
+- 它不是长期画像对象，也不应被当作长期用户偏好持久存储。
+- 但一旦当前 Home 主推荐被选定并暴露给用户，本次 recommendation 的 `id`、`source`、`sourceId`、`cta` 必须保持稳定，直到该 recommendation 被点击、失效或被下一次 recommendation 替换。
+- 同一个曝光周期内，不得为同一张主推荐重复生成新的 `id`，否则 view / click 无法可靠关联。
 
 ### 6.18 ProductEvent
 
@@ -1111,14 +1160,14 @@ TalkEntryContext
 
 Sleep
 SleepLog[]、TalkSession、RoomSession、MemoryFeedback
-SleepLog、SleepInsight
+SleepLog、SleepInsight snapshot
 Tonight's suggestion
 sleep_、tonight_
 TalkEntryContext or Room entry
 
 Home
 HomeRecommendation candidates
-ephemeral recommendation
+当前 `HomeRecommendation` snapshot
 main CTA
 home_*
 target payload
@@ -1867,14 +1916,20 @@ Home 是轻量默认入口，不是复杂信息流。
 
 ### 10.2 Home 推荐优先级
 
+首先明确：
+
+- 未完成 onboarding 的用户应由 `AppEntryResolver` 直接导向 `/onboarding`，不应进入正常 Home 流。
+- active onboarding preset 尚未消费的用户应由 `AppEntryResolver` 直接导向 `/room`，不应进入正常 Home 流。
+
+因此，下面的优先级分为两类：
+
+1. 正常 Home 主流程：只适用于 `hasCompletedOnboarding = true` 且不存在 active preset 的用户。
+2. Defensive fallback：只用于路由恢复异常、状态不同步或深链误入 Home 时的兜底推荐，不应当作正常 Home 产品路径。
+
+#### 10.2.1 正常 Home 主流程优先级
+
 用户状态
 主推荐
-
-未完成 onboarding
-Complete setup
-
-有 active onboarding preset 且未进入 Talk
-Continue to Room
 
 有新 MemoryItem 未反馈
 Review what I noticed
@@ -1891,12 +1946,26 @@ Continue from Memory
 无明确推荐
 Enter Room
 
+#### 10.2.2 Defensive fallback only
+
+以下状态允许保留在 `HomeRecommendation.type` 中作为兜底恢复，但默认不应出现在正常 Home 页面：
+
+用户状态
+主推荐
+
+未完成 onboarding
+Complete setup
+
+有 active onboarding preset 且未进入 Talk
+Continue to Room
+
 规则：
 
 1. `HomeRecommendation` 除 `system_default` 外必须有 `sourceId`。
 2. Hidden Memory 不得作为 Home recommendation 来源。
 3. Tonight's suggestion 可以被 Home 读取。
 4. Home 不做外部 push。
+5. `complete_onboarding` 与 active preset 对应的 `enter_room` 只应用于 defensive fallback，不应用于正常 Home 主流程。
 
 ## 11. Analytics and Retention
 
@@ -2244,6 +2313,9 @@ type Stage3StoreApi = {
   startTalkSession(context: TalkEntryContext): TalkSession;
   endTalkSession(talkSessionId: string): TalkSession;
   maybeExtractMemoryFromTalk(talkSessionId: string): MemoryExtractionRun;
+  listMemoryExtractionRunsForTalkSession(
+    talkSessionId: string
+  ): MemoryExtractionRun[];
 
   listVisibleMemories(): MemoryItem[];
   submitMemoryFeedback(input: MemoryFeedback): MemoryItem;
@@ -2275,7 +2347,7 @@ Onboarding
 - Onboarding 只有两个问题。
 - Q1 是用户当前状态。
 - Q2 是用户允许的陪伴方式。
-- Onboarding 生成 `postOnboardingSessionPreset`。
+- Onboarding 生成 `OnboardingSessionPreset`。
 - Onboarding 不生成 room recommendation。
 - Onboarding 不直接进入 Talk。
 - 结果页主 CTA 进入 Room。
@@ -2301,6 +2373,7 @@ Talk
 - Talk 不只用 `presetId` 重新查表。
 - `TalkSession` 结束或离开页面后触发 Memory extraction 判断。
 - Memory extraction 具有幂等保护。
+- `latestMemoryExtractionRunId` 与 `completedMemoryExtractionRunId` 语义明确且不可混用。
 - 不是每个 `TalkSession` 都必须生成 `MemoryItem`。
 - Memory extraction 失败不影响 `TalkSession` 保存。
 
@@ -2312,6 +2385,7 @@ Memory
 - Agree 增强 Memory。
 - Disagree 纠错。
 - Hide 后该 Memory 不再影响 Talk / Sleep / Home。
+- `MemoryFeedback` 持久保存，并驱动后续状态读取。
 - Hidden Memory 不进入 prompt / retrieval / recommendation context。
 - V1 不做 Delete。
 - Disagree note 可选。
@@ -2322,6 +2396,7 @@ Sleep
 - `SleepLog` 有 `sleepDate` 和 `checkInDate`。
 - 数据不足不伪造趋势。
 - Tonight's suggestion 可追溯。
+- `SleepInsight` 作为 derived snapshot 具有稳定 `id` 与 `basedOn`。
 - Sleep suggestion 有规则优先级。
 - Onboarding 不直接影响 Sleep suggestion。
 - UI 文案不使用医学诊断表达。
@@ -2331,6 +2406,8 @@ Home
 - Home 是轻量默认入口。
 - Home 只展示一个主推荐。
 - `HomeRecommendation` 有 `source / sourceId`。
+- 正常 Home 流不处理未 onboarding / active preset 用户态；这些状态由 AppEntryResolver 拦截。
+- `HomeRecommendation` 作为当前主推荐 snapshot 具有稳定 `id`。
 - Home 可以读取 Tonight's suggestion。
 - Hidden Memory 不作为 Home recommendation 来源。
 - Home 不做外部 push。
