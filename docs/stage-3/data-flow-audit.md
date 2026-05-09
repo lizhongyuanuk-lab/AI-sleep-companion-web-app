@@ -251,7 +251,96 @@ Conclusion:
 
 - current runtime storage supports demo continuity, not the Stage 3 contract/persistence model
 
-## 7. Field inventory
+## 7. Page-level data requirements
+
+### 7.1 Onboarding
+
+| Item | Audit detail |
+| --- | --- |
+| data needs | onboarding completion state, fixed question options, preset mapping, draft progress, entry source |
+| data sources | `product-logic.md`, first-launch docs, runtime `lib/first-launch.ts` and `app/first-launch-flow.tsx` |
+| derived data | result view model, `OnboardingSessionPreset`, first-night bridge copy |
+| downstream consumers | App Entry route decision, Room, Talk first-session context, later Home gating |
+| missing/stale/fallback states | missing dedicated `/onboarding` route in runtime; stale preset must expire quietly; incomplete flow should not fall into normal Home |
+| contract requirements | canonical `OnboardingSessionPreset`, preset lifecycle, completion flag semantics, route handoff into Room |
+
+### 7.2 Room
+
+| Item | Audit detail |
+| --- | --- |
+| data needs | fixed `RoomOption[]`, active preset, room view state, room entry source |
+| data sources | `product-logic.md`, runtime `app/room/room-config.ts`, `app/room/page.tsx`, `lib/room-selection.ts` |
+| derived data | `RoomView`, weak initial room landing, `RoomSession`, `TalkEntryContext` payload |
+| downstream consumers | Talk, later Sleep / Home continuity, room re-entry logic |
+| missing/stale/fallback states | product expects clean separation of `RoomView` vs `RoomSession`; runtime fallback uses stored room/default room when preset context is missing or expired |
+| contract requirements | canonical `RoomOption`, `RoomView`, `RoomSession`, Room -> Talk payload, preset passthrough without mutation |
+
+### 7.3 Home
+
+| Item | Audit detail |
+| --- | --- |
+| data needs | onboarding completion state, active preset, recent Talk / Room / Sleep / Memory continuity, recommendation candidates |
+| data sources | primary `product-logic.md`, secondary `home.md`, future shared data layer; no runtime Home implementation yet |
+| derived data | `RouteDecision`, `HomeEntryContext`, `HomeRecommendation`, one main CTA, lightweight continuity explanation |
+| downstream consumers | Talk, Sleep, Room, Memory navigation targets, Home analytics |
+| missing/stale/fallback states | runtime lacks `/home`, `HomeRecommendation`, candidate derivation, `system_default`, partial-data, and error-safe Home fallbacks |
+| contract requirements | `AppEntryState`, `RouteDecision`, `HomeRecommendation`, `HomeCTA`, `HomeRecommendationClickPayload`, recommendation traceability fields |
+
+### 7.4 Talk
+
+| Item | Audit detail |
+| --- | --- |
+| data needs | `TalkEntryContext`, eligible memories, `RoomSession`, `OnboardingSessionPreset`, active scene / room continuity |
+| data sources | `product-logic.md`, runtime `app/talk/talk-shell.tsx`, `app/talk/scene-config.ts`, `lib/scene-selection.ts`, storage-mediated first-launch handoff |
+| derived data | Talk mode, opening copy, timing, question budget, memory extraction input |
+| downstream consumers | Memory extraction, Sleep continuity, future Home continuity, Talk analytics |
+| missing/stale/fallback states | runtime consumes first-launch context only; Home/Memory/Sleep-origin contexts are not runtime-wired; fallback uses stored/default scene |
+| contract requirements | canonical `TalkEntryContext`, `TalkSession`, intent/source rules, per-entry required IDs, fallback semantics for expired preset |
+
+### 7.5 Memory
+
+| Item | Audit detail |
+| --- | --- |
+| data needs | visible `MemoryItem[]`, feedback state, CTA eligibility, exclusion flags/status |
+| data sources | `product-logic.md`, `home.md`, runtime mock data in `app/memory/memory-page-data.ts` |
+| derived data | visible memory list, CTA payloads, lightweight continuity eligibility for Home |
+| downstream consumers | Talk personalization, Sleep suggestion inputs, Home recommendation candidates |
+| missing/stale/fallback states | runtime has local Agree/Delete demo behavior, but lacks contract-clean Agree/Disagree/Hide persistence and exclusion semantics |
+| contract requirements | canonical `MemoryItem`, `MemoryFeedback`, visibility/exclusion rules, CTA payload shape, hidden/disagreed/expired/blocked handling |
+
+### 7.6 Sleep
+
+| Item | Audit detail |
+| --- | --- |
+| data needs | `SleepLog[]`, prior `TalkSession` / `RoomSession`, `MemoryFeedback`, current `SleepInsight` |
+| data sources | `product-logic.md`, runtime mock data in `app/sleep-monitoring/sleep-page-data.ts` and `app/sleep-monitoring/sleep-shell.tsx` |
+| derived data | summaries, `Tonight's suggestion`, `SleepInsight`, Home sleep continuity |
+| downstream consumers | Home recommendation candidates, Talk / Room CTA handoff, sleep analytics |
+| missing/stale/fallback states | runtime exposes mock states only; product requires `collect_more_data`, snapshot traceability, and graceful fallback when sleep data is partial or missing |
+| contract requirements | canonical `SleepLog` or `SleepCheckIn`, `SleepInsight`, `basedOn`, CTA payload shape, stale/missing-data handling |
+
+## 8. Canonical cross-page data flows
+
+### 8.1 Flow matrix
+
+| Flow | Produced data object | Consumed data object | Required contract fields | Exclusion rules | Fallback behavior |
+| --- | --- | --- | --- | --- | --- |
+| Onboarding -> Room -> Home | `OnboardingSessionPreset`, then consumed/expired preset state | `AppEntryState`, Room handoff, later Home entry gating | `hasCompletedOnboarding`, `activeOnboardingPreset.status`, `onboardingPresetId`, preset lifecycle fields | Onboarding must not construct Talk directly; preset is session-scoped, not long-term profile | if onboarding incomplete -> `/onboarding`; if preset active -> `/room`; if consumed/expired -> `/home` |
+| Room -> Talk | `RoomSession`, `TalkEntryContext` | `TalkSession.entryContext` | `source="room"`, `intent`, `roomId`, `roomSessionId`, `onboardingPresetId`, full preset when active | Room must not rewrite preset; `RoomView != RoomSession` | expired preset should quietly degrade to default room-entry Talk logic |
+| Talk -> Memory | `TalkSession`, `MemoryExtractionRun`, possible `MemoryItem` | Memory page, Home/Sleep/Talk downstream continuity | `talkSessionId`, counts, summary, `entryContext`, extracted memory fields | hidden or excluded memories must not become recommendation inputs | if extraction not eligible, skip without inventing memory objects |
+| Memory -> Talk | `MemoryFeedback`, Memory CTA payload | `TalkEntryContext` for Talk re-entry | `source="memory"`, `sourceId`, `memoryId`, `intent`, optional opening/tone hints | hidden memory cannot surface CTA; contradicted/disagreed memory cannot act as positive preference | if memory is no longer eligible, CTA should disappear rather than route stale context |
+| Sleep -> Home | `SleepLog`, `SleepInsight`, `Tonight's suggestion` | Home recommendation candidates / continuity | `sleepInsightId`, `basedOn`, suggestion target, source traceability | hidden memory cannot influence Sleep inputs; raw onboarding answers cannot be direct sleep recommendation source | data-insufficient case falls back to `collect_more_data` or other Home source |
+| Home -> Talk | `HomeRecommendation`, optional `TalkEntryContext` | Talk entry | `homeRecommendationId`, `source`, `sourceId`, `cta.target="talk"`, `TalkEntryContext.source="home"` | Home must not carry transcript or raw memory payload; recommendation source must be eligible | if Home recommendation is stale/invalid, fallback should route to a safe default or regenerate recommendation |
+| Home -> Sleep | `HomeRecommendation` | Sleep route handoff | `homeRecommendationId`, `source`, `sourceId`, `cta.target="sleep"` | Home must not turn Sleep into a full report preview | if sleep-derived source is unavailable, fallback to other source or `system_default` |
+| Home -> Room | `HomeRecommendation` | Room entry / route decision | `homeRecommendationId`, `source`, `sourceId`, `cta.target="room"` | Home must not become Room browsing feed | if room continuity cannot be restored, fallback to default Room entry |
+
+### 8.2 Flow notes
+
+- The canonical chain is still first-night centric: onboarding creates the preset, Room consumes it, and only then should Home become the normal lightweight default entry.
+- Home is downstream of most business objects. It should not originate domain objects except its own derived recommendation snapshot and analytics.
+- Current runtime only partially implements the `Onboarding -> Room -> Talk` portion; the Home-origin flows are still documentation-only.
+
+## 9. Field inventory
 
 | Domain | Field / concept | Source | Runtime consumer file if any | Required for Stage 3 contract | Current status | Risk |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -270,15 +359,15 @@ Conclusion:
 | Home | `HomeRecommendation.id` | product-logic | none | yes | missing | No recommendation traceability. |
 | Home | `HomeRecommendation.type` | product-logic | none | yes | missing | No recommendation derivation. |
 | Home | `HomeRecommendation.source` | product-logic, home.md | none | yes | missing | No upstream provenance tracking. |
-| Home | `HomeRecommendation.sourceId` | product-logic, home.md | yes | missing | High review risk because traceability is a core rule. |
+| Home | `HomeRecommendation.sourceId` | product-logic, home.md | none | yes | missing | High review risk because traceability is a core rule. |
 | Home | `HomeRecommendation.cta.target` | product-logic, home.md | none | yes | missing | No canonical Home handoff payload. |
 | Home | one main recommendation | product-logic, home.md | none | yes | missing | Core Home behavior absent. |
 | Home | recommendation events | product-logic | none | yes | missing | Retention and analytics loop cannot validate Home. |
-| Runtime storage | `localStorage` onboarding draft/preset keys | runtime | `lib/first-launch.ts` | no | implemented | Useful reference for E, but not the final Stage 3 persistence contract. |
+| Runtime storage | `localStorage` onboarding draft/preset keys | runtime | `lib/first-launch.ts` | no | implemented | Useful reference for later local data work, but not the final Stage 3 persistence contract. |
 
-## 8. Recommendations for follow-on workers
+## 10. Recommendations for follow-on workers
 
-### 8.1 Worker B: data-contract requirements
+### 10.1 Worker B: data-contract requirements
 
 B should define or clarify:
 
@@ -291,7 +380,7 @@ B should define or clarify:
 - canonical Room -> Talk, Memory -> Talk, Sleep -> Talk, and Home -> Talk payload shapes
 - snapshot stability rules for `SleepInsight` and `HomeRecommendation`
 
-### 8.2 Worker C: acceptance checklist requirements
+### 10.2 Worker C: acceptance checklist requirements
 
 C should verify:
 
@@ -304,7 +393,7 @@ C should verify:
 - Talk can still accept Room/Memory/Sleep/Home entry contexts without losing provenance
 - runtime route mismatch between `"/"` and `"/home"` is resolved or deliberately accepted
 
-### 8.3 Worker D: contracts / mocks requirements
+### 10.3 Worker D: contracts / mocks requirements
 
 D should cover:
 
@@ -314,9 +403,9 @@ D should cover:
 - mock Home recommendations for `review_memory`, `sleep_checkin`, `tonight_suggestion`, `start_talk`, and `enter_room`
 - mock payloads for Home -> Talk, Memory -> Talk, Sleep -> Talk, and Room -> Talk
 
-### 8.4 Worker E: local-data-foundation prerequisites
+### 10.4 Follow-on local data foundation prerequisites
 
-E should not treat current `localStorage` usage as the final contract. E should first establish:
+Follow-on local data work should not treat current `localStorage` usage as the final contract. It should first establish:
 
 - a single local data foundation for onboarding completion, active preset state, and route resolution
 - a consistent store boundary between draft, session, persistent, and derived snapshot layers
@@ -324,7 +413,129 @@ E should not treat current `localStorage` usage as the final contract. E should 
 - a contract-clean replacement path for ad hoc localStorage handoffs where route payload or shared store is more appropriate
 - migration guidance for current runtime keys so first-launch demo continuity does not silently define the final Stage 3 model
 
-## 9. Main conclusions
+## 11. Data contract handoff summary
+
+Worker B should define the following exact fields, types, and states in `docs/stage-3/data-contract.md`:
+
+### 11.1 App entry and route decision
+
+- `AppEntryState`
+  - `userId?`
+  - `anonymousId?`
+  - `hasCompletedOnboarding`
+  - `activeOnboardingPreset?`
+  - `hasUsableHomeRecommendation`
+  - explicit stale/missing handling for preset and Home inputs
+- `RouteDecision`
+  - route target enum or literal union for `/onboarding`, `/room`, `/home`
+  - decision reason
+  - fallback marker when defensive fallback is used
+- `HomeEntryContext`
+  - minimum fields Home needs to explain why the user entered Home
+  - whether it includes `missingDataKeys`, `staleDataKeys`, `fallbackKind`
+
+### 11.2 Onboarding and Talk handoff
+
+- `OnboardingSessionPreset`
+  - ID
+  - q1/q2 answers
+  - base mode/state modifier
+  - opening copy / tone defaults
+  - fallback chain
+  - `status`
+  - `createdAt`
+  - `expiresAt`
+- `TalkEntryContext`
+  - `source`
+  - `sourceId`
+  - `sourceDomain`
+  - `intent`
+  - `roomId`
+  - `roomViewId`
+  - `roomSessionId`
+  - `onboardingPresetId`
+  - `onboardingPreset?`
+  - `memoryId`
+  - `sleepInsightId`
+  - `homeRecommendationId`
+  - `createdAt`
+
+### 11.3 Home recommendation contract
+
+- `HomeRecommendation`
+  - `id`
+  - `type`
+  - `title`
+  - `body?`
+  - `priority`
+  - `source`
+  - `sourceId`
+  - `sourceDomain`
+  - `createdAt`
+  - lifecycle/stability rules
+- `HomeCTA`
+  - `label`
+  - `target`
+  - optional `entryContext`
+  - optional route payload shape
+- fallback and data health metadata
+  - `fallbackKind`
+  - `missingDataKeys`
+  - `staleDataKeys`
+
+### 11.4 Memory contract
+
+- `MemoryItem`
+  - ID
+  - source session linkage
+  - eligibility / visibility fields
+  - whether hidden/disagreed/expired/blocked are statuses, flags, or both
+  - `excludeFromPersonalization`
+- `MemoryFeedback`
+  - ID
+  - linked `memoryId`
+  - feedback type for agree / disagree / hide
+  - persistence semantics
+  - audit fields / timestamps
+- explicit exclusion rules
+  - hidden memory exclusion
+  - disagreed memory exclusion or constraint semantics
+  - expired memory exclusion
+  - blocked memory exclusion
+
+### 11.5 Sleep contract
+
+- `SleepCheckIn` or `SleepLog`
+  - canonical name
+  - `sleepDate`
+  - `checkInDate`
+  - quality / ease fields
+  - room/talk linkage if needed
+- `SleepInsight`
+  - `id`
+  - `basedOn`
+  - suggestion target / type
+  - CTA shape
+  - stable snapshot semantics
+- stale/missing handling
+  - sleep data insufficiency
+  - `collect_more_data`
+  - `missingDataKeys`
+  - `staleDataKeys`
+
+## 12. Open questions / ambiguities
+
+- The task requests audit against `product-logic.md v0.4`, but the current repository file header says `v0.3`.
+- Canonical Stage 3 Home entry is `"/home"`, but current runtime entry is `"/"` and no `app/home` route exists.
+- `HomeRecommendation` is concretely typed in `product-logic.md`, but `home.md` also says exact TS shape belongs to the data-contract layer.
+- It is unclear whether generic "Recommendation" should exist as a broader contract, or whether Home should only use `HomeRecommendation`.
+- It is unresolved whether hidden / disagreed / blocked / expired memory should be modeled as statuses, flags, derived eligibility, or a mix of all three.
+- It is unresolved whether Room -> Talk and Home -> Talk handoffs should use `localStorage`, route payload, shared store, or a hybrid approach.
+- It is unresolved whether `SleepInsight` and `HomeRecommendation` are persisted snapshots, recomputable derived objects with stable IDs, or recomputable objects that also require persisted exposure records.
+- The current runtime uses `PostOnboardingSessionPreset`; Stage 3 docs use `OnboardingSessionPreset`. Canonical naming and migration are still open.
+- The Home doc says its own priority is above `product-logic.md`, while the worker brief says `product-logic.md` wins on conflict.
+
+## 13. Main conclusions
 
 1. Stage 3 Home logic is documented, but not implemented in current runtime.
 2. Current runtime still uses the root route as a first-launch shell rather than a Home resolver.
