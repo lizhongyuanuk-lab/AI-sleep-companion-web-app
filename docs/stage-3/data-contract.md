@@ -54,7 +54,9 @@ Current runtime compatibility note:
 
 ### 1.3 Storage assumption
 
-`product-logic.md` is storage-agnostic.
+`product-logic.md` defines Stage 3 persistence boundaries.
+
+Home-specific docs are storage-agnostic at the UI/page level.
 
 This contract defines logical state and field names only:
 
@@ -63,7 +65,7 @@ This contract defines logical state and field names only:
 - derived snapshots
 - derived runtime/read models
 
-Local persistence strategy is intentionally deferred to Worker E local-data-foundation. Worker D must model the logical contract first and must not rename contract fields to match temporary local storage keys.
+Worker E local-data-foundation will implement the local persistence layer. Worker D must model the logical contract first and must not rename contract fields to match temporary local storage keys.
 
 ### 1.4 Recommendation domain note
 
