@@ -378,6 +378,42 @@ export const homeRecommendationFromMemory: HomeRecommendation = {
   createdAt: MOCK_CREATED_AT,
 };
 
+export const homeSleepCheckInEntryContext: TalkEntryContext = {
+  source: "home",
+  sourceId: "sleep_checkin_001",
+  intent: "sleep_reflection",
+  homeRecommendationId: "home_rec_sleep_checkin_001",
+  suggestedOpening: "We can reflect on last night for a minute and keep it light.",
+  tonePreset: "gentle",
+  interactionIntensity: "low",
+  createdAt: MOCK_CREATED_AT,
+};
+
+export const homeSleepCheckInRecommendationCta: HomeCTA = {
+  id: "home_cta_sleep_checkin_001",
+  label: "Check in about last night",
+  target: "talk",
+  targetPath: "/talk",
+  homeRecommendationId: "home_rec_sleep_checkin_001",
+  entryContext: homeSleepCheckInEntryContext,
+  createdAt: MOCK_CREATED_AT,
+};
+
+export const homeSleepCheckInRecommendation: HomeRecommendation = {
+  id: "home_rec_sleep_checkin_001",
+  type: "sleep_checkin",
+  title: "Check in about last night",
+  body: "A quick reflection could help keep tonight's support more grounded.",
+  priority: 90,
+  source: "sleep_log",
+  sourceId: "sleep_checkin_001",
+  sourceDomain: "sleep",
+  surface: "home_main",
+  fallbackKind: "none",
+  cta: homeSleepCheckInRecommendationCta,
+  createdAt: MOCK_CREATED_AT,
+};
+
 export const lightweightSleepCheckIn: SleepCheckIn = {
   id: "sleep_checkin_001",
   sleepDate: MOCK_SLEEP_DATE,
@@ -441,6 +477,43 @@ export const lightweightSleepInsight: SleepInsight = {
   },
   homeEligible: true,
   createdAt: "2026-05-09T07:10:00.000Z",
+};
+
+export const homeTonightSuggestionEntryContext: TalkEntryContext = {
+  source: "home",
+  sourceId: lightweightSleepInsight.id,
+  intent: "tonight_suggestion",
+  sleepInsightId: lightweightSleepInsight.id,
+  homeRecommendationId: "home_rec_tonight_suggestion_001",
+  suggestedOpening: "We can try tonight's gentler suggestion together.",
+  tonePreset: "gentle",
+  interactionIntensity: "low",
+  createdAt: MOCK_CREATED_AT,
+};
+
+export const homeTonightSuggestionRecommendationCta: HomeCTA = {
+  id: "home_cta_tonight_suggestion_001",
+  label: "Try tonight's suggestion",
+  target: "talk",
+  targetPath: "/talk",
+  homeRecommendationId: "home_rec_tonight_suggestion_001",
+  entryContext: homeTonightSuggestionEntryContext,
+  createdAt: MOCK_CREATED_AT,
+};
+
+export const homeTonightSuggestionRecommendation: HomeRecommendation = {
+  id: "home_rec_tonight_suggestion_001",
+  type: "tonight_suggestion",
+  title: "Tonight's suggestion",
+  body: "A gentler start looks like the strongest sleep-linked next step tonight.",
+  priority: 80,
+  source: "sleep_insight",
+  sourceId: lightweightSleepInsight.id,
+  sourceDomain: "sleep",
+  surface: "home_main",
+  fallbackKind: "none",
+  cta: homeTonightSuggestionRecommendationCta,
+  createdAt: MOCK_CREATED_AT,
 };
 
 export const staleSleepCheckIn: SleepCheckIn = {
@@ -619,6 +692,80 @@ export const conversationMessages: ConversationMessage[] = [
   },
 ];
 
+export const homeConversationContinuityEntryContext: TalkEntryContext = {
+  source: "home",
+  sourceId: conversationContinuity.id,
+  intent: "open_chat",
+  homeRecommendationId: "home_rec_conversation_001",
+  suggestedOpening: "We can pick up gently from the tone that worked last time.",
+  tonePreset: "gentle",
+  interactionIntensity: "low",
+  createdAt: MOCK_CREATED_AT,
+};
+
+export const homeConversationContinuityRecommendationCta: HomeCTA = {
+  id: "home_cta_conversation_001",
+  label: "Start gently",
+  target: "talk",
+  targetPath: "/talk",
+  homeRecommendationId: "home_rec_conversation_001",
+  entryContext: homeConversationContinuityEntryContext,
+  createdAt: MOCK_CREATED_AT,
+};
+
+export const homeConversationContinuityRecommendation: HomeRecommendation = {
+  id: "home_rec_conversation_001",
+  type: "start_talk",
+  title: "Continue with a gentle start",
+  body: "Recent conversation continuity suggests a low-pressure return to Talk.",
+  priority: 70,
+  source: "talk_session",
+  sourceId: conversationContinuity.id,
+  sourceDomain: "talk",
+  surface: "home_main",
+  fallbackKind: "none",
+  cta: homeConversationContinuityRecommendationCta,
+  createdAt: MOCK_CREATED_AT,
+};
+
+export const homeRoomContinuityEntryContext: TalkEntryContext = {
+  source: "home",
+  sourceId: roomSessionAfterOnboarding.id,
+  intent: "quiet_company",
+  roomId: roomSessionAfterOnboarding.roomId,
+  roomSessionId: roomSessionAfterOnboarding.id,
+  homeRecommendationId: "home_rec_room_001",
+  suggestedOpening: "We can keep the calmer room pace as we re-enter Talk.",
+  tonePreset: "quiet",
+  interactionIntensity: "low",
+  createdAt: MOCK_CREATED_AT,
+};
+
+export const homeRoomContinuityRecommendationCta: HomeCTA = {
+  id: "home_cta_room_001",
+  label: "Continue with quiet company",
+  target: "talk",
+  targetPath: "/talk",
+  homeRecommendationId: "home_rec_room_001",
+  entryContext: homeRoomContinuityEntryContext,
+  createdAt: MOCK_CREATED_AT,
+};
+
+export const homeRoomContinuityRecommendation: HomeRecommendation = {
+  id: "home_rec_room_001",
+  type: "start_talk",
+  title: "Continue with quiet company",
+  body: "Room continuity is available and can hand off directly into Talk.",
+  priority: 60,
+  source: "room_session",
+  sourceId: roomSessionAfterOnboarding.id,
+  sourceDomain: "room",
+  surface: "home_main",
+  fallbackKind: "none",
+  cta: homeRoomContinuityRecommendationCta,
+  createdAt: MOCK_CREATED_AT,
+};
+
 export const systemDefaultFallbackCta: HomeCTA = {
   id: "home_cta_system_001",
   label: "Start a simple check-in",
@@ -744,6 +891,18 @@ export const staleSleepFallbackRecommendation: HomeRecommendation = {
   cta: staleSleepFallbackCta,
   createdAt: MOCK_CREATED_AT,
 };
+
+export const normalHomePriorityRecommendations: [
+  HomeRecommendation,
+  HomeRecommendation,
+  HomeRecommendation,
+  HomeRecommendation,
+] = [
+  homeRecommendationFromMemory,
+  homeSleepCheckInRecommendation,
+  homeTonightSuggestionRecommendation,
+  homeConversationContinuityRecommendation,
+];
 
 export const returningUserHomeState: HomeState = {
   id: "home_state_001",
@@ -873,16 +1032,28 @@ export const stage3MockData = {
   home: {
     returningHomeEntryContext,
     partialFallbackEntryContext,
+    staleSleepFallbackEntryContext,
     errorFallbackEntryContext,
     homeRecommendationFromMemory,
+    homeSleepCheckInRecommendation,
+    homeTonightSuggestionRecommendation,
+    homeConversationContinuityRecommendation,
+    homeRoomContinuityRecommendation,
     homeRecommendationFromMemoryCta,
+    homeSleepCheckInRecommendationCta,
+    homeTonightSuggestionRecommendationCta,
+    homeConversationContinuityRecommendationCta,
+    homeRoomContinuityRecommendationCta,
+    normalHomePriorityRecommendations,
     systemDefaultFallbackRecommendation,
     dataPartialFallbackRecommendation,
     errorSafeFallbackRecommendation,
+    staleSleepFallbackRecommendation,
     returningUserHomeState,
     systemDefaultFallbackHomeState,
     dataPartialFallbackHomeState,
     errorSafeFallbackHomeState,
+    staleSleepFallbackHomeState,
   },
   talk: {
     homeToTalkEntryContext,

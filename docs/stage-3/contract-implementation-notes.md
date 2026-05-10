@@ -56,6 +56,7 @@ It did not implement:
 Commands run:
 
 - `npm run lint`
+- `npm run type-check`
 - `npm run build`
 
 Results:
@@ -63,6 +64,14 @@ Results:
 - `npm run lint`: failed
   - Error: `Cannot find package 'eslint-config-next' imported from .../eslint.config.mjs`
   - Assessment: this is a pre-existing workspace/dependency-resolution issue, not caused by the contract or mock files added here.
+- `npm run type-check`: environment caveat / failed
+  - Error family: workspace cannot resolve `next`, `next/navigation`, `next/link`, and CSS module declarations in existing `app/`, `components/`, and `next.config.ts` files.
+  - Assessment: this is a pre-existing dependency/runtime-environment issue in the project workspace, not a Stage 3 contract-shape error introduced by `src/contracts/` or `src/mocks/`.
 - `npm run build`: failed
   - Error: `next: command not found`
   - Assessment: this is a pre-existing environment/dependency availability issue, not caused by the contract or mock files added here.
+
+Worker E local-data-foundation must wait for:
+
+- source trace review to pass
+- integration validation to pass in an environment where project dependencies resolve correctly
