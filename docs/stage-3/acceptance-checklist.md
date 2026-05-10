@@ -252,7 +252,7 @@ Pass/fail rules:
 
 - `FAIL` if route decision is implicit instead of modeled.
 - `FAIL` if Home state is derived only from runtime view state and not from canonical contract rules.
-- `FAIL` if `HomeEntryContext` cannot represent present, missing, partial, stale, or expired upstream state.
+- `FAIL` if `HomeEntryContext` cannot represent `missingDataKeys`, `staleDataKeys`, and `activePresetState` as required by the contract.
 - `FAIL` if `OnboardingPreset` expiry or stale handling is undefined.
 - `FAIL` if `MemoryItem` eligibility is not driven by `status + excludeFromPersonalization`.
 - `FAIL` if sleep contracts drift from the contract document or from worker B's accepted contract output.
@@ -361,7 +361,13 @@ Canonical normal Home recommendation priority:
 2. missing morning sleep check-in
 3. usable `SleepInsight`
 4. strong memory continuity back to Talk
-5. otherwise Room or `system_default`
+5. otherwise `system_default` fallback to `start_talk`
+
+Normal Home CTA rule:
+
+- the normal Home primary CTA is Talk
+- Room, Sleep, and Memory may be recommendation sources or continuity context, but must not become competing normal Home primary CTA targets unless `docs/stage-3/data-contract.md` explicitly allows that behavior
+- `system_default` may be used as fallback, but its Stage 3 CTA resolves to `start_talk`
 
 Defensive fallback only:
 
@@ -382,7 +388,7 @@ Worker D must fail review if any of the following are true:
 - `src/contracts/home.ts` differs from `docs/stage-3/data-contract.md`
 - mocks mirror runtime naming instead of canonical contract naming
 - route values drift from the canonical route decision
-- `HomeEntryContext` omits missing-data keys, stale-data keys, partial-data keys, or expired upstream keys required by contract behavior
+- `HomeEntryContext` omits `missingDataKeys`, `staleDataKeys`, or `activePresetState` required by contract behavior
 - `MemoryItem` uses non-canonical eligibility logic
 - sleep contracts do not match worker B's accepted contract output
 - `docs/stage-3/contract-implementation-notes.md` contains stale factual errors
