@@ -576,7 +576,7 @@ export const errorFallbackEntryContext: HomeEntryContext = {
   canonicalHomePath: "/home",
   runtimeObservedPath: "/",
   sourceRecommendationId: "home_rec_error_001",
-  sourceRecommendationType: "enter_room",
+  sourceRecommendationType: "start_talk",
   missingDataKeys: ["route_decision", "source_recommendation"],
   staleDataKeys: ["active_onboarding_preset", "source_recommendation"],
   activePresetState: "stale",
