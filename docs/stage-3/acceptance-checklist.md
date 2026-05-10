@@ -217,7 +217,6 @@ The mock layer must be able to represent all of the following review scenarios:
 - disagreed memory
 - expired memory
 - blocked memory
-- deleted memory
 - complete upstream data
 - missing upstream data
 - partial upstream data
@@ -232,6 +231,7 @@ Hard fail:
 
 - `FAIL` if mocks cover only the happy path.
 - `FAIL` if the scenario matrix cannot represent fallback, status, stale, expired, or blocked states.
+- `FAIL` if V1 review requires deleted memory coverage unless `product-logic.md` explicitly adds Delete.
 
 ## 8. Canonical Contract Checks
 
@@ -243,7 +243,7 @@ The contract layer must explicitly define or clearly alias all of the following:
 - `HomeRecommendation` or a documented canonical `Recommendation` alias
 - `HomeCTA`
 - `OnboardingPreset` with expiry and stale behavior
-- status-driven `MemoryItem` eligibility
+- `MemoryItem` eligibility driven by `status + excludeFromPersonalization`
 - `SleepGoal`, `SleepSession`, and `SleepCheckIn` shaped according to `docs/stage-3/data-contract.md`
 - `RoomState` as the continuity contract
 - `Ritual` status with active vs future behavior explicitly decided
@@ -252,9 +252,9 @@ Pass/fail rules:
 
 - `FAIL` if route decision is implicit instead of modeled.
 - `FAIL` if Home state is derived only from runtime view state and not from canonical contract rules.
-- `FAIL` if `HomeEntryContext` cannot represent present, missing, partial, stale, or expired upstream state.
+- `FAIL` if `HomeEntryContext` cannot represent `missingDataKeys`, `staleDataKeys`, and `activePresetState` as required by the contract.
 - `FAIL` if `OnboardingPreset` expiry or stale handling is undefined.
-- `FAIL` if `MemoryItem` eligibility is not status-driven.
+- `FAIL` if `MemoryItem` eligibility is not driven by `status + excludeFromPersonalization`.
 - `FAIL` if sleep contracts drift from the contract document or from worker B's accepted contract output.
 - `FAIL` if `RoomState` is missing as the continuity-facing shape.
 - `FAIL` if `Ritual` active vs future semantics are left ambiguous.
@@ -289,7 +289,7 @@ Worker B must pass review for `docs/stage-3/data-contract.md` only if all of the
 - the file defines `HomeRecommendation` or a documented canonical `Recommendation` alias
 - the file defines `HomeCTA`
 - the file defines `OnboardingPreset` expiry and stale behavior
-- the file defines status-driven `MemoryItem` eligibility
+- the file defines `MemoryItem` eligibility as `status + excludeFromPersonalization`
 - the file defines `SleepGoal`, `SleepSession`, and `SleepCheckIn` in the canonical contract shape
 - the file defines `RoomState` as continuity-facing state
 - the file explicitly decides `Ritual` active vs future status behavior
@@ -337,10 +337,10 @@ Home must pass all of the following:
 - recommendation priority is defined
 - recommendation traceability is required
 - hidden memory cannot drive Home
-- disagreed memory cannot drive Home
+- contradicted memory cannot drive Home
+- archived memory cannot drive Home
 - expired memory cannot drive Home
 - blocked memory cannot drive Home
-- deleted memory cannot drive Home
 - raw transcripts cannot be passed through Home entry payloads
 - full sleep reports cannot be passed through Home entry payloads
 - fallback states are defined:
@@ -361,7 +361,13 @@ Canonical normal Home recommendation priority:
 2. missing morning sleep check-in
 3. usable `SleepInsight`
 4. strong memory continuity back to Talk
-5. otherwise Room or `system_default`
+5. otherwise `system_default` fallback to `start_talk`
+
+Normal Home CTA rule:
+
+- the normal Home primary CTA is Talk
+- Room, Sleep, and Memory may be recommendation sources or continuity context, but must not become competing normal Home primary CTA targets unless `docs/stage-3/data-contract.md` explicitly allows that behavior
+- `system_default` may be used as fallback, but its Stage 3 CTA resolves to `start_talk`
 
 Defensive fallback only:
 
@@ -382,7 +388,7 @@ Worker D must fail review if any of the following are true:
 - `src/contracts/home.ts` differs from `docs/stage-3/data-contract.md`
 - mocks mirror runtime naming instead of canonical contract naming
 - route values drift from the canonical route decision
-- `HomeEntryContext` omits missing-data keys, stale-data keys, partial-data keys, or expired upstream keys required by contract behavior
+- `HomeEntryContext` omits `missingDataKeys`, `staleDataKeys`, or `activePresetState` required by contract behavior
 - `MemoryItem` uses non-canonical eligibility logic
 - sleep contracts do not match worker B's accepted contract output
 - `docs/stage-3/contract-implementation-notes.md` contains stale factual errors
@@ -506,7 +512,7 @@ Additional rejection triggers:
 
 - route decision checks are missing
 - fallback mock checks are missing
-- status-driven memory eligibility checks are missing
+- `status + excludeFromPersonalization` memory eligibility checks are missing
 - `src/contracts/home.ts` is not included in required contract review
 - source priority is not documented
 - conflicts are resolved by assumption rather than by explicit trace to `product-logic.md`
