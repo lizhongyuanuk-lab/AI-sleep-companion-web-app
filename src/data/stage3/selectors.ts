@@ -156,7 +156,6 @@ export function getHomeEntryContext(
 ): HomeEntryContext {
   const routeDecision = getRouteDecision(state, now);
   const existing = state.home.entryContext ?? createDefaultHomeEntryContext(now, routeDecision);
-  const recommendation = state.home.recommendation;
   const missingDataKeys = getMissingDataKeys(state);
   const staleDataKeys = getStaleDataKeys(state, now);
 
@@ -171,8 +170,6 @@ export function getHomeEntryContext(
       routeDecision.runtimeObservedPath === "/home"
         ? routeDecision.runtimeObservedPath
         : undefined),
-    sourceRecommendationId: recommendation?.id,
-    sourceRecommendationType: recommendation?.type,
     latestTalkSessionId: state.conversation.latestConversation?.id,
     latestRoomSessionId: state.room.latestRoomSession?.id,
     latestSleepInsightId: state.sleep.latestInsight?.id,
@@ -248,7 +245,8 @@ export function getConversationContinuity(
 export function getMissingDataKeys(
   state: Stage3LocalDataState,
 ): HomeEntryContext["missingDataKeys"] {
-  const existing = state.home.entryContext?.missingDataKeys ?? [];
+  const entryContext = state.home.entryContext;
+  const existing = entryContext?.missingDataKeys ?? [];
   const derived = [...existing];
 
   if (!state.conversation.latestConversation) {
@@ -271,7 +269,10 @@ export function getMissingDataKeys(
     derived.push("eligible_memory");
   }
 
-  if (!state.home.recommendation) {
+  if (
+    !entryContext?.sourceRecommendationId ||
+    !entryContext.sourceRecommendationType
+  ) {
     derived.push("source_recommendation");
   }
 

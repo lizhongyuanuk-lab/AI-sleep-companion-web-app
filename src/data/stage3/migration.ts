@@ -516,6 +516,7 @@ function normalizeHomeRecommendation(raw: unknown): HomeRecommendation | undefin
     "data_partial_fallback",
     "error_safe_fallback",
   ] as const);
+  const sourceId = asOptionalString(raw.sourceId);
   const createdAt = asOptionalString(raw.createdAt);
   const ctaId = asOptionalString(raw.cta.id);
   const ctaLabel = asOptionalString(raw.cta.label);
@@ -546,6 +547,7 @@ function normalizeHomeRecommendation(raw: unknown): HomeRecommendation | undefin
     !title ||
     priority === undefined ||
     !source ||
+    (source !== "system_default" && !sourceId) ||
     !sourceDomain ||
     !surface ||
     !fallbackKind ||

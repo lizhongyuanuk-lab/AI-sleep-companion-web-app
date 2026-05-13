@@ -67,6 +67,8 @@ It creates a reusable, browser-safe data foundation for canonical Stage 3 contra
 - Local storage metadata uses `STAGE3_LOCAL_DATA_VERSION = 1`.
 - Missing version metadata triggers normalization/migration.
 - Future-version local data fails closed to safe defaults instead of attempting a downgrade.
+- `HomeRecommendation.sourceId` is required during normalization for every non-`system_default` recommendation.
+- Malformed non-default recommendations without `sourceId` are removed safely during normalization so read-time fallback can use the existing default recommendation strategy.
 - Legacy first-launch migration currently maps:
   - completion flag
   - onboarding preset
@@ -96,6 +98,8 @@ Derived selector rules stay within accepted contract behavior:
 - route decision follows canonical `/onboarding -> /room -> /home` gating
 - memory eligibility uses `status + excludeFromPersonalization`
 - active preset staleness is derived from `expiresAt`
+- `HomeEntryContext.sourceRecommendationId` and `sourceRecommendationType` are prior Home re-entry / handoff trace fields and are not derived from the current `HomeRecommendation`
+- `source_recommendation` missingness means the prior source trace context is missing, not that the current recommendation snapshot is absent
 - Home selectors do not carry transcript payloads
 - stale sleep/memory thresholds are not invented here beyond explicit contract-safe derivations
 
@@ -130,9 +134,7 @@ Derived selector rules stay within accepted contract behavior:
 
 ## Validation results
 
-Validation was deferred until after implementation.
-
-Worker E should run:
+Worker E source trace fix validation uses:
 
 - `git status --short`
 - `git diff --name-only`
@@ -140,6 +142,13 @@ Worker E should run:
 - `npm run lint`
 - `npm run type-check`
 - `npm run build`
+
+Current results for this fix round:
+
+- `git` scope checks are expected to show only Worker E allowlist files.
+- `npm run lint` fails because the existing workspace cannot resolve `eslint-config-next`.
+- `npm run type-check` fails on existing workspace-level Next and CSS-module resolution outside `src/data/stage3`; Worker E local-data errors should be fixed if they appear.
+- `npm run build` fails because `next` is not available in the current environment.
 
 ## E unlock / next steps
 
