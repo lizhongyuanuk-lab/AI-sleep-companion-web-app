@@ -244,7 +244,7 @@ The contract layer must explicitly define or clearly alias all of the following:
 - `HomeCTA`
 - `OnboardingPreset` with expiry and stale behavior
 - `MemoryItem` eligibility driven by `status + excludeFromPersonalization`
-- `SleepGoal`, `SleepSession`, and `SleepCheckIn` shaped according to `docs/stage-3/data-contract.md`
+- `SleepGoal`, `SleepSession`, and `SleepLog` shaped according to `docs/stage-3/data-contract.md`
 - `RoomState` as the continuity contract
 - `Ritual` status with active vs future behavior explicitly decided
 
@@ -290,7 +290,7 @@ Worker B must pass review for `docs/stage-3/data-contract.md` only if all of the
 - the file defines `HomeCTA`
 - the file defines `OnboardingPreset` expiry and stale behavior
 - the file defines `MemoryItem` eligibility as `status + excludeFromPersonalization`
-- the file defines `SleepGoal`, `SleepSession`, and `SleepCheckIn` in the canonical contract shape
+- the file defines `SleepGoal`, `SleepSession`, and `SleepLog` in the canonical contract shape
 - the file defines `RoomState` as continuity-facing state
 - the file explicitly decides `Ritual` active vs future status behavior
 - the file preserves traceability requirements for `SleepInsight` and `HomeRecommendation`
@@ -371,8 +371,8 @@ Normal Home CTA rule:
 
 Defensive fallback only:
 
-- `complete_onboarding`
-- `enter_room` for active preset recovery
+- incomplete onboarding recovery via `RouteDecision` / entry guard
+- active preset recovery via `RouteDecision` / entry guard
 
 Review rule:
 

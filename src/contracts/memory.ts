@@ -55,17 +55,18 @@ export type MemoryItem = {
   updatedAt: ISODateTimeString;
 };
 
-export type MemoryFeedbackEventAction = "agree" | "disagree" | "hide" | "unhide";
+export type MemoryFeedbackAction = "agree" | "disagree" | "hide";
 
-export type MemoryFeedbackEventSource = "memory_page" | "talk" | "home";
+export type MemoryFeedbackEffect =
+  | "reinforce_memory"
+  | "contradict_memory"
+  | "hide_from_memory_page_and_personalization";
 
-export type MemoryFeedbackEvent = {
+export type MemoryFeedback = {
   id: EntityId;
   memoryItemId: EntityId;
-  action: MemoryFeedbackEventAction;
-  previousStatus: MemoryItem["status"];
-  resultingStatus: MemoryItem["status"];
-  excludeFromPersonalization: boolean;
-  source: MemoryFeedbackEventSource;
+  action: MemoryFeedbackAction;
+  effect: MemoryFeedbackEffect;
+  note?: string;
   createdAt: ISODateTimeString;
 };

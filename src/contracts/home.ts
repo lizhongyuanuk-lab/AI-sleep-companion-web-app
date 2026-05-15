@@ -63,7 +63,6 @@ export type HomeRecommendationType =
   | "tonight_suggestion";
 
 export type HomeRecommendationSource =
-  | "onboarding_preset"
   | "memory"
   | "talk_session"
   | "sleep_log"
@@ -72,7 +71,6 @@ export type HomeRecommendationSource =
   | "system_default";
 
 export type HomeRecommendationSourceDomain =
-  | "onboarding"
   | "memory"
   | "talk"
   | "sleep"
@@ -101,14 +99,14 @@ export type HomeEntryContextMissingDataKey =
   | "route_decision"
   | "latest_talk_session"
   | "latest_room_session"
-  | "latest_sleep_check_in"
+  | "latest_sleep_log"
   | "latest_sleep_insight"
   | "eligible_memory"
   | "source_recommendation";
 
 export type HomeEntryContextStaleDataKey =
   | "active_onboarding_preset"
-  | "latest_sleep_check_in"
+  | "latest_sleep_log"
   | "latest_sleep_insight"
   | "eligible_memory"
   | "source_recommendation";
@@ -131,7 +129,7 @@ export type HomeEntryContext = {
   latestTalkSessionId?: EntityId;
   latestRoomSessionId?: EntityId;
   latestSleepInsightId?: EntityId;
-  latestSleepCheckInId?: EntityId;
+  latestSleepLogId?: EntityId;
   eligibleMemoryId?: EntityId;
   missingDataKeys: HomeEntryContextMissingDataKey[];
   staleDataKeys: HomeEntryContextStaleDataKey[];

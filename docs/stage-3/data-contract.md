@@ -35,11 +35,11 @@ type RoutePath =
   | "/sleep-monitoring";
 
 type RoomEntrySource =
-  | "after_onboarding"
-  | "home_handoff"
-  | "memory_handoff"
-  | "sleep_handoff"
-  | "direct";
+  | "onboarding"
+  | "home"
+  | "manual"
+  | "memory_cta"
+  | "sleep_suggestion";
 ```
 
 ### 1.2 Canonical route note
@@ -208,6 +208,31 @@ Lifecycle:
 | `createdAt` | `ISODateTimeString` | Required | creation timestamp | Must be valid ISO datetime | none directly | persistent | Backend can own later |
 | `updatedAt` | `ISODateTimeString` | Required | last write timestamp | Must be valid ISO datetime | none directly | persistent | Backend can own later |
 
+### 4.1A OnboardingDraft
+
+Type name:
+
+```ts
+type OnboardingDraft = {
+  stepIndex: 0 | 1 | 2 | 3;
+  q1State?: OnboardingPreset["q1State"];
+  q2SupportStyle?: OnboardingPreset["q2SupportStyle"];
+  draftUpdatedAt: ISODateTimeString;
+  expiresAt: ISODateTimeString;
+};
+```
+
+Purpose:
+
+- Local-only onboarding interruption recovery object.
+- Must not become a long-term profile or downstream personalization source.
+
+Rules:
+
+- Recommended TTL is 12 hours.
+- Must be cleared after onboarding completes.
+- Must not be read by Sleep suggestion or Home recommendation logic.
+
 ### 4.2 OnboardingState
 
 Type name:
@@ -330,6 +355,36 @@ Stale behavior:
 - A preset is stale when `status = "active"` but `expiresAt < now`, or when required fields are missing.
 - Stale preset behavior must degrade to expired behavior.
 
+### 4.3A OnboardingContextCard
+
+Type name:
+
+```ts
+type OnboardingContextCard = {
+  sourcePresetId: string;
+  title: string;
+  body: string;
+  allowedConsumers: ["memory_preview"];
+  disallowedConsumers: [
+    "talk_personalization",
+    "sleep_recommendation",
+    "home_recommendation",
+    "long_term_profile"
+  ];
+  expiresAt: ISODateTimeString;
+};
+```
+
+Purpose:
+
+- UI-only derived context object for lightweight onboarding carry-over on Memory surfaces.
+- Not a persistent business object and not a `MemoryItem`.
+
+Rules:
+
+- May be shown only as a temporary Memory-page context card.
+- Must not be read by Talk personalization, Sleep recommendation, or Home recommendation.
+
 ### 4.4 RouteDecision
 
 Type name:
@@ -442,20 +497,20 @@ type HomeEntryContext = {
   latestTalkSessionId?: string;
   latestRoomSessionId?: string;
   latestSleepInsightId?: string;
-  latestSleepCheckInId?: string;
+  latestSleepLogId?: string;
   eligibleMemoryId?: string;
   missingDataKeys: (
     | "route_decision"
     | "latest_talk_session"
     | "latest_room_session"
-    | "latest_sleep_check_in"
+    | "latest_sleep_log"
     | "latest_sleep_insight"
     | "eligible_memory"
     | "source_recommendation"
   )[];
   staleDataKeys: (
     | "active_onboarding_preset"
-    | "latest_sleep_check_in"
+    | "latest_sleep_log"
     | "latest_sleep_insight"
     | "eligible_memory"
     | "source_recommendation"
@@ -492,7 +547,7 @@ Lifecycle:
 | `latestTalkSessionId` | `string` | Optional | `undefined` | May be absent without blocking Home | home continuity | derived read model | Backend later may fill server-side |
 | `latestRoomSessionId` | `string` | Optional | `undefined` | May be absent without blocking Home | home continuity | derived read model | Backend later may fill server-side |
 | `latestSleepInsightId` | `string` | Optional | `undefined` | Must reference current usable insight snapshot only | home continuity | derived read model | Server may precompute later |
-| `latestSleepCheckInId` | `string` | Optional | `undefined` | Must reference latest valid morning check-in / SleepLog-backed record | home continuity | derived read model | Server may precompute later |
+| `latestSleepLogId` | `string` | Optional | `undefined` | Must reference latest valid morning check-in / SleepLog-backed record | home continuity | derived read model | Server may precompute later |
 | `eligibleMemoryId` | `string` | Optional | `undefined` | Present only for memory that passes eligibility rules | home continuity | derived read model | Server may precompute later |
 | `missingDataKeys` | enum array | Required | `[]` | Must list absent inputs without exposing technical wording in UI | home fallback logic | derived runtime only | Good for diagnostics |
 | `staleDataKeys` | enum array | Required | `[]` | Must list unsafe or stale inputs | home fallback logic | derived runtime only | Good for diagnostics |
@@ -654,7 +709,7 @@ type SleepInsight = {
   body: string;
   confidence: "low" | "medium" | "high";
   basedOn: {
-    sleepCheckInIds: string[];
+    sleepLogIds: string[];
     sleepSessionId?: string;
     talkSessionIds?: string[];
     roomSessionIds?: string[];
@@ -687,11 +742,11 @@ Purpose:
 Source of truth:
 
 - `product-logic.md` `SleepInsight`
-- canonical Stage 3 `SleepCheckIn` and `SleepSession` contracts in this document
+- canonical Stage 3 `SleepLog` and `SleepSession` contracts in this document
 
 Lifecycle:
 
-- Derived snapshot built from one or more `SleepCheckIn` records and optional `SleepSession` continuity.
+- Derived snapshot built from one or more `SleepLog` records and optional `SleepSession` continuity.
 - Recomputable, but stable for the duration of a single exposed insight.
 
 | Field | Type | Req | Default | Validation rule | UI consumer | Persistence assumption | Future backend/API note |
@@ -703,7 +758,7 @@ Lifecycle:
 | `title` | `string` | Required | none | Must remain lightweight, non-clinical, and recommendation-oriented | sleep, home | derived snapshot | Content service may own later |
 | `body` | `string` | Required | none | Must not become a medicalized report or diagnostic summary | sleep, home | derived snapshot | Content service may own later |
 | `confidence` | `"low" \| "medium" \| "high"` | Required | `"low"` | Must stay within approved set | sleep, home | derived snapshot | Stable enum |
-| `basedOn.sleepCheckInIds` | `string[]` | Required | none | Must include at least one valid `SleepCheckIn.id`; this is the contract-level equivalent of `product-logic.md` `sleepLogIds` | sleep, home continuity | derived snapshot | Backend may map directly from sleep log records |
+| `basedOn.sleepLogIds` | `string[]` | Required | none | Must include at least one valid `SleepLog.id` | sleep, home continuity | derived snapshot | Backend may map directly from sleep log records |
 | `basedOn.sleepSessionId` | `string` | Optional | `undefined` | May reference a lightweight `SleepSession` continuity aggregate when present | sleep, home continuity | derived snapshot | Optional server-side aggregate link |
 | `basedOn.talkSessionIds` | `string[]` | Optional | `undefined` | Optional supporting continuity only | sleep | derived snapshot | Optional |
 | `basedOn.roomSessionIds` | `string[]` | Optional | `undefined` | Optional supporting continuity only | sleep | derived snapshot | Optional |
@@ -716,8 +771,8 @@ Lifecycle:
 
 Rules:
 
-- `basedOn.sleepCheckInIds` must exist.
-- `single_night` may be generated from one `SleepCheckIn`.
+- `basedOn.sleepLogIds` must exist.
+- `single_night` may be generated from one `SleepLog`.
 - `3_day` / `7_day` / `14_day` are window labels, not minimum data requirements.
 - Low-confidence insights may be generated from sparse data.
 - `basedOn.sleepSessionId` is optional and must stay lightweight.
@@ -725,6 +780,25 @@ Rules:
 - Hidden memory must not appear in `basedOn.memoryItemIds`.
 - Home may surface a `SleepInsight` only when `homeEligible = true`.
 - This contract must not expand into a clinical scorecard, diagnosis, or full sleep report.
+
+### 4.9A SuggestionRuleResult
+
+Type name:
+
+```ts
+type SuggestionRuleResult = {
+  suggestionType: SleepInsight["suggestionType"];
+  priority: number;
+  confidence: "low" | "medium" | "high";
+  basedOn: SleepInsight["basedOn"];
+  target: "talk" | "room" | "sleep_checkin";
+};
+```
+
+Purpose:
+
+- Lightweight ranking result used when multiple Sleep suggestion rules compete.
+- Keeps Sleep recommendation ordering explicit without inventing new product behavior.
 
 ### 4.10 SleepGoal
 
@@ -767,7 +841,7 @@ Type name:
 type SleepSession = {
   id: string;
   sleepDate: ISODateString;
-  latestSleepCheckInId?: string;
+  latestSleepLogId?: string;
   latestSleepInsightId?: string;
   preSleepTalkSessionId?: string;
   preSleepRoomSessionId?: string;
@@ -795,7 +869,7 @@ Lifecycle:
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `string` | Required | generated | Stable per logical sleep-date continuity record | sleep, home continuity | derived snapshot | Could be server-generated later |
 | `sleepDate` | `ISODateString` | Required | none | Must identify the night being reflected on | sleep, home continuity | derived snapshot | Stable key candidate |
-| `latestSleepCheckInId` | `string` | Optional | `undefined` | Must reference the latest valid check-in for `sleepDate` | sleep, home continuity | derived snapshot | Server may precompute later |
+| `latestSleepLogId` | `string` | Optional | `undefined` | Must reference the latest valid log for `sleepDate` | sleep, home continuity | derived snapshot | Server may precompute later |
 | `latestSleepInsightId` | `string` | Optional | `undefined` | Must reference current usable insight snapshot | sleep, home continuity | derived snapshot | Server may precompute later |
 | `preSleepTalkSessionId` | `string` | Optional | `undefined` | May link prior Talk session only | sleep continuity | derived snapshot | Keep optional |
 | `preSleepRoomSessionId` | `string` | Optional | `undefined` | May link prior Room session only | sleep continuity | derived snapshot | Keep optional |
@@ -803,12 +877,12 @@ Lifecycle:
 | `createdAt` | `ISODateTimeString` | Required | now | Must be valid ISO datetime | analytics | derived snapshot | Backend can log later |
 | `updatedAt` | `ISODateTimeString` | Required | now | Must be valid ISO datetime | analytics | derived snapshot | Backend can log later |
 
-### 4.12 SleepCheckIn
+### 4.12 SleepLog
 
 Type name:
 
 ```ts
-type SleepCheckIn = {
+type SleepLog = {
   id: string;
   sleepDate: ISODateString;
   checkInDate: ISODateString;
@@ -832,7 +906,7 @@ type SleepCheckIn = {
 Purpose:
 
 - Canonical Stage 3 morning check-in contract.
-- This is the Sleep check-in shape that backs `SleepLog` semantics from `product-logic.md`.
+- `SleepLog` is the canonical Stage 3 object name for the morning check-in record.
 
 Source of truth:
 
@@ -865,12 +939,12 @@ Lifecycle:
 | `createdAt` | `ISODateTimeString` | Required | now | Must be valid ISO datetime | analytics | persistent | Backend can own later |
 | `updatedAt` | `ISODateTimeString` | Required | now | Must be valid ISO datetime | analytics | persistent | Backend can own later |
 
-### 4.13 CompanionConversation
+### 4.13 TalkSession
 
 Type name:
 
 ```ts
-type CompanionConversation = {
+type TalkSession = {
   id: string;
   entryContext: TalkEntryContext;
   mode:
@@ -904,7 +978,7 @@ type CompanionConversation = {
 Purpose:
 
 - Canonical Stage 3 conversation/session contract for Talk.
-- This is the implementation-facing conversation object aligned to `product-logic.md` `TalkSession`.
+- `TalkSession` is the canonical contract name and must not be replaced by a legacy conversation alias.
 
 Source of truth:
 
@@ -935,6 +1009,32 @@ Lifecycle:
 | `memoryExtractionStatus` | enum | Required | `"not_started"` | Reflects latest run only, not aggregate history | talk, memory | persistent | Preserve semantics |
 | `generatedMemoryItemIds` | `string[]` | Optional | `undefined` | Represents completed run output only | memory | persistent | Preserve semantics |
 
+### 4.13A MemoryExtractionRun
+
+Type name:
+
+```ts
+type MemoryExtractionRun = {
+  id: string;
+  talkSessionId: string;
+  status: "running" | "skipped" | "completed" | "failed";
+  reason?: string;
+  startedAt: ISODateTimeString;
+  completedAt?: ISODateTimeString;
+  generatedMemoryItemIds?: string[];
+};
+```
+
+Purpose:
+
+- Idempotent extraction-run record linked to one `TalkSession`.
+- Makes skip / retry / completion state explicit without duplicating completed runs.
+
+Rules:
+
+- One `TalkSession` may have many runs over time, but at most one completed run.
+- `userMessageCount = 0` must produce a skipped run rather than a completed run.
+
 ### 4.14 ConversationMessage
 
 Type name:
@@ -942,7 +1042,7 @@ Type name:
 ```ts
 type ConversationMessage = {
   id: string;
-  conversationId: string;
+  talkSessionId: string;
   role: "user" | "assistant" | "system";
   contentText: string;
   createdAt: ISODateTimeString;
@@ -967,7 +1067,7 @@ Lifecycle:
 | Field | Type | Req | Default | Validation rule | UI consumer | Persistence assumption | Future backend/API note |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `id` | `string` | Required | generated | Stable unique id | talk | persistent if messages are stored | Backend may own later |
-| `conversationId` | `string` | Required | none | Must reference `CompanionConversation.id` | talk | persistent if messages are stored | Backend relation later |
+| `talkSessionId` | `string` | Required | none | Must reference `TalkSession.id` | talk | persistent if messages are stored | Backend relation later |
 | `role` | `"user" \| "assistant" \| "system"` | Required | none | Must stay within approved roles | talk | persistent if messages are stored | Stable enum |
 | `contentText` | `string` | Required | `""` | Plaintext message body; do not overload with memory metadata | talk | persistent if messages are stored | Later multimodal support may extend |
 | `createdAt` | `ISODateTimeString` | Required | now | Must be valid ISO datetime | talk | persistent if messages are stored | Backend can own later |
@@ -1071,26 +1171,28 @@ Memory eligibility decision:
   - any item with `excludeFromPersonalization = true`
 - `expired` and `blocked` are not canonical persisted `MemoryItem.status` values in Stage 3. If UI logic needs those concepts, it must model them as derived ineligibility reasons rather than inventing new persisted memory statuses.
 
-### 4.16 MemoryFeedbackEvent
+### 4.16 MemoryFeedback
 
 Type name:
 
 ```ts
-type MemoryFeedbackEvent = {
+type MemoryFeedback = {
   id: string;
   memoryItemId: string;
-  action: "agree" | "disagree" | "hide" | "unhide";
-  previousStatus: MemoryItem["status"];
-  resultingStatus: MemoryItem["status"];
-  excludeFromPersonalization: boolean;
-  source: "memory_page" | "talk" | "home";
+  action: "agree" | "disagree" | "hide";
+  effect:
+    | "reinforce_memory"
+    | "contradict_memory"
+    | "hide_from_memory_page_and_personalization";
+  note?: string;
   createdAt: ISODateTimeString;
 };
 ```
 
 Purpose:
 
-- Canonical Stage 3 feedback event object for memory actions so Worker D does not need to invent feedback history shape.
+- Canonical Stage 3 feedback object for memory actions.
+- Captures the user action and intended effect without inventing a delete or unhide API.
 
 Source of truth:
 
@@ -1104,21 +1206,18 @@ Lifecycle:
 
 | Field | Type | Req | Default | Validation rule | UI consumer | Persistence assumption | Future backend/API note |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| `id` | `string` | Required | generated | Stable unique feedback event id | memory, analytics | persistent | Backend may own later |
+| `id` | `string` | Required | generated | Stable unique feedback id | memory, analytics | persistent | Backend may own later |
 | `memoryItemId` | `string` | Required | none | Must reference an existing `MemoryItem.id` | memory, analytics | persistent relation | Stable relation |
-| `action` | `"agree" \| "disagree" \| "hide" \| "unhide"` | Required | none | Must stay within approved Stage 3 feedback actions | memory, analytics | persistent | Stable enum |
-| `previousStatus` | `MemoryItem["status"]` | Required | none | Must record the prior memory status before applying feedback | memory, analytics | persistent | Useful for audits and undo rules |
-| `resultingStatus` | `MemoryItem["status"]` | Required | none | Must record the resulting memory status after applying feedback | memory, analytics | persistent | Useful for audits and undo rules |
-| `excludeFromPersonalization` | `boolean` | Required | none | Must reflect the post-feedback personalization exclusion state | memory, talk, sleep, home derivation | persistent | Preserve exact logical flag |
-| `source` | `"memory_page" \| "talk" \| "home"` | Required | none | Must identify where the feedback action was initiated | memory, analytics | persistent | Stable enum |
+| `action` | `"agree" \| "disagree" \| "hide"` | Required | none | Must stay within approved Stage 3 feedback actions | memory, analytics | persistent | Stable enum |
+| `effect` | enum | Required | none | Must match canonical Stage 3 downstream meaning for the action | memory, talk, sleep, home derivation | persistent | Preserve exact meaning |
+| `note` | `string` | Optional | `undefined` | Optional human-readable rationale only | memory | persistent | May support moderation/audit later |
 | `createdAt` | `ISODateTimeString` | Required | now | Must be valid ISO datetime | analytics | persistent | Backend can own later |
 
 Rules:
 
 - `agree` should normally keep or strengthen active memory.
 - `disagree` should normally produce `contradicted` or `weakened` memory.
-- `hide` should set `resultingStatus = "hidden"` and `excludeFromPersonalization = true`.
-- `unhide` may restore a memory only if later product logic explicitly allows it.
+- `hide` should set the target `MemoryItem` to `status = "hidden"` and `excludeFromPersonalization = true`.
 - Hidden or contradicted memory must not influence Home, Talk, Sleep, or Room personalization.
 
 ### 4.17 RoomOption
@@ -1219,7 +1318,7 @@ type RoomSession = {
   durationSeconds?: number;
   exitReason?: "tap_to_talk" | "leave_page" | "app_background" | "timeout";
   followedByTalkSessionId?: string;
-  followedBySleepCheckInId?: string;
+  followedBySleepLogId?: string;
 };
 ```
 
@@ -1252,7 +1351,7 @@ Lifecycle:
 | `durationSeconds` | `number` | Optional | `undefined` | Must be >= 0 | analytics | persistent | Backend can compute later |
 | `exitReason` | enum | Optional | `undefined` | Must stay within approved exit reasons | room, analytics | persistent | Stable enum |
 | `followedByTalkSessionId` | `string` | Optional | `undefined` | Present when the room session leads into Talk | room, talk handoff | persistent relation | Optional relation |
-| `followedBySleepCheckInId` | `string` | Optional | `undefined` | Contract-level rename aligned to `SleepCheckIn` domain | room, sleep continuity | persistent relation | Maps to product-logic sleep-log linkage |
+| `followedBySleepLogId` | `string` | Optional | `undefined` | Present when Room later links to a `SleepLog` continuity record | room, sleep continuity | persistent relation | Maps to product-logic sleep-log linkage |
 
 ### 4.20 RoomState
 
@@ -1311,11 +1410,11 @@ Room continuity rules:
 - Onboarding preset must not reorder, highlight, or reduce room options.
 - If onboarding preset is active, Talk receives full preset after room tap.
 - If onboarding preset is stale or expired, Room degrades quietly to default Room -> Talk behavior.
-- `after_onboarding` means Room carries an active onboarding preset.
-- `home_handoff` means Room was reached from Home.
-- `memory_handoff` means Room was reached from Memory context.
-- `sleep_handoff` means Room was reached from Sleep context.
-- `direct` means the user entered Room directly without contextual handoff.
+- `onboarding` means Room carries an active onboarding preset.
+- `home` means Room was reached from Home.
+- `memory_cta` means Room was reached from Memory context.
+- `sleep_suggestion` means Room was reached from Sleep context.
+- `manual` means the user entered Room directly without contextual handoff.
 
 ### 4.21 Ritual
 
@@ -1376,6 +1475,69 @@ Rule:
 - In Stage 3, `Recommendation` is not distinct from `HomeRecommendation`.
 - Worker D must not create a separate shape unless a later product document explicitly introduces one.
 
+### 4.22A ProductEvent
+
+Type name:
+
+```ts
+type ProductEvent = {
+  id: string;
+  anonymousId?: string;
+  userId?: string;
+  eventName:
+    | "app_opened"
+    | "onboarding_view"
+    | "onboarding_start_click"
+    | "onboarding_q1_select"
+    | "onboarding_q1_next_click"
+    | "onboarding_q2_select"
+    | "onboarding_result_view"
+    | "onboarding_enter_room_click"
+    | "onboarding_enter_room_success"
+    | "onboarding_enter_room_fail"
+    | "room_view"
+    | "room_view_after_onboarding"
+    | "room_option_viewed"
+    | "room_session_started"
+    | "room_session_ended"
+    | "room_enter_talk_after_onboarding"
+    | "talk_started"
+    | "talk_message_sent"
+    | "talk_ended"
+    | "memory_item_created"
+    | "memory_item_viewed"
+    | "memory_feedback_submitted"
+    | "memory_cta_clicked"
+    | "sleep_checkin_started"
+    | "sleep_checkin_completed"
+    | "sleep_insight_viewed"
+    | "tonight_suggestion_viewed"
+    | "tonight_suggestion_clicked"
+    | "home_recommendation_viewed"
+    | "home_recommendation_clicked";
+  page: "home" | "onboarding" | "room" | "talk" | "memory" | "sleep";
+  sessionId?: string;
+  entityType?:
+    | "onboarding_preset"
+    | "room_option"
+    | "room_view"
+    | "room_session"
+    | "talk_session"
+    | "memory_item"
+    | "sleep_log"
+    | "sleep_insight"
+    | "home_recommendation";
+  entityId?: string;
+  properties?: Record<string, string | number | boolean>;
+  createdAt: ISODateTimeString;
+};
+```
+
+Purpose:
+
+- Canonical Stage 3 analytics event object used by docs, contracts, mocks, and local data.
+- Keeps event naming and payload traceability explicit without implying real backend analytics wiring.
+
 ## 5. Explicit Contract Decisions
 
 ### 5.1 Route decision
@@ -1402,7 +1564,7 @@ Current runtime note:
 
 HomeEntryContext must always support:
 
-- `latestSleepCheckInId`
+- `latestSleepLogId`
 - `eligibleMemoryId`
 - `missingDataKeys`
 - `staleDataKeys`
@@ -1441,7 +1603,7 @@ Canonical decision:
 Canonical decision:
 
 - Home reads lightweight Sleep continuity only.
-- Home may read `SleepCheckIn`, `SleepSession`, and `SleepInsight` outputs.
+- Home may read `SleepLog`, `SleepSession`, and `SleepInsight` outputs.
 - Home must not read or display a full sleep report object as its main recommendation source.
 
 ### 5.6 Home-to-Talk CTA
@@ -1511,7 +1673,7 @@ This contract passes review only if:
 - SleepInsight supports `single_night`
 - onboarding preset expiry and stale behavior are explicit
 - memory eligibility is explicit
-- MemoryFeedbackEvent exists and governs agree / disagree / hide / unhide
+- MemoryFeedback exists and governs agree / disagree / hide
 - sleep continuity stays lightweight
 - Room continuity is modeled across `RoomOption`, `RoomView`, `RoomSession`, and `RoomState`
 - Room source naming is unified across `RoomView`, `RoomSession`, and `RoomState`
@@ -1527,6 +1689,6 @@ This contract passes review only if:
 - Simplified `HomeState.status` and added `continuitySource` so Home state no longer mixes fallback and continuity as overlapping status enums.
 - Renamed `availableNavTargets` to `diagnosticsNavTargets` and made it explicitly non-visual to preserve Stage 3 Home as one main recommendation plus one main CTA.
 - Tightened `HomeCTA` so Stage 3 Home always hands off to Talk with required `TalkEntryContext`.
-- Added canonical `MemoryFeedbackEvent` so Worker D can implement feedback history without inventing a shape.
+- Added canonical `MemoryFeedback` so Worker D can implement feedback history without inventing a parallel shape.
 - Updated the RouteDecision sample code so stale / expired preset handling is explicit in code as well as prose.
 - Fixed the missing semicolon in `OnboardingPreset.q2SupportStyle`.

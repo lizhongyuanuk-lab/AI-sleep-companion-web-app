@@ -16,11 +16,11 @@ export type RoutePath =
   | "/sleep-monitoring";
 
 export type RoomEntrySource =
-  | "after_onboarding"
-  | "home_handoff"
-  | "memory_handoff"
-  | "sleep_handoff"
-  | "direct";
+  | "onboarding"
+  | "home"
+  | "manual"
+  | "memory_cta"
+  | "sleep_suggestion";
 
 export type TraceabilityStatus = "traceable" | "system_default";
 

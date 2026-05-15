@@ -13,7 +13,8 @@ export type MemoryPageData = {
     display_text: string;
     supporting_session_count: number;
     time_window_label: string;
-    is_deleted: boolean;
+    status: "active" | "hidden";
+    exclude_from_personalization: boolean;
     continuation_hint?: string | null;
   }>;
   helpful_patterns: Array<{
@@ -43,7 +44,7 @@ export type MemoryPageData = {
   }>;
   memory_items_version: string;
   deep_history_available: boolean;
-  memory_delete_capability: boolean;
+  memory_hide_capability: boolean;
   last_memory_refresh_at: string;
 };
 
@@ -66,7 +67,8 @@ export const memoryPageMockData: MemoryPageData = {
       time_window_label: "This week",
       continuation_hint:
         "You settle more easily when the conversation starts softly.",
-      is_deleted: false,
+      status: "active",
+      exclude_from_personalization: false,
     },
     {
       memory_id: "memory_topic_sleep_entry_pressure",
@@ -75,7 +77,8 @@ export const memoryPageMockData: MemoryPageData = {
       time_window_label: "This week",
       continuation_hint:
         "A softer opening works better than trying to solve everything first.",
-      is_deleted: false,
+      status: "active",
+      exclude_from_personalization: false,
     },
     {
       memory_id: "memory_topic_quiet_company",
@@ -84,7 +87,8 @@ export const memoryPageMockData: MemoryPageData = {
       time_window_label: "Last few sessions",
       continuation_hint:
         "You often stay longer when the tone feels calm and unhurried.",
-      is_deleted: false,
+      status: "active",
+      exclude_from_personalization: false,
     },
     {
       memory_id: "memory_topic_softer_openings",
@@ -93,7 +97,8 @@ export const memoryPageMockData: MemoryPageData = {
       time_window_label: "This week",
       continuation_hint:
         "Gentle first minutes seem to lower the pressure to explain everything at once.",
-      is_deleted: false,
+      status: "active",
+      exclude_from_personalization: false,
     },
     {
       memory_id: "memory_topic_quieter_room_returns",
@@ -102,7 +107,8 @@ export const memoryPageMockData: MemoryPageData = {
       time_window_label: "Recent nights",
       continuation_hint:
         "Lower stimulation seems to make it easier to stay present and come back again.",
-      is_deleted: false,
+      status: "active",
+      exclude_from_personalization: false,
     },
     {
       memory_id: "memory_topic_briefer_loops",
@@ -111,7 +117,8 @@ export const memoryPageMockData: MemoryPageData = {
       time_window_label: "Recent nights",
       continuation_hint:
         "Shorter conversations have felt easier to carry into the following night.",
-      is_deleted: false,
+      status: "active",
+      exclude_from_personalization: false,
     },
   ],
   helpful_patterns: [
@@ -178,6 +185,6 @@ export const memoryPageMockData: MemoryPageData = {
   ],
   memory_items_version: "mock-v1",
   deep_history_available: true,
-  memory_delete_capability: true,
+  memory_hide_capability: true,
   last_memory_refresh_at: "2026-04-28T10:30:00+08:00",
 };

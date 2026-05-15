@@ -34,7 +34,7 @@ How `home.md` is used here:
 | Source priority | Worker brief says product logic wins; product doc is the product-wide baseline | Section 1 says `home.md` is Home truth priority `1`, `product-logic.md` priority `2` | Conflict. This audit follows the worker brief and treats `product-logic.md` as higher priority. |
 | Version | Header says `v0.3` | No matching version banner | Ambiguous. Task says audit against `v0.4`, but repo content does not expose that version. |
 | Canonical Home route | App Entry Resolver returns `"/home"` | Home App Entry section also returns `"/home"` | Internally aligned in Stage 3 docs, but conflicts with current runtime and broader repo route reality where root `"/"` is the entry route and no `app/home` route exists. |
-| Home fallback types | Product logic explicitly keeps `complete_onboarding` and `enter_room` only for defensive fallback | Home PRD also frames entry-guard redirect and fallback, but does not define a concrete type enum | No direct contradiction, but `home.md` depends on missing data-contract alignment for exact fields. |
+| Home fallback types | Product logic keeps onboarding recovery and active-preset recovery in `AppEntryResolver` / entry guard only | Home PRD also frames entry-guard redirect and fallback rather than normal recommendation types | Aligned after baseline fix: defensive fallback is not a normal `HomeRecommendation` enum. |
 | Recommendation shape | Product logic defines a concrete `HomeRecommendation` TS type | Home PRD says exact TS shape belongs to data-contract layer | Tension, not fatal conflict. Product logic is currently the more concrete source. |
 
 ### 1.3 Broader repo ambiguity relevant to Home
@@ -127,8 +127,8 @@ Classification legend:
 | Home reads Tonight's suggestion from Sleep | Home absent | documented product logic only | Sleep mock data can express suggestion payloads, but Home does not read them. |
 | Home fallback to system default | Home absent | documented product logic only | No runtime fallback surface for Home. |
 | Hidden/disagreed/expired/blocked memory excluded from Home | Home absent | documented product logic only | No Home candidate logic exists to verify. |
-| hidden memory excluded from downstream recommendation context generally | Product rule only; runtime Memory page uses local `is_deleted` and delete demo state | partially implemented | Runtime demo delete behavior is not the Stage 3 Hide/Disagree model. |
-| Memory page supports Agree / Disagree / Hide only | runtime supports local Agree + Delete | partially implemented | Runtime conflicts with product logic: V1 should not expose Delete. |
+| hidden memory excluded from downstream recommendation context generally | Product rule plus runtime Memory demo now hides items and marks them excluded from personalization | partially implemented | Runtime demo behavior is local-only, but it now aligns with the Stage 3 Hide rule instead of Delete. |
+| Memory page supports Agree / Disagree / Hide only | runtime supports local Agree / Disagree / Hide demo behavior | partially implemented | Runtime remains local/mock-only, but user-facing Delete is removed. |
 | Sleep suggestion traceability | mock `target_payload` in `sleep-page-data.ts` | partially implemented | Mock payload exists, but no persisted `SleepInsight` snapshot wiring. |
 | Home-to-Talk payload with `homeRecommendationId` | none | ambiguous / missing | Product contract not represented in runtime. |
 
@@ -317,7 +317,7 @@ Conclusion:
 | derived data | summaries, `Tonight's suggestion`, `SleepInsight`, Home sleep continuity |
 | downstream consumers | Home recommendation candidates, Talk / Room CTA handoff, sleep analytics |
 | missing/stale/fallback states | runtime exposes mock states only; product requires `collect_more_data`, snapshot traceability, and graceful fallback when sleep data is partial or missing |
-| contract requirements | canonical `SleepLog` or `SleepCheckIn`, `SleepInsight`, `basedOn`, CTA payload shape, stale/missing-data handling |
+| contract requirements | canonical `SleepLog`, `SleepInsight`, `basedOn`, CTA payload shape, stale/missing-data handling |
 
 ## 8. Canonical cross-page data flows
 
@@ -331,8 +331,8 @@ Conclusion:
 | Memory -> Talk | `MemoryFeedback`, Memory CTA payload | `TalkEntryContext` for Talk re-entry | `source="memory"`, `sourceId`, `memoryId`, `intent`, optional opening/tone hints | hidden memory cannot surface CTA; contradicted/disagreed memory cannot act as positive preference | if memory is no longer eligible, CTA should disappear rather than route stale context |
 | Sleep -> Home | `SleepLog`, `SleepInsight`, `Tonight's suggestion` | Home recommendation candidates / continuity | `sleepInsightId`, `basedOn`, suggestion target, source traceability | hidden memory cannot influence Sleep inputs; raw onboarding answers cannot be direct sleep recommendation source | data-insufficient case falls back to `collect_more_data` or other Home source |
 | Home -> Talk | `HomeRecommendation`, optional `TalkEntryContext` | Talk entry | `homeRecommendationId`, `source`, `sourceId`, `cta.target="talk"`, `TalkEntryContext.source="home"` | Home must not carry transcript or raw memory payload; recommendation source must be eligible | if Home recommendation is stale/invalid, fallback should route to a safe default or regenerate recommendation |
-| Home -> Sleep | `HomeRecommendation` | Sleep route handoff | `homeRecommendationId`, `source`, `sourceId`, `cta.target="sleep"` | Home must not turn Sleep into a full report preview | if sleep-derived source is unavailable, fallback to other source or `system_default` |
-| Home -> Room | `HomeRecommendation` | Room entry / route decision | `homeRecommendationId`, `source`, `sourceId`, `cta.target="room"` | Home must not become Room browsing feed | if room continuity cannot be restored, fallback to default Room entry |
+| Home -> Talk (sleep-derived) | `HomeRecommendation`, `TalkEntryContext` | Talk entry | `homeRecommendationId`, `source`, `sourceId`, `cta.target="talk"`, `sleepInsightId` when relevant | Home must not turn Sleep into a full report preview | if sleep-derived source is unavailable, fallback to another Talk recommendation or `system_default` |
+| Home -> Talk (room-derived) | `HomeRecommendation`, `TalkEntryContext` | Talk entry | `homeRecommendationId`, `source`, `sourceId`, `cta.target="talk"`, `roomSessionId` when relevant | Home must not become Room browsing feed | if room continuity cannot be restored, fallback to another Talk recommendation or `system_default` |
 
 ### 8.2 Flow notes
 
@@ -400,7 +400,7 @@ D should cover:
 - contract skeletons for `OnboardingSessionPreset`, `TalkEntryContext`, `MemoryItem`, `MemoryFeedback`, `SleepInsight`, and `HomeRecommendation`
 - mock fixtures that reflect Stage 3 rules, especially no Memory Delete in V1
 - mock eligibility examples showing visible memory vs hidden/disagreed/blocked memory exclusion
-- mock Home recommendations for `review_memory`, `sleep_checkin`, `tonight_suggestion`, `start_talk`, and `enter_room`
+- mock Home recommendations for `review_memory`, `sleep_checkin`, `tonight_suggestion`, and `start_talk`
 - mock payloads for Home -> Talk, Memory -> Talk, Sleep -> Talk, and Room -> Talk
 
 ### 10.4 Follow-on local data foundation prerequisites
@@ -505,7 +505,7 @@ Worker B should define the following exact fields, types, and states in `docs/st
 
 ### 11.5 Sleep contract
 
-- `SleepCheckIn` or `SleepLog`
+- `SleepLog`
   - canonical name
   - `sleepDate`
   - `checkInDate`
@@ -533,7 +533,7 @@ Worker B should define the following exact fields, types, and states in `docs/st
 - It is unresolved whether Room -> Talk and Home -> Talk handoffs should use `localStorage`, route payload, shared store, or a hybrid approach.
 - It is unresolved whether `SleepInsight` and `HomeRecommendation` are persisted snapshots, recomputable derived objects with stable IDs, or recomputable objects that also require persisted exposure records.
 - The current runtime uses `PostOnboardingSessionPreset`; Stage 3 docs use `OnboardingSessionPreset`. Canonical naming and migration are still open.
-- The Home doc says its own priority is above `product-logic.md`, while the worker brief says `product-logic.md` wins on conflict.
+- Home doc priority was previously inverted; the Stage 3 baseline fix now aligns it so `product-logic.md` wins on conflict.
 
 ## 13. Main conclusions
 

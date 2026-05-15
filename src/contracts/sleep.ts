@@ -20,7 +20,7 @@ export type SleepSessionContinuityState = "none" | "partial" | "complete";
 export type SleepSession = {
   id: EntityId;
   sleepDate: ISODateString;
-  latestSleepCheckInId?: EntityId;
+  latestSleepLogId?: EntityId;
   latestSleepInsightId?: EntityId;
   preSleepTalkSessionId?: EntityId;
   preSleepRoomSessionId?: EntityId;
@@ -29,14 +29,14 @@ export type SleepSession = {
   updatedAt: ISODateTimeString;
 };
 
-export type SleepCheckInSource =
+export type SleepLogSource =
   | "manual_morning_checkin"
   | "talk_followup"
   | "room_followup";
 
 export type SleepRating = 1 | 2 | 3 | 4 | 5;
 
-export type SleepCheckIn = {
+export type SleepLog = {
   id: EntityId;
   sleepDate: ISODateString;
   checkInDate: ISODateString;
@@ -51,7 +51,7 @@ export type SleepCheckIn = {
   preSleepTalkSessionId?: EntityId;
   preSleepRoomSessionId?: EntityId;
   notes?: string;
-  source: SleepCheckInSource;
+  source: SleepLogSource;
   createdAt: ISODateTimeString;
   updatedAt: ISODateTimeString;
 };
@@ -88,7 +88,7 @@ export type SleepInsight = {
   body: string;
   confidence: SleepInsightConfidence;
   basedOn: {
-    sleepCheckInIds: EntityId[];
+    sleepLogIds: EntityId[];
     sleepSessionId?: EntityId;
     talkSessionIds?: EntityId[];
     roomSessionIds?: EntityId[];
@@ -99,4 +99,12 @@ export type SleepInsight = {
   cta?: SleepInsightCta;
   homeEligible: boolean;
   createdAt: ISODateTimeString;
+};
+
+export type SuggestionRuleResult = {
+  suggestionType: SleepInsight["suggestionType"];
+  priority: number;
+  confidence: SleepInsightConfidence;
+  basedOn: SleepInsight["basedOn"];
+  target: "talk" | "room" | "sleep_checkin";
 };

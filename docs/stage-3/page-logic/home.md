@@ -110,8 +110,8 @@ Data Contract 不得反向推翻 Product Logic。
 
 优先级：
 
-1. `docs/stage-3/page-logic/home.md`
-2. `docs/stage-3/product-logic.md` if present
+1. `docs/stage-3/product-logic.md` if present
+2. `docs/stage-3/page-logic/home.md`
 3. `docs/stage-3/data-contract.md` after alignment
 4. `docs/stage-3/page-data-matrix.md` after creation
 5. `docs/stage-3/ui/home-ui-spec.md`
@@ -273,10 +273,12 @@ Home 可以读取的业务上下文包括：
 Home 可以承接的推荐方向包括：
 
 - 继续进入 `Talk`
-- 回到 `Room`
-- 进入 `Sleep`
-- 进入 `Memory`
 - 在无更好来源时使用系统默认推荐
+
+补充规则：
+
+- `Room` / `Sleep` / `Memory` 可以提供 continuity 来源或作为少量基础导航入口
+- Stage 3 Home 的主推荐 CTA 仍然只进入 `Talk`
 
 ### 5.2 Out Of Scope
 
@@ -337,10 +339,10 @@ Home 的主内容不是 feed，而是一个 `HomeRecommendation`。
 HomeRecommendation 的产品优先级应遵循以下顺序：
 
 1. 首夜链路未完成时，不进入 Home，而由 App Entry Resolver 将用户导向 `/onboarding` 或 `/room`
-2. 最近一次明确的会话连续性需要回到 `Talk`
-3. 最近一次明确的空间连续性需要回到 `Room`
-4. 最近一次明确的睡眠反思建议适合导向 `/sleep-monitoring` 或相关下一步
-5. 存在合格的可见 Memory，可作为轻量 continuity 来源
+2. 存在合格的可见 Memory，可作为轻量 continuity 来源
+3. 今天早上尚未完成 sleep check-in
+4. 存在可用 `SleepInsight`
+5. 最近一次明确的 Talk continuity 适合继续进入 `Talk`
 6. 当以上都不成立时，使用 `system_default`
 
 这里的“优先级”是产品规则，不等于数据层枚举排序。
@@ -367,6 +369,7 @@ HomeRecommendation 不得来自：
 - 用户点击推荐后，系统应能知道该推荐来自哪一类上游对象
 - 推荐来源必须能映射到明确业务来源，而不是纯文案拼接
 - 若来源是 Memory，则必须可证明该 Memory 符合展示资格
+- 主 CTA 必须把用户带入 `Talk`，而不是把 Home 变成 `Room` / `Sleep` / `Memory` 的替代入口
 
 `Needs Data Contract Alignment`
 

@@ -1,12 +1,11 @@
 import type {
-  CompanionConversation,
   ContractVersion,
   EntityId,
   HomeCTA,
   HomeEntryContext,
   HomeRecommendation,
   HomeState,
-  MemoryFeedbackEvent,
+  MemoryFeedback,
   MemoryItem,
   OnboardingPreset,
   OnboardingState,
@@ -14,10 +13,11 @@ import type {
   RoomState,
   RoomView,
   RouteDecision,
-  SleepCheckIn,
+  SleepLog,
   SleepInsight,
   SleepSession,
   TalkEntryContext,
+  TalkSession,
   UserProfile,
 } from "../../contracts";
 import { STAGE3_CONTRACT_VERSION } from "./keys";
@@ -45,17 +45,17 @@ export type Stage3HomeStore = {
 };
 
 export type Stage3ConversationStore = {
-  currentConversationId?: EntityId;
-  latestConversation?: CompanionConversation;
+  currentTalkSessionId?: EntityId;
+  latestTalkSession?: TalkSession;
 };
 
 export type Stage3MemoryStore = {
   items: MemoryItem[];
-  feedbackEvents: MemoryFeedbackEvent[];
+  feedback: MemoryFeedback[];
 };
 
 export type Stage3SleepStore = {
-  latestCheckIn?: SleepCheckIn;
+  latestSleepLog?: SleepLog;
   latestInsight?: SleepInsight;
   latestSession?: SleepSession;
 };
@@ -143,7 +143,7 @@ export function createDefaultHomeEntryContext(
     missingDataKeys: [
       "latest_talk_session",
       "latest_room_session",
-      "latest_sleep_check_in",
+      "latest_sleep_log",
       "latest_sleep_insight",
       "eligible_memory",
       "source_recommendation",
@@ -212,7 +212,7 @@ export function createDefaultConversationState(): Stage3ConversationStore {
 export function createDefaultMemoryState(): Stage3MemoryStore {
   return {
     items: [],
-    feedbackEvents: [],
+    feedback: [],
   };
 }
 
