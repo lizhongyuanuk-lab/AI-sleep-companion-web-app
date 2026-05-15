@@ -6,3 +6,4 @@ export * from "./sleep";
 export * from "./conversation";
 export * from "./memory";
 export * from "./room";
+export * from "./analytics";

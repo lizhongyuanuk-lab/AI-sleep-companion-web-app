@@ -1002,8 +1002,6 @@ type HomeRecommendation = UserScoped & {
   id: string;
 
   type:
-    | "complete_onboarding"
-    | "enter_room"
     | "review_memory"
     | "start_talk"
     | "sleep_checkin"
@@ -1014,7 +1012,6 @@ type HomeRecommendation = UserScoped & {
   priority: number;
 
   source:
-    | "onboarding_preset"
     | "memory"
     | "talk_session"
     | "sleep_log"
@@ -1026,8 +1023,10 @@ type HomeRecommendation = UserScoped & {
 
   cta: {
     label: string;
-    target: "onboarding" | "room" | "talk" | "memory" | "sleep";
-    entryContext?: TalkEntryContext;
+    target: "talk";
+    targetPath: "/talk";
+    homeRecommendationId: string;
+    entryContext: TalkEntryContext;
   };
 
   createdAt: ISODateTimeString;
@@ -1944,11 +1943,11 @@ Tonight's suggestion
 Continue from Memory
 
 无明确推荐
-Enter Room
+Start a simple check-in
 
 #### 10.2.2 Defensive fallback only
 
-以下状态允许保留在 `HomeRecommendation.type` 中作为兜底恢复，但默认不应出现在正常 Home 页面：
+以下状态只允许由 `AppEntryResolver` / entry guard 兜底恢复处理，不应作为正常 `HomeRecommendation.type`：
 
 用户状态
 主推荐
@@ -1965,7 +1964,7 @@ Continue to Room
 2. Hidden Memory 不得作为 Home recommendation 来源。
 3. Tonight's suggestion 可以被 Home 读取。
 4. Home 不做外部 push。
-5. `complete_onboarding` 与 active preset 对应的 `enter_room` 只应用于 defensive fallback，不应用于正常 Home 主流程。
+5. 未完成 onboarding 与 active preset recovery 由 `AppEntryResolver` / entry guard 处理，不进入正常 Home 推荐枚举。
 
 ## 11. Analytics and Retention
 

@@ -15,19 +15,19 @@
 - `HomeState`
   - Mapped to the local contract’s simplified top-level Home render states: `entry_guard_redirect`, `recommendation_ready`, and `fallback_ready`, with optional `continuitySource` and non-visual `diagnosticsNavTargets`.
 - `HomeEntryContext`
-  - Mapped with route trace, source recommendation trace, `latestSleepCheckInId`, `eligibleMemoryId`, `missingDataKeys`, `staleDataKeys`, and active preset state.
+  - Mapped with route trace, source recommendation trace, `latestSleepLogId`, `eligibleMemoryId`, `missingDataKeys`, `staleDataKeys`, and active preset state.
 - `HomeRecommendation`
   - Mapped as the only active recommendation domain, with `source`, `sourceId`, `sourceDomain`, `surface`, `fallbackKind`, and one linked CTA.
 - `Onboarding`
   - Mapped through `OnboardingState` and `OnboardingPreset` with completion state, active/consumed/expired lifecycle, and stale-as-derived behavior.
 - `Room`
   - Mapped across `RoomOption`, `RoomView`, `RoomSession`, and `RoomState` so room catalog, entry exposure, selected-room session, and continuity state remain separate.
-- `SleepCheckIn`
-  - Mapped as the canonical morning check-in object backing `SleepLog` semantics, with lightweight `SleepSession` and `SleepInsight` continuity support.
+- `SleepLog`
+  - Mapped as the canonical morning check-in object, with lightweight `SleepSession` and `SleepInsight` continuity support.
 - `MemoryItem`
-  - Mapped with canonical persisted statuses plus `excludeFromPersonalization`, and with `MemoryFeedbackEvent` for auditable agree/disagree/hide history.
+  - Mapped with canonical persisted statuses plus `excludeFromPersonalization`, and with `MemoryFeedback` for auditable agree/disagree/hide history.
 - `Conversation/Talk`
-  - Mapped through `TalkEntryContext`, `CompanionConversation`, and `ConversationMessage`, keeping session/message/memory separate and preserving handoff traceability.
+  - Mapped through `TalkEntryContext`, `TalkSession`, and `ConversationMessage`, keeping session/message/memory separate and preserving handoff traceability.
 
 ## Skeleton-only boundaries
 
@@ -47,9 +47,9 @@ It did not implement:
 
 - Current runtime root `"/"` is treated only as a compatibility surface; canonical Home remains `"/home"`.
 - `Recommendation` exists only as an alias to `HomeRecommendation`.
-- `HomeCTA` follows the current local canonical contract where normal Stage 3 Home handoff targets Talk only.
+- `HomeCTA` follows the canonical Stage 3 Home contract where the normal primary CTA targets Talk only.
 - `blocked`, `expired`, and `disagreed` are not persisted `MemoryItem.status` values. They are represented only as derived exclusion scenarios or feedback history.
-- The local data contract uses `MemoryFeedbackEvent`; this skeleton follows that canonical shape rather than inventing a separate runtime-only feedback model.
+- The local data contract uses `MemoryFeedback`; this skeleton follows that canonical shape rather than inventing a separate runtime-only feedback model.
 
 ## Validation
 

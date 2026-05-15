@@ -452,7 +452,9 @@ Additional current implementation rules:
 - only one recurring item may expand at a time
 - the expanded recurring item may reveal a very subtle soft-shell container behind that item only
 - expanded detail groups may include `Seen when`, `Appeared in`, and `Pattern note`
-- lightweight local `Agree` / `Delete` actions may appear inside the expanded recurring item shell
+- lightweight local `Agree` / `Disagree` / `Hide` actions may appear inside the expanded recurring item shell
+- `Hide` is an exclusion action, not a delete action, and should read as a lighter destructive choice rather than full record removal
+- user-facing Delete CTA must not appear in the Stage 3 Memory UI
 
 ## 10. Bottom Action Area
 
@@ -590,6 +592,8 @@ Codex must not do any of the following:
 - Use bright, loud, saturated gradients
 - Make one bottom action look primary over the others
 - Turn the layout into an analytics dashboard
+- Add a user-facing Delete memory CTA
+- Prescribe delete-shaped handlers or delete API calls for Stage 3 Memory
 
 ## 14. Implementation Notes for Codex
 
@@ -600,6 +604,7 @@ Codex must not do any of the following:
 - Expanded recurring detail content may left-align inside the subtle expanded shell
 - Do not convert the recurring section into heavy cards or full accordion modules
 - Current version uses 3 visible recurring items by default, with same-page reveal for additional items
+- If local per-item feedback actions are shown, keep the visible set limited to `Agree`, `Disagree`, and `Hide`
 
 ### 14.2 Responsive behavior
 

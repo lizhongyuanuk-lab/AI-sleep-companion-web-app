@@ -3,7 +3,7 @@ import type {
   HomeEntryContext,
   HomeRecommendation,
   HomeState,
-  MemoryFeedbackEvent,
+  MemoryFeedback,
   MemoryItem,
   OnboardingPreset,
   OnboardingState,
@@ -11,9 +11,10 @@ import type {
   RoomState,
   RoomView,
   RouteDecision,
-  SleepCheckIn,
+  SleepLog,
   SleepInsight,
   SleepSession,
+  TalkSession,
   UserProfile,
 } from "../../contracts";
 import {
@@ -99,7 +100,7 @@ const HOME_ENTRY_CONTEXT_MISSING_KEYS = [
   "route_decision",
   "latest_talk_session",
   "latest_room_session",
-  "latest_sleep_check_in",
+  "latest_sleep_log",
   "latest_sleep_insight",
   "eligible_memory",
   "source_recommendation",
@@ -107,7 +108,7 @@ const HOME_ENTRY_CONTEXT_MISSING_KEYS = [
 
 const HOME_ENTRY_CONTEXT_STALE_KEYS = [
   "active_onboarding_preset",
-  "latest_sleep_check_in",
+  "latest_sleep_log",
   "latest_sleep_insight",
   "eligible_memory",
   "source_recommendation",
@@ -465,7 +466,11 @@ function normalizeHomeEntryContext(raw: unknown): HomeEntryContext | undefined {
     latestTalkSessionId: asOptionalString(raw.latestTalkSessionId),
     latestRoomSessionId: asOptionalString(raw.latestRoomSessionId),
     latestSleepInsightId: asOptionalString(raw.latestSleepInsightId),
-    latestSleepCheckInId: asOptionalString(raw.latestSleepCheckInId),
+    latestSleepLogId:
+      // Legacy compatibility: older local data stored the canonical SleepLog id
+      // under the pre-normalization latestSleepCheckInId key.
+      asOptionalString(raw.latestSleepLogId) ??
+      asOptionalString(raw.latestSleepCheckInId),
     eligibleMemoryId: asOptionalString(raw.eligibleMemoryId),
     missingDataKeys,
     staleDataKeys,
@@ -493,7 +498,6 @@ function normalizeHomeRecommendation(raw: unknown): HomeRecommendation | undefin
   const title = asOptionalString(raw.title);
   const priority = isNumber(raw.priority) ? raw.priority : undefined;
   const source = asOptionalEnum(raw.source, [
-    "onboarding_preset",
     "memory",
     "talk_session",
     "sleep_log",
@@ -502,7 +506,6 @@ function normalizeHomeRecommendation(raw: unknown): HomeRecommendation | undefin
     "system_default",
   ] as const);
   const sourceDomain = asOptionalEnum(raw.sourceDomain, [
-    "onboarding",
     "memory",
     "talk",
     "sleep",
@@ -646,9 +649,15 @@ function normalizeConversationStore(raw: unknown): Stage3ConversationStore {
   }
 
   return {
-    currentConversationId: asOptionalString(raw.currentConversationId),
-    latestConversation: isRecord(raw.latestConversation)
-      ? (raw.latestConversation as Stage3ConversationStore["latestConversation"])
+    currentTalkSessionId:
+      // Legacy compatibility: older local data used conversation naming.
+      asOptionalString(raw.currentTalkSessionId) ??
+      asOptionalString(raw.currentConversationId),
+    latestTalkSession: isRecord(raw.latestTalkSession)
+      ? (raw.latestTalkSession as Stage3ConversationStore["latestTalkSession"])
+      // Legacy compatibility: older local data stored latestConversation.
+      : isRecord(raw.latestConversation)
+        ? (raw.latestConversation as TalkSession)
       : undefined,
   };
 }
@@ -664,9 +673,12 @@ function normalizeMemoryStore(raw: unknown): Stage3MemoryStore {
     items: Array.isArray(raw.items)
       ? raw.items.filter(isRecord) as MemoryItem[]
       : fallback.items,
-    feedbackEvents: Array.isArray(raw.feedbackEvents)
-      ? raw.feedbackEvents.filter(isRecord) as MemoryFeedbackEvent[]
-      : fallback.feedbackEvents,
+    feedback: Array.isArray(raw.feedback)
+      ? raw.feedback.filter(isRecord) as MemoryFeedback[]
+      // Legacy compatibility: older local data used feedbackEvents.
+      : Array.isArray(raw.feedbackEvents)
+        ? raw.feedbackEvents.filter(isRecord) as MemoryFeedback[]
+        : fallback.feedback,
   };
 }
 
@@ -678,8 +690,11 @@ function normalizeSleepStore(raw: unknown): Stage3SleepStore {
   }
 
   return {
-    latestCheckIn: isRecord(raw.latestCheckIn)
-      ? (raw.latestCheckIn as SleepCheckIn)
+    latestSleepLog: isRecord(raw.latestSleepLog)
+      ? (raw.latestSleepLog as SleepLog)
+      // Legacy compatibility: older local data used latestCheckIn.
+      : isRecord(raw.latestCheckIn)
+        ? (raw.latestCheckIn as SleepLog)
       : undefined,
     latestInsight: isRecord(raw.latestInsight)
       ? (raw.latestInsight as SleepInsight)

@@ -52,19 +52,23 @@ function ExpandableRecurringItem({
   detail,
   expanded,
   agreed,
-  canDelete,
+  disagreed,
+  canHide,
   onToggle,
   onAgree,
-  onDelete,
+  onDisagree,
+  onHide,
 }: {
   topic: RecurringTopic;
   detail: RecurringMemoryDetail;
   expanded: boolean;
   agreed?: boolean;
-  canDelete?: boolean;
+  disagreed?: boolean;
+  canHide?: boolean;
   onToggle: () => void;
   onAgree: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDisagree: (id: string) => void;
+  onHide: (id: string) => void;
 }) {
   return (
     <article className={styles.recurringMemoryItem}>
@@ -131,7 +135,22 @@ function ExpandableRecurringItem({
                 >
                   {agreed ? "Agreed" : "Agree"}
                 </button>
-                {canDelete ? (
+                <button
+                  type="button"
+                  className={[
+                    styles.recurringMemoryAction,
+                    disagreed ? styles.recurringMemoryActionSelected : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDisagree(topic.memory_id);
+                  }}
+                >
+                  {disagreed ? "Marked as off" : "Disagree"}
+                </button>
+                {canHide ? (
                   <button
                     type="button"
                     className={[
@@ -142,10 +161,10 @@ function ExpandableRecurringItem({
                       .join(" ")}
                     onClick={(event) => {
                       event.stopPropagation();
-                      onDelete(topic.memory_id);
+                      onHide(topic.memory_id);
                     }}
                   >
-                    Delete
+                    Hide
                   </button>
                 ) : null}
               </div>
@@ -163,7 +182,8 @@ export default function MemoryPage() {
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
   const [showAllMemories, setShowAllMemories] = useState(false);
   const [agreedTopics, setAgreedTopics] = useState<Record<string, boolean>>({});
-  const displayedThemes = topics.filter((topic) => !topic.is_deleted);
+  const [disagreedTopics, setDisagreedTopics] = useState<Record<string, boolean>>({});
+  const displayedThemes = topics.filter((topic) => topic.status !== "hidden");
   const visibleThemes = showAllMemories
     ? displayedThemes
     : displayedThemes.slice(0, 3);
@@ -217,7 +237,8 @@ export default function MemoryPage() {
                           detail={detail}
                           expanded={expandedTopicId === topic.memory_id}
                           agreed={Boolean(agreedTopics[topic.memory_id])}
-                          canDelete={data.memory_delete_capability}
+                          disagreed={Boolean(disagreedTopics[topic.memory_id])}
+                          canHide={data.memory_hide_capability}
                           onToggle={() => {
                             setExpandedTopicId((current) =>
                               current === topic.memory_id ? null : topic.memory_id,
@@ -228,12 +249,30 @@ export default function MemoryPage() {
                               ...current,
                               [memoryId]: !current[memoryId],
                             }));
+                            setDisagreedTopics((current) => ({
+                              ...current,
+                              [memoryId]: false,
+                            }));
                           }}
-                          onDelete={(memoryId) => {
+                          onDisagree={(memoryId) => {
+                            setDisagreedTopics((current) => ({
+                              ...current,
+                              [memoryId]: !current[memoryId],
+                            }));
+                            setAgreedTopics((current) => ({
+                              ...current,
+                              [memoryId]: false,
+                            }));
+                          }}
+                          onHide={(memoryId) => {
                             setTopics((current) =>
                               current.map((currentTopic) =>
                                 currentTopic.memory_id === memoryId
-                                  ? { ...currentTopic, is_deleted: true }
+                                  ? {
+                                      ...currentTopic,
+                                      status: "hidden",
+                                      exclude_from_personalization: true,
+                                    }
                                   : currentTopic,
                               ),
                             );

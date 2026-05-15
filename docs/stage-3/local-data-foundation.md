@@ -87,9 +87,9 @@ Selectors are read-only and intentionally lightweight:
 - `getPrimaryHomeRecommendation`
 - `getHomeCTA`
 - `getEligibleVisibleMemory`
-- `getLatestSleepCheckIn`
+- `getLatestSleepLog`
 - `getRoomContinuity`
-- `getConversationContinuity`
+- `getTalkSessionContinuity`
 - `getMissingDataKeys`
 - `getStaleDataKeys`
 

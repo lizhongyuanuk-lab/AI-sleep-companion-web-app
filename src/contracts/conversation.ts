@@ -44,7 +44,7 @@ export type TalkEntryContext = {
   createdAt: ISODateTimeString;
 };
 
-export type CompanionConversationMode =
+export type TalkSessionMode =
   | "open_chat"
   | "sleep_checkin"
   | "gentle_start"
@@ -59,17 +59,17 @@ export type MemoryExtractionStatus =
   | "completed"
   | "failed";
 
-export type CompanionConversationEmotionalTone =
+export type TalkSessionEmotionalTone =
   | "calm"
   | "anxious"
   | "sad"
   | "neutral"
   | "restless";
 
-export type CompanionConversation = {
+export type TalkSession = {
   id: EntityId;
   entryContext: TalkEntryContext;
-  mode: CompanionConversationMode;
+  mode: TalkSessionMode;
   startedAt: ISODateTimeString;
   endedAt?: ISODateTimeString;
   durationSeconds?: number;
@@ -77,7 +77,7 @@ export type CompanionConversation = {
   userMessageCount: number;
   assistantMessageCount: number;
   sessionSummary?: string;
-  emotionalTone?: CompanionConversationEmotionalTone;
+  emotionalTone?: TalkSessionEmotionalTone;
   sleepRelated?: boolean;
   latestMemoryExtractionRunId?: EntityId;
   completedMemoryExtractionRunId?: EntityId;
@@ -85,11 +85,27 @@ export type CompanionConversation = {
   generatedMemoryItemIds?: EntityId[];
 };
 
+export type MemoryExtractionRunStatus =
+  | "running"
+  | "skipped"
+  | "completed"
+  | "failed";
+
+export type MemoryExtractionRun = {
+  id: EntityId;
+  talkSessionId: EntityId;
+  status: MemoryExtractionRunStatus;
+  reason?: string;
+  startedAt: ISODateTimeString;
+  completedAt?: ISODateTimeString;
+  generatedMemoryItemIds?: EntityId[];
+};
+
 export type ConversationMessageRole = "user" | "assistant" | "system";
 
 export type ConversationMessage = {
   id: EntityId;
-  conversationId: EntityId;
+  talkSessionId: EntityId;
   role: ConversationMessageRole;
   contentText: string;
   createdAt: ISODateTimeString;

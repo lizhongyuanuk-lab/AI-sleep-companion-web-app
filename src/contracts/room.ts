@@ -49,7 +49,7 @@ export type RoomSession = {
   durationSeconds?: number;
   exitReason?: RoomSessionExitReason;
   followedByTalkSessionId?: EntityId;
-  followedBySleepCheckInId?: EntityId;
+  followedBySleepLogId?: EntityId;
 };
 
 export type RoomStateOnboardingPresetStatus =

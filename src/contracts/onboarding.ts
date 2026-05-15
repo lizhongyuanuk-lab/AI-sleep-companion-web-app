@@ -36,6 +36,14 @@ export type OnboardingPresetQuestionBudgetFirst3Turns = 0 | 1 | 2;
 
 export type OnboardingPresetStatus = "active" | "consumed" | "expired";
 
+export type OnboardingDraft = {
+  stepIndex: 0 | 1 | 2 | 3;
+  q1State?: OnboardingPresetQ1State;
+  q2SupportStyle?: OnboardingPresetQ2SupportStyle;
+  draftUpdatedAt: ISODateTimeString;
+  expiresAt: ISODateTimeString;
+};
+
 export type OnboardingState = {
   status: OnboardingStateStatus;
   q1State?: OnboardingPreset["q1State"];
@@ -63,4 +71,18 @@ export type OnboardingPreset = {
   createdAt: ISODateTimeString;
   expiresAt: ISODateTimeString;
   consumedAt?: ISODateTimeString;
+};
+
+export type OnboardingContextCard = {
+  sourcePresetId: EntityId;
+  title: string;
+  body: string;
+  allowedConsumers: ["memory_preview"];
+  disallowedConsumers: [
+    "talk_personalization",
+    "sleep_recommendation",
+    "home_recommendation",
+    "long_term_profile",
+  ];
+  expiresAt: ISODateTimeString;
 };

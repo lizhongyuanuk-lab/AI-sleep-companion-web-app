@@ -5,8 +5,8 @@ import type {
   MemoryItem,
   RoomState,
   RouteDecision,
-  SleepCheckIn,
-  CompanionConversation,
+  SleepLog,
+  TalkSession,
 } from "../../contracts";
 import {
   createDefaultHomeEntryContext,
@@ -144,10 +144,10 @@ export function getEligibleVisibleMemory(
   return [...state.memory.items].filter(isEligibleMemory).sort(byNewestUpdatedAt)[0];
 }
 
-export function getLatestSleepCheckIn(
+export function getLatestSleepLog(
   state: Stage3LocalDataState,
-): SleepCheckIn | undefined {
-  return state.sleep.latestCheckIn;
+): SleepLog | undefined {
+  return state.sleep.latestSleepLog;
 }
 
 export function getHomeEntryContext(
@@ -170,10 +170,10 @@ export function getHomeEntryContext(
       routeDecision.runtimeObservedPath === "/home"
         ? routeDecision.runtimeObservedPath
         : undefined),
-    latestTalkSessionId: state.conversation.latestConversation?.id,
+    latestTalkSessionId: state.conversation.latestTalkSession?.id,
     latestRoomSessionId: state.room.latestRoomSession?.id,
     latestSleepInsightId: state.sleep.latestInsight?.id,
-    latestSleepCheckInId: state.sleep.latestCheckIn?.id,
+    latestSleepLogId: state.sleep.latestSleepLog?.id,
     eligibleMemoryId: getEligibleVisibleMemory(state)?.id,
     missingDataKeys,
     staleDataKeys,
@@ -205,7 +205,7 @@ export function getPrimaryHomeRecommendation(
     return createDefaultHomeRecommendation(now);
   }
 
-  if (recommendation.source === "sleep_log" && !state.sleep.latestCheckIn) {
+  if (recommendation.source === "sleep_log" && !state.sleep.latestSleepLog) {
     return createDefaultHomeRecommendation(now);
   }
 
@@ -215,7 +215,7 @@ export function getPrimaryHomeRecommendation(
 
   if (
     recommendation.source === "talk_session" &&
-    !state.conversation.latestConversation
+    !state.conversation.latestTalkSession
   ) {
     return createDefaultHomeRecommendation(now);
   }
@@ -236,10 +236,10 @@ export function getRoomContinuity(
   return state.room.latestRoomState;
 }
 
-export function getConversationContinuity(
+export function getTalkSessionContinuity(
   state: Stage3LocalDataState,
-): CompanionConversation | undefined {
-  return state.conversation.latestConversation;
+): TalkSession | undefined {
+  return state.conversation.latestTalkSession;
 }
 
 export function getMissingDataKeys(
@@ -249,7 +249,7 @@ export function getMissingDataKeys(
   const existing = entryContext?.missingDataKeys ?? [];
   const derived = [...existing];
 
-  if (!state.conversation.latestConversation) {
+  if (!state.conversation.latestTalkSession) {
     derived.push("latest_talk_session");
   }
 
@@ -257,8 +257,8 @@ export function getMissingDataKeys(
     derived.push("latest_room_session");
   }
 
-  if (!state.sleep.latestCheckIn) {
-    derived.push("latest_sleep_check_in");
+  if (!state.sleep.latestSleepLog) {
+    derived.push("latest_sleep_log");
   }
 
   if (!state.sleep.latestInsight) {

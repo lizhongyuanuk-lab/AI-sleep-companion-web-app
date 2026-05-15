@@ -1,14 +1,17 @@
 import type {
-  CompanionConversation,
   ConversationMessage,
   HomeCTA,
   HomeEntryContext,
   HomeRecommendation,
   HomeState,
-  MemoryFeedbackEvent,
+  MemoryExtractionRun,
+  MemoryFeedback,
   MemoryItem,
+  OnboardingContextCard,
+  OnboardingDraft,
   OnboardingPreset,
   OnboardingState,
+  ProductEvent,
   Recommendation,
   Ritual,
   RoomOption,
@@ -16,11 +19,13 @@ import type {
   RoomState,
   RoomView,
   RouteDecision,
-  SleepCheckIn,
   SleepGoal,
   SleepInsight,
+  SleepLog,
   SleepSession,
+  SuggestionRuleResult,
   TalkEntryContext,
+  TalkSession,
   UserProfile,
 } from "../contracts";
 
@@ -70,6 +75,14 @@ export const onboardingStateCompleted: OnboardingState = {
   latestExpiredPresetId: "obp_expired_001",
   completedAt: "2026-05-08T22:40:00.000Z",
   updatedAt: MOCK_UPDATED_AT,
+};
+
+export const onboardingDraftInProgress: OnboardingDraft = {
+  stepIndex: 2,
+  q1State: "overthinking",
+  q2SupportStyle: "mindfulness_guide",
+  draftUpdatedAt: MOCK_UPDATED_AT,
+  expiresAt: "2026-05-09T23:59:00.000Z",
 };
 
 export const activeOnboardingPreset: OnboardingPreset = {
@@ -139,6 +152,20 @@ export const consumedOnboardingPreset: OnboardingPreset = {
   createdAt: "2026-05-07T22:00:00.000Z",
   expiresAt: "2026-05-07T22:30:00.000Z",
   consumedAt: "2026-05-07T22:18:00.000Z",
+};
+
+export const onboardingContextCardPreview: OnboardingContextCard = {
+  sourcePresetId: activeOnboardingPreset.id,
+  title: "Your first-night starting point",
+  body: "This onboarding preset only shaped the first session opening and does not become a long-term profile.",
+  allowedConsumers: ["memory_preview"],
+  disallowedConsumers: [
+    "talk_personalization",
+    "sleep_recommendation",
+    "home_recommendation",
+    "long_term_profile",
+  ],
+  expiresAt: "2026-05-09T23:10:00.000Z",
 };
 
 export const firstLaunchRouteDecision: RouteDecision = {
@@ -213,13 +240,13 @@ export const stalePresetHomeRouteDecision: RouteDecision = {
 export const eligibleVisibleMemory: MemoryItem = {
   id: "mem_active_001",
   source: "talk_session",
-  sourceId: "conv_home_001",
+  sourceId: "ts_memory_001",
   type: "support_style",
   title: "A gentler opening helps you settle",
   body: "Short, steady openings seem to help you stay engaged without pressure.",
   evidence: {
     sourceSummary: "User responded more positively to a gentle opening in the last evening talk.",
-    sourceSessionId: "conv_home_001",
+    sourceSessionId: "ts_memory_001",
   },
   confidence: "medium",
   influenceWeight: 0.7,
@@ -252,7 +279,7 @@ export const weakenedVisibleMemory: MemoryItem = {
 export const contradictedMemoryExcluded: MemoryItem = {
   id: "mem_contradicted_001",
   source: "talk_session",
-  sourceId: "conv_old_001",
+  sourceId: "ts_old_001",
   type: "preference",
   title: "Late-night advice is helpful",
   body: "This was later contradicted by user feedback and cannot drive Home continuity.",
@@ -267,7 +294,7 @@ export const contradictedMemoryExcluded: MemoryItem = {
 export const hiddenMemoryExcluded: MemoryItem = {
   id: "mem_hidden_001",
   source: "talk_session",
-  sourceId: "conv_old_002",
+  sourceId: "ts_old_002",
   type: "emotional_pattern",
   title: "User feels observed at bedtime",
   body: "This memory was hidden and must not power Home recommendations.",
@@ -325,7 +352,7 @@ export const memoryEligibilityScenarios: MemoryEligibilityScenario[] = [
     memory: {
       ...weakenedVisibleMemory,
       id: "mem_expired_derived_001",
-      sourceId: "conv_expired_like_001",
+      sourceId: "ts_expired_like_001",
     },
     eligibleForHomeContinuity: false,
     derivedReason: "expired_derived",
@@ -334,7 +361,7 @@ export const memoryEligibilityScenarios: MemoryEligibilityScenario[] = [
     memory: {
       ...eligibleVisibleMemory,
       id: "mem_blocked_derived_001",
-      sourceId: "conv_blocked_like_001",
+      sourceId: "ts_blocked_like_001",
     },
     eligibleForHomeContinuity: false,
     derivedReason: "blocked_derived",
@@ -378,9 +405,9 @@ export const homeRecommendationFromMemory: HomeRecommendation = {
   createdAt: MOCK_CREATED_AT,
 };
 
-export const homeSleepCheckInEntryContext: TalkEntryContext = {
+export const homeSleepLogEntryContext: TalkEntryContext = {
   source: "home",
-  sourceId: "sleep_checkin_001",
+  sourceId: "sl_001",
   intent: "sleep_reflection",
   homeRecommendationId: "home_rec_sleep_checkin_001",
   suggestedOpening: "We can reflect on last night for a minute and keep it light.",
@@ -389,33 +416,33 @@ export const homeSleepCheckInEntryContext: TalkEntryContext = {
   createdAt: MOCK_CREATED_AT,
 };
 
-export const homeSleepCheckInRecommendationCta: HomeCTA = {
+export const homeSleepLogRecommendationCta: HomeCTA = {
   id: "home_cta_sleep_checkin_001",
   label: "Check in about last night",
   target: "talk",
   targetPath: "/talk",
   homeRecommendationId: "home_rec_sleep_checkin_001",
-  entryContext: homeSleepCheckInEntryContext,
+  entryContext: homeSleepLogEntryContext,
   createdAt: MOCK_CREATED_AT,
 };
 
-export const homeSleepCheckInRecommendation: HomeRecommendation = {
+export const homeSleepLogRecommendation: HomeRecommendation = {
   id: "home_rec_sleep_checkin_001",
   type: "sleep_checkin",
   title: "Check in about last night",
   body: "A quick reflection could help keep tonight's support more grounded.",
   priority: 90,
   source: "sleep_log",
-  sourceId: "sleep_checkin_001",
+  sourceId: "sl_001",
   sourceDomain: "sleep",
   surface: "home_main",
   fallbackKind: "none",
-  cta: homeSleepCheckInRecommendationCta,
+  cta: homeSleepLogRecommendationCta,
   createdAt: MOCK_CREATED_AT,
 };
 
-export const lightweightSleepCheckIn: SleepCheckIn = {
-  id: "sleep_checkin_001",
+export const lightweightSleepLog: SleepLog = {
+  id: "sl_001",
   sleepDate: MOCK_SLEEP_DATE,
   checkInDate: MOCK_CHECKIN_DATE,
   timezone: "Asia/Makassar",
@@ -426,8 +453,8 @@ export const lightweightSleepCheckIn: SleepCheckIn = {
   easeOfFallingAsleep: 2,
   nightAwakenings: 2,
   morningEnergy: 2,
-  preSleepTalkSessionId: "conv_home_001",
-  preSleepRoomSessionId: "room_session_001",
+  preSleepTalkSessionId: "ts_memory_001",
+  preSleepRoomSessionId: "rs_001",
   notes: "I took longer to settle than I wanted.",
   source: "manual_morning_checkin",
   createdAt: "2026-05-09T06:40:00.000Z",
@@ -437,17 +464,17 @@ export const lightweightSleepCheckIn: SleepCheckIn = {
 export const lightweightSleepSession: SleepSession = {
   id: "sleep_session_001",
   sleepDate: MOCK_SLEEP_DATE,
-  latestSleepCheckInId: lightweightSleepCheckIn.id,
-  latestSleepInsightId: "sleep_insight_001",
-  preSleepTalkSessionId: "conv_home_001",
-  preSleepRoomSessionId: "room_session_001",
+  latestSleepLogId: lightweightSleepLog.id,
+  latestSleepInsightId: "si_001",
+  preSleepTalkSessionId: "ts_memory_001",
+  preSleepRoomSessionId: "rs_001",
   continuityState: "complete",
   createdAt: "2026-05-09T06:42:00.000Z",
   updatedAt: "2026-05-09T07:10:00.000Z",
 };
 
 export const lightweightSleepInsight: SleepInsight = {
-  id: "sleep_insight_001",
+  id: "si_001",
   period: "single_night",
   startDate: MOCK_SLEEP_DATE,
   endDate: MOCK_SLEEP_DATE,
@@ -455,10 +482,10 @@ export const lightweightSleepInsight: SleepInsight = {
   body: "Last night's check-in suggests a lighter start could help you settle more easily tonight.",
   confidence: "medium",
   basedOn: {
-    sleepCheckInIds: [lightweightSleepCheckIn.id],
+    sleepLogIds: [lightweightSleepLog.id],
     sleepSessionId: lightweightSleepSession.id,
-    talkSessionIds: ["conv_home_001"],
-    roomSessionIds: ["room_session_001"],
+    talkSessionIds: ["ts_memory_001"],
+    roomSessionIds: ["rs_001"],
     memoryItemIds: [eligibleVisibleMemory.id],
   },
   suggestionType: "try_gentler_talk",
@@ -467,9 +494,9 @@ export const lightweightSleepInsight: SleepInsight = {
     target: "talk",
     entryContext: {
       source: "sleep",
-      sourceId: "sleep_insight_001",
+      sourceId: "si_001",
       intent: "tonight_suggestion",
-      sleepInsightId: "sleep_insight_001",
+      sleepInsightId: "si_001",
       tonePreset: "gentle",
       interactionIntensity: "low",
       createdAt: MOCK_CREATED_AT,
@@ -516,8 +543,8 @@ export const homeTonightSuggestionRecommendation: HomeRecommendation = {
   createdAt: MOCK_CREATED_AT,
 };
 
-export const staleSleepCheckIn: SleepCheckIn = {
-  id: "sleep_checkin_stale_001",
+export const staleSleepLog: SleepLog = {
+  id: "sl_stale_001",
   sleepDate: "2026-04-29",
   checkInDate: "2026-04-30",
   timezone: "Asia/Makassar",
@@ -558,23 +585,23 @@ export const roomOptions: [RoomOption, RoomOption, RoomOption] = [
 ];
 
 export const roomViewAfterOnboarding: RoomView = {
-  id: "room_view_001",
-  source: "after_onboarding",
+  id: "rv_001",
+  source: "onboarding",
   onboardingPresetId: activeOnboardingPreset.id,
   viewedAt: "2026-05-08T22:42:00.000Z",
 };
 
 export const roomSessionAfterOnboarding: RoomSession = {
-  id: "room_session_001",
+  id: "rs_001",
   roomId: "room_quiet_01",
-  source: "after_onboarding",
+  source: "onboarding",
   roomViewId: roomViewAfterOnboarding.id,
   onboardingPresetId: activeOnboardingPreset.id,
   startedAt: "2026-05-08T22:44:00.000Z",
   endedAt: "2026-05-08T22:45:00.000Z",
   durationSeconds: 60,
   exitReason: "tap_to_talk",
-  followedByTalkSessionId: "conv_home_001",
+  followedByTalkSessionId: "ts_first_night_001",
 };
 
 export const roomContinuityState: RoomState = {
@@ -587,7 +614,7 @@ export const roomContinuityState: RoomState = {
   ],
   roomViewId: roomViewAfterOnboarding.id,
   roomSessionId: roomSessionAfterOnboarding.id,
-  continuityReason: "after_onboarding",
+  continuityReason: "onboarding",
   onboardingPresetId: activeOnboardingPreset.id,
   onboardingPresetStatus: "active",
   talkEntryReady: true,
@@ -601,10 +628,10 @@ export const returningHomeEntryContext: HomeEntryContext = {
   routeDecisionReason: returningUserHomeRouteDecision.reason,
   canonicalHomePath: "/home",
   runtimeObservedPath: "/",
-  latestTalkSessionId: "conv_home_001",
+  latestTalkSessionId: "ts_memory_001",
   latestRoomSessionId: roomSessionAfterOnboarding.id,
   latestSleepInsightId: lightweightSleepInsight.id,
-  latestSleepCheckInId: lightweightSleepCheckIn.id,
+  latestSleepLogId: lightweightSleepLog.id,
   eligibleMemoryId: eligibleVisibleMemory.id,
   missingDataKeys: [],
   staleDataKeys: [],
@@ -618,9 +645,9 @@ export const partialFallbackEntryContext: HomeEntryContext = {
   routeDecisionReason: consumedPresetHomeRouteDecision.reason,
   canonicalHomePath: "/home",
   runtimeObservedPath: "/",
-  latestTalkSessionId: "conv_home_001",
+  latestTalkSessionId: "ts_memory_001",
   latestRoomSessionId: roomSessionAfterOnboarding.id,
-  missingDataKeys: ["latest_sleep_check_in", "eligible_memory"],
+  missingDataKeys: ["latest_sleep_log", "eligible_memory"],
   staleDataKeys: ["latest_sleep_insight"],
   activePresetState: "consumed",
   createdAt: MOCK_CREATED_AT,
@@ -632,12 +659,12 @@ export const staleSleepFallbackEntryContext: HomeEntryContext = {
   routeDecisionReason: returningUserHomeRouteDecision.reason,
   canonicalHomePath: "/home",
   runtimeObservedPath: "/",
-  latestTalkSessionId: "conv_home_001",
+  latestTalkSessionId: "ts_memory_001",
   latestRoomSessionId: roomSessionAfterOnboarding.id,
   latestSleepInsightId: lightweightSleepInsight.id,
-  latestSleepCheckInId: staleSleepCheckIn.id,
+  latestSleepLogId: staleSleepLog.id,
   missingDataKeys: [],
-  staleDataKeys: ["latest_sleep_check_in"],
+  staleDataKeys: ["latest_sleep_log"],
   activePresetState: "none",
   createdAt: MOCK_CREATED_AT,
 };
@@ -656,8 +683,39 @@ export const errorFallbackEntryContext: HomeEntryContext = {
   createdAt: MOCK_CREATED_AT,
 };
 
-export const conversationContinuity: CompanionConversation = {
-  id: "conv_home_001",
+export const roomToTalkEntryContext: TalkEntryContext = {
+  source: "room",
+  sourceId: roomSessionAfterOnboarding.id,
+  intent: "tap_from_room_after_onboarding",
+  roomId: roomSessionAfterOnboarding.roomId,
+  roomViewId: roomViewAfterOnboarding.id,
+  roomSessionId: roomSessionAfterOnboarding.id,
+  onboardingPresetId: activeOnboardingPreset.id,
+  onboardingPreset: activeOnboardingPreset,
+  createdAt: "2026-05-08T22:45:00.000Z",
+};
+
+export const firstNightTalkSession: TalkSession = {
+  id: "ts_first_night_001",
+  entryContext: roomToTalkEntryContext,
+  mode: "onboarding_first_session",
+  startedAt: "2026-05-08T22:45:00.000Z",
+  endedAt: "2026-05-08T22:57:00.000Z",
+  durationSeconds: 720,
+  messageCount: 6,
+  userMessageCount: 3,
+  assistantMessageCount: 3,
+  sessionSummary: "A short first-night session grounded by the onboarding preset and quiet room handoff.",
+  emotionalTone: "restless",
+  sleepRelated: true,
+  latestMemoryExtractionRunId: "mer_first_night_001",
+  completedMemoryExtractionRunId: "mer_first_night_001",
+  memoryExtractionStatus: "completed",
+  generatedMemoryItemIds: ["mem_first_night_001"],
+};
+
+export const talkSessionContinuity: TalkSession = {
+  id: "ts_memory_001",
   entryContext: homeToTalkEntryContext,
   mode: "memory_reflection",
   startedAt: "2026-05-08T21:30:00.000Z",
@@ -669,32 +727,76 @@ export const conversationContinuity: CompanionConversation = {
   sessionSummary: "A calm reflection about what helped the user settle earlier in the week.",
   emotionalTone: "calm",
   sleepRelated: true,
-  latestMemoryExtractionRunId: "mem_run_001",
-  completedMemoryExtractionRunId: "mem_run_001",
+  latestMemoryExtractionRunId: "mer_memory_001",
+  completedMemoryExtractionRunId: "mer_memory_001",
   memoryExtractionStatus: "completed",
   generatedMemoryItemIds: [eligibleVisibleMemory.id],
 };
 
-export const conversationMessages: ConversationMessage[] = [
+export const silentTalkSession: TalkSession = {
+  id: "ts_silent_001",
+  entryContext: {
+    source: "direct",
+    intent: "open_chat",
+    createdAt: "2026-05-09T00:10:00.000Z",
+  },
+  mode: "open_chat",
+  startedAt: "2026-05-09T00:10:00.000Z",
+  endedAt: "2026-05-09T00:11:00.000Z",
+  durationSeconds: 60,
+  messageCount: 1,
+  userMessageCount: 0,
+  assistantMessageCount: 1,
+  memoryExtractionStatus: "skipped",
+  latestMemoryExtractionRunId: "mer_silent_001",
+};
+
+export const completedMemoryExtractionRun: MemoryExtractionRun = {
+  id: "mer_memory_001",
+  talkSessionId: talkSessionContinuity.id,
+  status: "completed",
+  startedAt: "2026-05-08T21:42:10.000Z",
+  completedAt: "2026-05-08T21:42:13.000Z",
+  generatedMemoryItemIds: [eligibleVisibleMemory.id],
+};
+
+export const skippedMemoryExtractionRun: MemoryExtractionRun = {
+  id: "mer_silent_001",
+  talkSessionId: silentTalkSession.id,
+  status: "skipped",
+  reason: "user_message_count_zero",
+  startedAt: "2026-05-09T00:11:00.000Z",
+  completedAt: "2026-05-09T00:11:00.000Z",
+};
+
+export const sleepSuggestionRuleResult: SuggestionRuleResult = {
+  suggestionType: lightweightSleepInsight.suggestionType,
+  priority: 80,
+  confidence: lightweightSleepInsight.confidence,
+  basedOn: lightweightSleepInsight.basedOn,
+  target: "talk",
+};
+
+export const talkSessionMessages: ConversationMessage[] = [
   {
     id: "msg_001",
-    conversationId: conversationContinuity.id,
+    talkSessionId: talkSessionContinuity.id,
     role: "assistant",
     contentText: "We can start gently with what felt most noticeable last night.",
     createdAt: "2026-05-08T21:30:00.000Z",
   },
   {
     id: "msg_002",
-    conversationId: conversationContinuity.id,
+    talkSessionId: talkSessionContinuity.id,
     role: "user",
     contentText: "A softer start helped me stay with the conversation longer.",
     createdAt: "2026-05-08T21:31:00.000Z",
   },
 ];
 
-export const homeConversationContinuityEntryContext: TalkEntryContext = {
+export const homeTalkContinuityEntryContext: TalkEntryContext = {
   source: "home",
-  sourceId: conversationContinuity.id,
+  sourceId: talkSessionContinuity.id,
   intent: "open_chat",
   homeRecommendationId: "home_rec_conversation_001",
   suggestedOpening: "We can pick up gently from the tone that worked last time.",
@@ -703,28 +805,28 @@ export const homeConversationContinuityEntryContext: TalkEntryContext = {
   createdAt: MOCK_CREATED_AT,
 };
 
-export const homeConversationContinuityRecommendationCta: HomeCTA = {
+export const homeTalkContinuityRecommendationCta: HomeCTA = {
   id: "home_cta_conversation_001",
   label: "Start gently",
   target: "talk",
   targetPath: "/talk",
   homeRecommendationId: "home_rec_conversation_001",
-  entryContext: homeConversationContinuityEntryContext,
+  entryContext: homeTalkContinuityEntryContext,
   createdAt: MOCK_CREATED_AT,
 };
 
-export const homeConversationContinuityRecommendation: HomeRecommendation = {
+export const homeTalkContinuityRecommendation: HomeRecommendation = {
   id: "home_rec_conversation_001",
   type: "start_talk",
   title: "Continue with a gentle start",
   body: "Recent conversation continuity suggests a low-pressure return to Talk.",
   priority: 70,
   source: "talk_session",
-  sourceId: conversationContinuity.id,
+  sourceId: talkSessionContinuity.id,
   sourceDomain: "talk",
   surface: "home_main",
   fallbackKind: "none",
-  cta: homeConversationContinuityRecommendationCta,
+  cta: homeTalkContinuityRecommendationCta,
   createdAt: MOCK_CREATED_AT,
 };
 
@@ -821,7 +923,7 @@ export const dataPartialFallbackRecommendation: HomeRecommendation = {
   body: "Some continuity inputs are missing, but a low-pressure start is still safe.",
   priority: 20,
   source: "talk_session",
-  sourceId: conversationContinuity.id,
+  sourceId: talkSessionContinuity.id,
   sourceDomain: "talk",
   surface: "home_main",
   fallbackKind: "data_partial_fallback",
@@ -853,7 +955,7 @@ export const errorSafeFallbackRecommendation: HomeRecommendation = {
   body: "A safer, traceable talk entry is available while other continuity inputs are not.",
   priority: 5,
   source: "talk_session",
-  sourceId: conversationContinuity.id,
+  sourceId: talkSessionContinuity.id,
   sourceDomain: "talk",
   surface: "home_main",
   fallbackKind: "error_safe_fallback",
@@ -899,9 +1001,9 @@ export const normalHomePriorityRecommendations: [
   HomeRecommendation,
 ] = [
   homeRecommendationFromMemory,
-  homeSleepCheckInRecommendation,
+  homeSleepLogRecommendation,
   homeTonightSuggestionRecommendation,
-  homeConversationContinuityRecommendation,
+  homeTalkContinuityRecommendation,
 ];
 
 export const returningUserHomeState: HomeState = {
@@ -969,26 +1071,44 @@ export const staleSleepFallbackHomeState: HomeState = {
   createdAt: MOCK_CREATED_AT,
 };
 
-export const disagreedMemoryFeedbackEvent: MemoryFeedbackEvent = {
-  id: "memory_feedback_001",
+export const agreedMemoryFeedback: MemoryFeedback = {
+  id: "mf_001",
+  memoryItemId: eligibleVisibleMemory.id,
+  action: "agree",
+  effect: "reinforce_memory",
+  note: "This still feels accurate.",
+  createdAt: "2026-05-09T08:10:00.000Z",
+};
+
+export const disagreedMemoryFeedback: MemoryFeedback = {
+  id: "mf_002",
   memoryItemId: contradictedMemoryExcluded.id,
   action: "disagree",
-  previousStatus: "active",
-  resultingStatus: "contradicted",
-  excludeFromPersonalization: false,
-  source: "memory_page",
+  effect: "contradict_memory",
+  note: "This does not fit and should not be reused as a positive signal.",
   createdAt: "2026-05-04T08:00:00.000Z",
 };
 
-export const hiddenMemoryFeedbackEvent: MemoryFeedbackEvent = {
-  id: "memory_feedback_002",
+export const hiddenMemoryFeedback: MemoryFeedback = {
+  id: "mf_003",
   memoryItemId: hiddenMemoryExcluded.id,
   action: "hide",
-  previousStatus: "active",
-  resultingStatus: "hidden",
-  excludeFromPersonalization: true,
-  source: "memory_page",
+  effect: "hide_from_memory_page_and_personalization",
   createdAt: "2026-05-05T07:30:00.000Z",
+};
+
+export const homeRecommendationViewedEvent: ProductEvent = {
+  id: "evt_001",
+  anonymousId: returningUserProfile.anonymousId,
+  eventName: "home_recommendation_viewed",
+  page: "home",
+  entityType: "home_recommendation",
+  entityId: homeRecommendationFromMemory.id,
+  properties: {
+    source: homeRecommendationFromMemory.source,
+    priority: homeRecommendationFromMemory.priority,
+  },
+  createdAt: MOCK_CREATED_AT,
 };
 
 export const futureOnlySleepGoal: SleepGoal = {
@@ -1014,6 +1134,8 @@ export const stage3MockData = {
     returningUserProfile,
   },
   onboarding: {
+    onboardingDraftInProgress,
+    onboardingContextCardPreview,
     onboardingStateIncomplete,
     onboardingStateCompleted,
     activeOnboardingPreset,
@@ -1035,14 +1157,14 @@ export const stage3MockData = {
     staleSleepFallbackEntryContext,
     errorFallbackEntryContext,
     homeRecommendationFromMemory,
-    homeSleepCheckInRecommendation,
+    homeSleepLogRecommendation,
     homeTonightSuggestionRecommendation,
-    homeConversationContinuityRecommendation,
+    homeTalkContinuityRecommendation,
     homeRoomContinuityRecommendation,
     homeRecommendationFromMemoryCta,
-    homeSleepCheckInRecommendationCta,
+    homeSleepLogRecommendationCta,
     homeTonightSuggestionRecommendationCta,
-    homeConversationContinuityRecommendationCta,
+    homeTalkContinuityRecommendationCta,
     homeRoomContinuityRecommendationCta,
     normalHomePriorityRecommendations,
     systemDefaultFallbackRecommendation,
@@ -1056,9 +1178,14 @@ export const stage3MockData = {
     staleSleepFallbackHomeState,
   },
   talk: {
+    roomToTalkEntryContext,
     homeToTalkEntryContext,
-    conversationContinuity,
-    conversationMessages,
+    firstNightTalkSession,
+    talkSessionContinuity,
+    silentTalkSession,
+    completedMemoryExtractionRun,
+    skippedMemoryExtractionRun,
+    talkSessionMessages,
   },
   memory: {
     eligibleVisibleMemory,
@@ -1066,16 +1193,18 @@ export const stage3MockData = {
     contradictedMemoryExcluded,
     hiddenMemoryExcluded,
     archivedMemoryExcluded,
-    disagreedMemoryFeedbackEvent,
-    hiddenMemoryFeedbackEvent,
+    agreedMemoryFeedback,
+    disagreedMemoryFeedback,
+    hiddenMemoryFeedback,
     memoryEligibilityScenarios,
   },
   sleep: {
     futureOnlySleepGoal,
-    lightweightSleepCheckIn,
-    staleSleepCheckIn,
+    lightweightSleepLog,
+    staleSleepLog,
     lightweightSleepInsight,
     lightweightSleepSession,
+    sleepSuggestionRuleResult,
   },
   room: {
     roomOptions,
@@ -1088,5 +1217,8 @@ export const stage3MockData = {
   },
   aliases: {
     canonicalRecommendationAlias,
+  },
+  analytics: {
+    homeRecommendationViewedEvent,
   },
 };

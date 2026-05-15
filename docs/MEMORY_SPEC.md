@@ -147,7 +147,8 @@ type MemoryPageData = {
     display_text: string;
     supporting_session_count: number;
     time_window_label: string;
-    is_deleted: boolean;
+    status: "active" | "hidden";
+    exclude_from_personalization: boolean;
     continuation_hint?: string | null;
   }>;
   helpful_patterns: Array<{
@@ -177,7 +178,7 @@ type MemoryPageData = {
   }>;
   memory_items_version: string;
   deep_history_available: boolean;
-  memory_delete_capability: boolean;
+  memory_hide_capability: boolean;
   last_memory_refresh_at: string;
 };
 ```
@@ -191,7 +192,13 @@ Contract rules:
 - `continue_actions` may carry processed continuation payload but must not expose internal reasoning
 - the frontend must not create new memory records locally
 - the current default main page should surface exactly three equal-weight actions and must not render action hierarchy even if upstream contract includes `visual_priority`
-- `memory_delete_capability` may remain part of the broader contract, but a strong management-style delete affordance is not part of the current default reading-first skeleton
+- Stage 3 per-memory feedback is limited to `Agree`, `Disagree`, and `Hide`
+- `Disagree` is correction feedback and must not be modeled as hide or delete
+- `Hide` must set `status = "hidden"` and `exclude_from_personalization = true`
+- if the upstream canonical `MemoryItem` includes `influenceWeight`, `Hide` must set it to `0`
+- hidden memories must not be displayed on the main page and must not be used by Talk, Sleep, or Home personalization or CTA generation
+- `memory_hide_capability` may remain part of the broader page contract to control whether the Stage 3 Hide action is available in the current surface
+- any older Delete wording is deprecated historical context only and is not normative for Stage 3
 - the current UI-only implementation may use local view-model detail content for expanded recurring items until a dedicated recurring-memory detail contract is defined
 
 ## 7. Runtime States
@@ -282,7 +289,7 @@ The current implementation allows one recurring item at a time to expand inline.
 
 - one subtle hidden shell behind the current item only
 - concise supporting detail groups
-- lightweight local actions such as `Agree` and `Delete`
+- lightweight local actions such as `Agree`, `Disagree`, and `Hide`
 
 These expanded controls are secondary to the reading flow and must not turn the Recurring Insights block into a dashboard or management list.
 
@@ -395,7 +402,7 @@ These decisions are confirmed for the current `/memory` implementation pass:
 7. recurring insight items remain text-first and center-aligned in their collapsed state
 8. the current default view shows the first three recurring insight items, plus a lightweight same-page reveal control when more items exist
 9. the current implementation allows one recurring insight item at a time to expand inline inside a subtle shell
-10. expanded recurring items may show local mock detail groups plus lightweight `Agree` and `Delete` actions
+10. expanded recurring items may show local mock detail groups plus lightweight `Agree`, `Disagree`, and `Hide` actions
 11. the current default main page surfaces exactly three equal-weight actions
 
 ## 15. Page-Level Acceptance Criteria
@@ -410,6 +417,8 @@ Acceptance requires all of the following:
 - the current default main page shows exactly three recurring insight items before the reveal-more control
 - additional recurring items, when present, are revealed in the same page rather than by route change or modal
 - at most one recurring insight item remains expanded at a time
+- if expanded per-item feedback actions are shown, they are limited to `Agree`, `Disagree`, and `Hide`
+- no user-facing Delete memory action appears in the Stage 3 default Memory main page
 - the page contains Top Navigation -> Hero Insight -> Recurring Insights -> Take Action in the correct order
 - the three action options appear visually equal and non-hierarchical
 - no long default explanation blocks are introduced
