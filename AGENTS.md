@@ -2,146 +2,89 @@
 
 ## 0. Scope
 
-1. These rules apply to the current Git repository root and all child paths.
-2. The current V1 mainline scope is limited to:
-   - `/`
-   - `/onboarding`
-   - `/talk`
-   - `/room`
-   - `/memory`
-   - `/sleep-monitoring`
-3. Unless a task explicitly requires it, do not expand into:
-   - new product areas
-   - new routes
-   - backend platform migrations
-   - design system rewrites
-   - unrelated pages or experiments
+1. These rules apply to this repository root and all child paths.
+2. Current V1 product scope is limited to `/`, `/onboarding`, `/talk`, `/room`, `/memory`, and `/sleep-monitoring`.
+3. Do not expand into new product areas, new routes, backend migrations, or design-system rewrites unless the task explicitly requires it.
 
 ---
 
 ## 1. Repository Boundary Rules
 
 1. All reads, writes, creates, moves, and deletes must stay inside this repository root.
-2. Do not use the parent `Playground` directory as an implementation source of truth.
-3. Do not create shadow copies, mirrored projects, or parallel worktrees outside this repository unless the user explicitly asks.
-4. Do not pull runtime implementation rules from external drafts, Downloads folders, screenshots, or copied notes unless the user explicitly asks to vendor them into this repository.
+2. Do not use sibling worktrees or the parent `Playground` directory as implementation source of truth.
+3. Do not create shadow projects or parallel copies unless the user explicitly asks.
 
 ---
 
-## 2. Source of Truth and Rule Priority
+## 2. Source of Truth
 
-Page-specific source-of-truth mapping:
+### Page-level product source
 
-### `/`
+- `/` and `/onboarding`: `docs/FIRST_LAUNCH_SPEC.md`, then `docs/FIRST_LAUNCH_UI_SPEC.md`
+- `/talk`: `docs/SPEC.md`, then `docs/TALK_UI_SPEC.md`
+- `/room`: `docs/ROOM_SPEC.md`, then `docs/ROOM_UI_SPEC.md`
+- `/memory`: `docs/MEMORY_SPEC.md`, then `docs/MEMORY_UI_SPEC.md`
+- `/sleep-monitoring`: `docs/SLEEP_SPEC.md`, then `docs/SLEEP_UI_SPEC.md`
 
-1. `docs/FIRST_LAUNCH_SPEC.md`
-2. `docs/FIRST_LAUNCH_UI_SPEC.md`
-3. `docs/ACCEPTANCE.md`
-4. `docs/TRACKING.md`
-5. `docs/HANDOFF.md`
-6. current repository code and config
-7. local inference
+### Shared process source
 
-### `/onboarding`
+- `docs/ACCEPTANCE.md`
+- `docs/TRACKING.md`
+- `docs/HANDOFF.md`
 
-1. `docs/FIRST_LAUNCH_SPEC.md`
-2. `docs/FIRST_LAUNCH_UI_SPEC.md`
-3. `docs/ACCEPTANCE.md`
-4. `docs/TRACKING.md`
-5. `docs/HANDOFF.md`
-6. current repository code and config
-7. local inference
+### Engineering source
 
-### `/talk`
+- `docs/engineering/source-of-truth-map.md`
+- `docs/engineering/worktree-branch-map.md`
+- `docs/stage-4/application-architecture.md`
+- `docs/engineering/coding-architecture-rules.md`
+- `docs/engineering/review-checklist.md`
+- `docs/engineering/technical-review-writing-rules.md`
 
-1. `docs/SPEC.md`
-2. `docs/TALK_UI_SPEC.md`
-3. `docs/ACCEPTANCE.md`
-4. `docs/TRACKING.md`
-5. `docs/HANDOFF.md`
-6. current repository code and config
-7. local inference
+### Conflict rule
 
-### `/room`
-
-1. `docs/ROOM_SPEC.md`
-2. `docs/ROOM_UI_SPEC.md`
-3. `docs/ACCEPTANCE.md`
-4. `docs/TRACKING.md`
-5. `docs/HANDOFF.md`
-6. current repository code and config
-7. local inference
-
-### `/memory`
-
-1. `docs/MEMORY_SPEC.md`
-2. `docs/MEMORY_UI_SPEC.md`
-3. `docs/ACCEPTANCE.md`
-4. `docs/TRACKING.md`
-5. `docs/HANDOFF.md`
-6. current repository code and config
-7. local inference
-
-### `/sleep-monitoring`
-
-1. `docs/SLEEP_SPEC.md`
-2. `docs/SLEEP_UI_SPEC.md`
-3. `docs/ACCEPTANCE.md`
-4. `docs/TRACKING.md`
-5. `docs/HANDOFF.md`
-6. current repository code and config
-7. local inference
-
-### Engineering Source of Truth
-
-For data-contract, data-wiring, api-contract, architecture-docs, implementation, or technical-review tasks, agents must also read the relevant engineering documents when present:
-
-- docs/stage-3/data-contract.md
-- docs/stage-3/acceptance-checklist.md
-- docs/engineering/coding-architecture-rules.md
-- docs/engineering/application-architecture.md
-- docs/engineering/review-checklist.md
-- docs/engineering/technical-review-writing-rules.md
-
-If engineering documents conflict with page-specific product specs, agents must report the conflict instead of silently choosing a behavior.
-
-Page-specific product behavior belongs in page PRD/UI specs.
-Repository-wide coding and architecture rules belong in docs/engineering and AGENTS.md.
-
-### Shared rules
-
-1. `docs/FIRST_LAUNCH_SPEC.md` and `docs/FIRST_LAUNCH_UI_SPEC.md` are the current first-launch PRD and UI baseline only.
-2. `docs/SPEC.md` and `docs/TALK_UI_SPEC.md` are the current Talk PRD and UI baseline only.
-3. `docs/ROOM_SPEC.md` and `docs/ROOM_UI_SPEC.md` are the current Room PRD and UI baseline only.
-4. `docs/MEMORY_SPEC.md` and `docs/MEMORY_UI_SPEC.md` are the current Memory PRD and UI baseline only.
-5. `docs/SLEEP_SPEC.md` and `docs/SLEEP_UI_SPEC.md` are the current Sleep PRD and UI baseline only.
-6. Do not treat older in-repo drafts or external copies as runtime truth once these files are vendored.
-7. If two sources conflict, follow the higher-priority source for the active page and explicitly report the conflict.
-8. Do not silently resolve spec ambiguity by expanding product behavior.
+1. If source documents conflict, do not invent product behavior.
+2. Mark the conflict as `Needs Product Decision`.
+3. Do not silently expand scope to resolve the conflict.
 
 ---
 
-## 3. Task Startup Checklist
+## 3. Pre-flight Checks
 
-Before implementation:
+Before making changes, every Codex worker must report:
 
-1. Confirm `pwd`.
-2. Confirm `git rev-parse --show-toplevel`.
-3. Only continue when both point to this repository root.
-4. Read:
-   - `AGENTS.md`
-   - the active page's primary spec pair under `docs/`
-   - `docs/ACCEPTANCE.md`
-   - `docs/TRACKING.md`
-   - `docs/HANDOFF.md`
-5. When changing Next.js application code, read the relevant local Next.js guide under `node_modules/next/dist/docs/` first if framework behavior may matter.
-6. Restate the active task before making code changes.
+1. `pwd`
+2. `git branch --show-current`
+3. `git status`
+4. intended task scope
+5. allowed files
+
+Required startup commands:
+
+1. `pwd`
+2. `git rev-parse --show-toplevel`
+3. `git branch --show-current`
+4. `git status`
+5. `git worktree list`
+
+Only continue when `pwd` and `git rev-parse --show-toplevel` both point to this repository root.
+
+Before implementation work, also read:
+
+1. `AGENTS.md`
+2. the active page's primary spec pair when the task touches product behavior
+3. `docs/ACCEPTANCE.md`
+4. `docs/TRACKING.md`
+5. `docs/HANDOFF.md`
+6. relevant engineering docs for architecture, contract, or review tasks
+
+When Next.js framework behavior matters, read the relevant local guide under `node_modules/next/dist/docs/` first.
 
 ---
 
 ## 4. Mandatory Task Classification
 
-Every task must be classified before coding as one of the following:
+Every task must be classified before coding as one of:
 
 - `ui-only`
 - `data-wiring`
@@ -154,19 +97,17 @@ Every task must be classified before coding as one of the following:
 
 Rules:
 
-1. Stay within the task class unless the user explicitly approves cross-scope work.
-2. `ui-only` tasks must not change API shapes, route structure, or data contracts.
-3. `data-wiring` tasks must not redesign page layout or visual hierarchy.
-4. `api-contract` tasks must not silently change unrelated UI structure.
-5. `architecture-docs` is used only for repository architecture, coding standards, review standards, source-of-truth rules, or engineering documentation. It must not modify runtime code unless explicitly approved.
-6. `technical-review` is used only for reviewing diffs, PRs, branches, or implementation results. It must not modify files unless the user explicitly asks for a fix task.
-7. `approved-refactor` is only allowed when the user explicitly asks for refactoring.
+1. Stay inside the selected task class unless the user explicitly approves cross-scope work.
+2. `architecture-docs` may update repository rules and engineering docs only.
+3. `technical-review` may review diffs, branches, or PRs, but must not modify files unless the user explicitly asks for fixes.
+4. `ui-only` must not change API shapes or route structure.
+5. `data-wiring` must not redesign page layout or visual hierarchy.
 
 ---
 
-## 5. Pre-Implementation Report Requirement
+## 5. Pre-Implementation Report
 
-Before making changes, provide a short implementation report that includes:
+Before editing files, provide a short implementation report that includes:
 
 1. task classification
 2. task goal
@@ -176,62 +117,80 @@ Before making changes, provide a short implementation report that includes:
 6. expected contract or data shape involved
 7. assumptions or blockers
 
-Do not start implementation until this report is internally consistent with the task.
+Do not start implementation until the report is internally consistent with the task.
 
 ---
 
-## 6. Change Guardrails
+## 6. Scope Control
 
 1. Keep changes tightly scoped to the active task.
-2. Do not delete or rewrite existing page skeletons unless the task explicitly asks for it.
-3. Reuse shared navigation, placeholder shells, and common layout instead of duplicating them.
-4. Do not change locked information architecture, route structure, layout structure, or base interaction rules unless the user explicitly approves a spec upgrade.
-5. Do not refactor for elegance, preference, cleanup, or abstraction unless explicitly requested.
-6. Do not rename core entities or concepts without explicit approval:
-   - `user`
-   - `room`
-   - `session`
-   - `message`
-   - `memory`
-7. Do not silently change field names, payload shapes, response structures, or type contracts.
-8. Do not invent backend fields and present them as approved contract.
-9. Do not convert mock structures into claimed production behavior without stating that clearly.
-10. Do not expand placeholder content into speculative features.
-11. If a shared component changes, explicitly report:
-   - affected routes
-   - likely regression areas
-   - whether the change was necessary
+2. If a task is documentation-only, do not modify `src/`, `app/`, `components/`, `public/`, package files, lock files, backend files, or Go files.
+3. If allowed files are specified, modify only those files.
+4. Do not silently expand scope.
+5. Do not perform runtime implementation review during a coding-rules or documentation-consolidation task.
+6. Do not refactor for elegance, cleanup, or abstraction unless the user explicitly asks.
 
 ---
 
-## 7. Data and Contract Discipline
+## 7. Branch and Worktree Safety
 
-1. Treat `session`, `message`, and `memory` as separate concepts unless the spec explicitly merges them.
+1. If required files appear missing, first verify the current branch and worktree.
+2. Do not declare the product blocked before checking whether the current branch is audit-only, spec-only, or otherwise outdated.
+3. Missing `src/contracts`, `src/mocks`, or Stage 3 docs on an audit-only branch does not automatically mean the full project lacks them.
+4. Do not start Stage 4 implementation from Stage 3 audit branches.
+5. Stage 4 implementation should start from the verified Stage 3 integration baseline.
+6. Use `docs/engineering/worktree-branch-map.md` to classify the current worktree before escalating a missing-file concern.
+7. If branch classification is unclear, mark it as `needs verification` rather than guessing.
+
+---
+
+## 8. Data and Contract Discipline
+
+1. Treat `session`, `message`, and `memory` as separate concepts unless a higher-priority source explicitly merges them.
 2. Preserve approved contract naming.
-3. If contract details are unclear:
-   - prefer preserving current shapes
-   - add a clearly marked TODO or assumption
-   - report the ambiguity
-4. Do not replace structured contract gaps with local guesswork that could cascade into rework.
-5. If a task requires backend behavior that does not exist yet, clearly separate:
-   - current mock behavior
-   - expected real behavior
-   - missing backend dependency
+3. Do not silently change field names, payload shapes, response structures, or type contracts.
+4. If contract details are unclear, preserve current shapes, mark the assumption, and report the ambiguity.
+5. Separate mock behavior from expected real backend behavior in every implementation summary.
 
 ---
 
-## 8. Current Mainline Intent
+## 9. Coding Architecture Summary
 
-1. This repository is the active mainline for the web companion shell.
-2. `docs/FIRST_LAUNCH_SPEC.md` and `docs/FIRST_LAUNCH_UI_SPEC.md` are the current source of truth for the first-launch flow on `/`.
-3. `docs/SPEC.md` and `docs/TALK_UI_SPEC.md` are the current source of truth for Talk behavior and UI.
-4. The current implementation target is to align the Next.js app to the vendored first-launch, Talk, Room, Memory, and Sleep documents in a controlled way.
-5. Favor structure, consistency, reviewability, and handoff quality over speculative feature expansion.
-6. Prefer small, reviewable changes over broad rewrites.
+Implementation work must follow:
+
+```text
+contracts -> domain -> policies/config -> experience -> app/components
+```
+
+Mandatory rules:
+
+1. No domain logic inside page components.
+2. No product decision logic inside presentational components.
+3. No silent product fallback.
+4. Recommendations must preserve source trace.
+5. Key user actions need typed event payloads or a documented reason for omission.
+6. Future backend communication must go through `src/api`.
+7. Domain must not import React, components, app, or API clients.
+
+The full standard lives in `docs/engineering/coding-architecture-rules.md`.
 
 ---
 
-## 9. Verification Rules
+## 10. Review Writing Summary
+
+Every technical review must:
+
+1. output `pass`, `pass-with-notes`, or `blocked`
+2. include evidence for every issue
+3. include `file path`, `evidence`, `violated rule`, `risk`, and `required fix` for every P1 blocker
+4. avoid blocking merge for future-stage requirements that are out of scope
+5. avoid redesigning product behavior unless the current implementation violates source-of-truth docs
+
+The full standard lives in `docs/engineering/technical-review-writing-rules.md`.
+
+---
+
+## 11. Verification Rules
 
 Every implementation task should finish by running:
 
@@ -241,13 +200,15 @@ Every implementation task should finish by running:
 
 Rules:
 
-1. If any check fails, do not present the task as complete.
+1. If a check fails, do not present the task as complete.
 2. If a check cannot run, explicitly state why.
 3. If verification is skipped, explicitly state that it is unverified.
 
+Documentation-only tasks may skip runtime checks when no runtime files changed, but must say so explicitly.
+
 ---
 
-## 10. Final Delivery Report Requirement
+## 12. Final Delivery Requirements
 
 Each implementation summary must include:
 
@@ -264,194 +225,17 @@ Each implementation summary must include:
 11. manual verification steps
 12. whether any remaining area is still mock or placeholder
 
----
+For code tasks that must be reviewed through GitHub, also include:
 
-## 11. Non-Negotiable Reviewability Rules
-
-1. Prefer small patches over broad rewrites.
-2. Prefer explicit wiring over hidden magic.
-3. Preserve page structure when the task is only data hookup.
-4. Preserve contract shape when the task is only UI work.
-5. If a requested implementation appears to conflict with the locked spec, stop expansion and report the conflict instead of improvising a new product decision.
-
----
-
-## 12. Technical Baseline
-
-1. Prefer this repository's code, config, and docs over assumptions.
-2. Use `package.json`, `next.config.*`, and current source files as the technical baseline.
-3. Keep the authoritative spec inside this repository.
-4. Do not treat placeholder content as permission to remove project rules.
-
----
-
-## 13. Document Layer Separation
-
-1. `AGENTS.md` only defines repository-level execution rules, scope control, reporting rules, and verification discipline.
-2. Product definitions such as page responsibilities, page-to-page flows, data structures, API contracts, state models, and data sources must live in product docs such as PRD, non-UI delivery docs, or UI spec docs.
-3. Task-specific implementation instructions such as:
-   - which page section to modify
-   - which files are allowed in the current task
-   - what is mock vs real in the current round
-   - what should be completed in this round only
-   must not be treated as long-term repository rules; they belong in the current task brief or prompt.
-4. Review standards for evaluating whether a visual effect is successful or unsuccessful must not be embedded into repository-wide rules unless they are generic and durable. Page-specific visual review criteria belong in a separate review rubric.
-5. If a rule appears to belong to more than one layer, prefer the narrower and more local document rather than overloading `AGENTS.md`.
-
----
-
-## 14. Mock vs Real Behavior Discipline
-
-1. Any implementation that uses mock data, placeholder state, simulated runtime, or local demo behavior must be explicitly identified as mock.
-2. Mock behavior must never be reported as completed production behavior.
-3. If a page currently renders from local config or front-end constants rather than backend contract, this must be stated explicitly in the implementation summary.
-4. If a task is `ui-only`, mock data is allowed, but it must not silently hard-code business rules that belong to backend or contract definitions.
-5. If current behavior is only a visual/demo state machine and not a real runtime implementation, the final report must say so explicitly.
-
----
-
-## 15. UI Task Boundary Discipline
-
-1. A `ui-only` task is not permission to infer or redefine business logic.
-2. A `ui-only` task may implement layout, component structure, visual hierarchy, and mock state shells, but must not silently define:
-   - session creation timing
-   - memory write timing
-   - backend payload shapes
-   - runtime audio behavior
-3. If UI spec defines visual result but not data source, the implementation must preserve mock boundaries and report the missing product definition rather than inventing a permanent data source.
-4. If a page requires data-dependent UI and the data source is not yet defined in product docs, the implementation must:
-   - use clearly labeled mock data
-   - avoid implying that real wiring is complete
-   - report the unresolved dependency
-
----
-
-## 16. Local PR Review Workflow Rules
-
-1. All agents must use a feature branch and review work through a PR or explicit diff before any merge decision.
-2. Automatic merge is forbidden. Agents must not merge, auto-merge, or report merge completion unless a human has done it.
-3. After completing a task, every agent must output:
-   - `Branch`
-   - `PR`
-   - `Summary`
-   - `Changed files`
-   - `Commands run`
-   - `Technical check result`
-   - `Local verification steps`
-   - `Visual QA checklist`
-   - `Known risks`
-   - `Merge status`
-4. Any UI change must explicitly check:
-   - desktop
-   - mobile
-   - first launch
-   - returning user
-   - loading
-   - empty
-   - error
-   - animation
-   - console errors
-5. Required technical checks for PR review work are:
-   - `npm run lint`
-   - `npm run build`
-
-## Real GitHub PR Requirement
-
-A task is not complete unless a real GitHub pull request has been created and a real PR URL is provided.
-
-A prepared PR title/body, local commit, local branch, "Open Pull Request" button, or "View changes" button is not sufficient.
-
-The final delivery must include a real GitHub PR URL in this format:
-
-https://github.com/<owner>/<repo>/pull/<number>
-
-If the agent cannot create a real PR because `origin` is missing, GitHub access fails, network access is blocked, or permissions are unavailable, it must stop and report the blocker before claiming the task is complete.
-
-The agent must not ask the user to run `git remote add origin` or `git push` unless it has first confirmed that it cannot create the PR itself.
-
-For this repository, the expected remote is:
-
-https://github.com/lizhongyuanuk-lab/AI-sleep-companion-web-app.git
-
-The expected base branch for product work is:
-
-main
-
-After completing any code task, the required final output must include:
-
-- Branch
-- Real PR URL
-- Summary
-- Changed files
-- Commands run
-- Technical check result
-- Local verification steps
-- Visual QA checklist, if UI changed
-- Known risks
-- Merge status
-
-If there is no real PR URL, the task is not delivered.
-
----
-
-## 17. Coding Architecture Rules
-
-The full coding standard lives in `docs/engineering/coding-architecture-rules.md`.
-
-Mandatory rules:
-
-1. Use the architecture flow: `contracts -> domain -> policies/config -> experience -> app/components`.
-2. Do not place domain logic directly inside page components.
-3. Do not place product decision logic inside presentational components.
-4. Domain must not import React, components, app, or API clients.
-5. Do not use `any` unless the reason is documented inline.
-6. Do not use magic strings for lifecycle states, events, fallback reasons, or recommendation types.
-7. Do not create silent product fallbacks.
-8. All product fallbacks must include typed fallback reasons.
-9. All recommendation objects must preserve source trace.
-10. Key user actions must have typed event payloads or a documented reason for omission.
-11. Configurable product behavior belongs in `src/config` or `src/policies`.
-12. Page experience should be generated by typed experience builders.
-13. Future backend communication must go through `src/api`.
-14. Do not introduce Go Gin backend code, database code, LLM provider calls, Redux/Zustand, microservices, monorepo restructuring, or AI agent frameworks unless a later architecture task explicitly allows it.
-
----
-
-## 18. Technical Review Output Rules
-
-The full technical review writing standard should live in:
-
-- `docs/engineering/technical-review-writing-rules.md`
-
-Every technical review must include:
-
-- `Status: pass / pass-with-notes / blocked`
-- `Scope reviewed`
-- `Changed files reviewed`
+- `Branch`
+- `Real PR URL`
+- `Summary`
+- `Changed files`
 - `Commands run`
-- `P1 blockers`
-- `P2 concerns`
-- `P3 notes`
-- `Architecture compliance`
-- `Contract compliance`
-- `Mock vs real behavior check`
-- `Merge recommendation`
+- `Technical check result`
+- `Local verification steps`
+- `Visual QA checklist` when UI changed
+- `Known risks`
+- `Merge status`
 
-Every P1 blocker must include:
-
-- `file path`
-- `evidence`
-- `violated rule`
-- `risk`
-- `required fix`
-- `validation method`
-
-Reviewers must not redesign product behavior unless the implementation violates existing source-of-truth docs.
-
-Reviewers must not block merge for missing infrastructure outside the current stage scope, such as real database, real Go Gin backend, real LLM integration, real analytics provider, or production authentication, unless the active task explicitly requires it.
-
-Reviewers must classify findings as:
-
-- `P1 blocker`: Must be fixed before merge.
-- `P2 concern`: Should be addressed soon but does not block merge unless it compounds with other risks.
-- `P3 note`: Informational note only.
+Automatic merge is forbidden. Do not report merge completion unless a human has done it.
