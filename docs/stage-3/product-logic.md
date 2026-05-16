@@ -34,7 +34,7 @@ Stage 3 的目标不是继续优化视觉 UI，而是把产品的数据闭环定
   ↓
 Onboarding 两个问题
   ↓
-生成一次性的 OnboardingSessionPreset
+生成一次性的 OnboardingPreset
   ↓
 进入 Room 页面
   ↓
@@ -212,7 +212,7 @@ OnboardingDraft
 
 Session store
 当前 session 内有效，跨 Onboarding -> Room -> Talk 传递
-OnboardingSessionPreset
+OnboardingPreset
 
 Persistent store
 长期业务对象
@@ -267,8 +267,9 @@ type AppEntryState = {
   anonymousId?: string;
 
   hasCompletedOnboarding: boolean;
-  activeOnboardingPreset?: OnboardingSessionPreset;
+  activeOnboardingPreset?: OnboardingPreset;
   hasUsableHomeRecommendation: boolean;
+  now: ISODateTimeString;
 };
 ```
 
@@ -278,10 +279,12 @@ type AppEntryState = {
 function resolveInitialRoute(state: AppEntryState) {
   if (!state.hasCompletedOnboarding) return "/onboarding";
 
-  if (
-    state.activeOnboardingPreset &&
-    state.activeOnboardingPreset.status === "active"
-  ) {
+  const preset = state.activeOnboardingPreset;
+  const hasActiveAndUnexpiredPreset =
+    preset?.status === "active" &&
+    new Date(preset.expiresAt).getTime() > new Date(state.now).getTime();
+
+  if (hasActiveAndUnexpiredPreset) {
     return "/room";
   }
 
@@ -297,10 +300,10 @@ function resolveInitialRoute(state: AppEntryState) {
 从未完成 onboarding
 /onboarding
 
-完成 onboarding，preset active，但还未进入 Talk
+完成 onboarding，preset active 且未过期，但还未进入 Talk
 /room
 
-onboarding preset consumed / expired
+onboarding preset consumed / expired / stale
 /home
 
 老用户正常回访
@@ -316,7 +319,7 @@ onboarding preset consumed / expired
 ID 前缀
 示例
 
-OnboardingSessionPreset
+OnboardingPreset
 obp_
 obp_01hxyz...
 
@@ -424,12 +427,14 @@ type OnboardingDraft = {
 3. 不允许存长期心理标签。
 4. 不允许被 Sleep recommendation 读取。
 
-### 6.4 OnboardingSessionPreset
+### 6.4 OnboardingPreset
+
+Older product-language references to `OnboardingSessionPreset` refer to the same Stage 3 concept, but the canonical contract name is `OnboardingPreset`.
 
 用途：Onboarding -> Room -> Talk 首会话初始化。
 
 ```ts
-type OnboardingSessionPreset = UserScoped & {
+type OnboardingPreset = UserScoped & {
   id: string;
   presetId: string;
 
@@ -644,7 +649,7 @@ type TalkEntryContext = {
   roomViewId?: string;
   roomSessionId?: string;
   onboardingPresetId?: string;
-  onboardingPreset?: OnboardingSessionPreset;
+  onboardingPreset?: OnboardingPreset;
 
   memoryId?: string;
   sleepInsightId?: string;
@@ -972,7 +977,7 @@ type SleepInsight = UserScoped & {
 
 1. `basedOn.sleepLogIds` 必须存在。
 2. 数据不足时 `suggestionType = collect_more_data`。
-3. `OnboardingAnswer` / `OnboardingSessionPreset` 不得直接作为 `SleepInsight` 来源。
+3. `OnboardingAnswer` / `OnboardingPreset` 不得直接作为 `SleepInsight` 来源。
 4. Hidden Memory 不得进入 `memoryItemIds`。
 
 生命周期规则：
@@ -1131,7 +1136,7 @@ route
 
 Onboarding
 options、preset map、draft、app shell
-draft、OnboardingSessionPreset
+draft、OnboardingPreset
 result view model
 onboarding_*
 Room route
@@ -1180,7 +1185,7 @@ target payload
 `ONBOARDING_OPTIONS_V1`、`ONBOARDING_PRESET_MAP_V1`、`OnboardingDraft`、`entry_source`、`has_completed_onboarding_before`、`device_capabilities`
 
 写入
-`OnboardingDraft`、`OnboardingSessionPreset`
+`OnboardingDraft`、`OnboardingPreset`
 
 派生
 `resultViewModel = derive(draft + presetMap)`
@@ -1212,13 +1217,13 @@ type EnterRoomFromOnboardingPayload = {
 内容
 
 读取
-`RoomOption[]`、active `OnboardingSessionPreset`、route source
+`RoomOption[]`、active and unexpired `OnboardingPreset`、route source
 
 写入
 `RoomView`、用户 tap room 后写入 `RoomSession`
 
 派生
-当前 room view state、是否带 onboarding preset
+当前 room view state、是否带 onboarding preset route context
 
 事件
 `room_view`、`room_view_after_onboarding`、`room_option_viewed`、`room_session_started`、`room_enter_talk_after_onboarding`、`room_session_ended`
@@ -1237,7 +1242,7 @@ type RoomToTalkPayload = {
     roomViewId?: string;
     roomSessionId: string;
     onboardingPresetId?: string;
-    onboardingPreset?: OnboardingSessionPreset;
+    onboardingPreset?: OnboardingPreset;
   };
 };
 ```
@@ -1248,6 +1253,7 @@ type RoomToTalkPayload = {
 2. 如果 preset expired，不弹错误，Talk 使用默认 room 入口逻辑。
 3. Room 不改写 preset。
 4. RoomView 不等于 RoomSession。
+5. Onboarding 只能解释为什么用户进入 Room，不能对固定 room options 做排序、重排、推荐、预选或高亮。
 
 ### 7.4 Talk 页面矩阵
 
@@ -1255,7 +1261,7 @@ type RoomToTalkPayload = {
 内容
 
 读取
-`TalkEntryContext`、eligible Memory context、`RoomSession`、`OnboardingSessionPreset`
+`TalkEntryContext`、eligible Memory context、`RoomSession`、`OnboardingPreset`
 
 写入
 `TalkSession`、`MemoryExtractionRun`、可能生成 `MemoryItem`
@@ -1918,11 +1924,11 @@ Home 是轻量默认入口，不是复杂信息流。
 首先明确：
 
 - 未完成 onboarding 的用户应由 `AppEntryResolver` 直接导向 `/onboarding`，不应进入正常 Home 流。
-- active onboarding preset 尚未消费的用户应由 `AppEntryResolver` 直接导向 `/room`，不应进入正常 Home 流。
+- active and unexpired onboarding preset 尚未消费的用户应由 `AppEntryResolver` 直接导向 `/room`，不应进入正常 Home 流。
 
 因此，下面的优先级分为两类：
 
-1. 正常 Home 主流程：只适用于 `hasCompletedOnboarding = true` 且不存在 active preset 的用户。
+1. 正常 Home 主流程：只适用于 `hasCompletedOnboarding = true` 且不存在 active and unexpired preset 的用户。
 2. Defensive fallback：只用于路由恢复异常、状态不同步或深链误入 Home 时的兜底推荐，不应当作正常 Home 产品路径。
 
 #### 10.2.1 正常 Home 主流程优先级
@@ -1955,7 +1961,7 @@ Start a simple check-in
 未完成 onboarding
 Complete setup
 
-有 active onboarding preset 且未进入 Talk
+有 active and unexpired onboarding preset 且未进入 Talk
 Continue to Room
 
 规则：
@@ -2299,8 +2305,8 @@ type Stage3StoreApi = {
   saveOnboardingDraft(draft: OnboardingDraft): void;
   clearOnboardingDraft(): void;
 
-  createOnboardingPreset(input: OnboardingDraft): OnboardingSessionPreset;
-  getActiveOnboardingPreset(): OnboardingSessionPreset | null;
+  createOnboardingPreset(input: OnboardingDraft): OnboardingPreset;
+  getActiveOnboardingPreset(): OnboardingPreset | null;
   consumeOnboardingPreset(presetId: string): void;
   expireOnboardingPreset(presetId: string): void;
 
@@ -2338,7 +2344,7 @@ type Stage3StoreApi = {
 App Entry
 
 - 未完成 onboarding 时进入 `/onboarding`。
-- 有 active onboarding preset 且未 consumed 时进入 `/room`。
+- 有 active 且未过期的 onboarding preset 时进入 `/room`。
 - 其他情况进入 `/home`。
 
 Onboarding
@@ -2346,7 +2352,7 @@ Onboarding
 - Onboarding 只有两个问题。
 - Q1 是用户当前状态。
 - Q2 是用户允许的陪伴方式。
-- Onboarding 生成 `OnboardingSessionPreset`。
+- Onboarding 生成 `OnboardingPreset`。
 - Onboarding 不生成 room recommendation。
 - Onboarding 不直接进入 Talk。
 - 结果页主 CTA 进入 Room。
@@ -2414,7 +2420,7 @@ Home
 ### 13.2 数据契约验收
 
 - 定义 `OnboardingDraft`。
-- 定义 `OnboardingSessionPreset`。
+- 定义 `OnboardingPreset`。
 - 定义 `OnboardingContextCard`，且明确为 UI 派生对象。
 - 定义 `RoomOption`。
 - 定义 `RoomView`。
