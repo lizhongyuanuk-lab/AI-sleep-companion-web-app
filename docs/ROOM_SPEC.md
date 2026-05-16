@@ -39,7 +39,7 @@ Room 是 Talk 前的沉浸式场景预览层。
 MVP 范围固定为：
 
 - 6 个静态 room
-- 弱推荐
+- onboarding 承接上下文，不做 room 个性化推荐
 - 无详情页
 - 无分类
 - 无收藏
@@ -74,7 +74,7 @@ Room 的目标不是做内容分发，也不是做分类浏览，而是通过最
 
 | 上游页面 | 当前页面 | 下游页面 | 责任拆分 |
 | --- | --- | --- | --- |
-| Onboarding | Room | Talk | Onboarding 决定首次弱推荐；Room 承担氛围预览；Talk 承担正式陪伴和导航出现后的主体验。 |
+| Onboarding | Room | Talk | Onboarding 决定用户是否通过 entry / route logic 进入 Room，并提供首会话承接 context；Room 承担氛围预览；Talk 承担正式陪伴和导航出现后的主体验。 |
 
 ## 7. 核心体验骨架
 
@@ -118,13 +118,13 @@ Room 的目标不是做内容分发，也不是做分类浏览，而是通过最
 
 ## 11. Onboarding 与 Room 的关系
 
-Room 与 onboarding 的关系定为“弱关联”。
+Room 与 onboarding 的关系定为“入口承接关系”。
 
-Onboarding 只影响首次进入 Room 时的首个 room 落点，不限制用户后续滑动，也不把 room 与 LLM mode 强绑定。
+Onboarding 只影响用户是否通过 app entry / route logic 进入 Room，以及进入 Talk 时是否携带 active and unexpired `OnboardingPreset`。Onboarding 不决定首个 room 落点，不限制用户后续滑动，也不把 room 与 LLM mode 强绑定。
 
 | 维度 | 是否受 onboarding 影响 | 规则 |
 | --- | --- | --- |
-| 首次首屏 room | 是 | 根据 onboarding 输出做弱推荐，决定首个 room 落点。 |
+| 首次进入 Room | 是 | onboarding 只影响 route / entry context，并为后续 Talk handoff 提供 preset continuity；不得排名、重排、推荐、预选或高亮 room option。 |
 | 后续滑动访问 | 否 | 所有 room 均可自由访问，不做锁定。 |
 | Talk 的陪伴 mode | 否 | mode 与 room 解耦，由 Talk / LLM 逻辑决定。 |
 | 长期排序与推荐 | 否（MVP） | MVP 不做复杂推荐系统。 |
@@ -133,7 +133,7 @@ Onboarding 只影响首次进入 Room 时的首个 room 落点，不限制用户
 
 | 场景 | 规则 |
 | --- | --- |
-| 首次进入 Room | 默认落在 onboarding 弱推荐的首个 room。 |
+| 首次进入 Room | 当存在 active and unexpired `OnboardingPreset` 时，通过 entry / route logic 进入 Room；Room options 保持固定，不因 onboarding 改变排序、推荐、预选或高亮。 |
 | 非首次进入 Room | 默认落在用户上一次成功进入 Talk 的 room。 |
 | 从 Talk 返回 Room | 回到刚才进入 Talk 时所在的 room，不重置。 |
 | 推荐系统边界 | MVP 不做复杂偏好学习，仅保留“上一次成功进入 Talk 的 room”作为轻记忆规则。 |
@@ -154,7 +154,7 @@ MVP 固定提供 6 个 room。
 | room 数量 | MVP = 6 个 | 后续验证通过再扩到 8 个或 10–12 个。 |
 | 标题形式 | 统一使用氛围型命名 | 不使用“快速入睡”“缓解焦虑”这类功能型标题。 |
 | 前台显示 | 显示标题和 ambience 标签 | 标题为单独 title pill；第二行显示拆分后的 ambience tag pills。 |
-| 内部标签 | 必须保留 | 供 onboarding 弱推荐与后续扩展使用。 |
+| 内部标签 | 必须保留 | 供 room 内容组织与后续明确批准的扩展使用；Stage 3 不将其作为 onboarding 驱动的 room 推荐输入。 |
 
 ### 13.2 建议数据字段
 
@@ -214,7 +214,7 @@ type Room = {
 - 切换后 ambience 使用淡入淡出过渡，不出现硬切、黑屏或闪断。
 - 停留 2 秒后出现居中的 `Tap to enter` 玻璃 CTA；tap 当前 room 进入 Talk。
 - 左下信息簇由独立 title pill 和独立 ambience tag pills 组成，不使用共享外层容器。
-- 首次进入时首屏 room 受 onboarding 弱影响；后续不限制自由滑动。
+- 首次进入 Room 可由 active and unexpired `OnboardingPreset` 触发 route handoff；room option 不受 onboarding 排序、推荐、预选或高亮影响，后续仍可自由滑动。
 - 非首次进入时，默认落在上一次成功进入 Talk 的 room。
 - 从 Talk 返回时，回到原 room，不重置到首个 room。
 
@@ -227,7 +227,7 @@ type Room = {
 | 6 个 room 最终标题 | 待补 | 不阻塞页面结构与状态开发。 |
 | 背景素材 | 待补 | 后续可替换资源，不影响页面骨架。 |
 | ambience 音频 | 占位中 | 当前运行时允许 `null` 音频资源并静默降级；后续替换真实资源即可。 |
-| onboarding → room 弱映射表 | 待补 | 可先用占位映射实现逻辑闭环。 |
+| onboarding → room 承接文案 / entry context mapping | 待补 | 可先用占位文案与固定 entry context 实现逻辑闭环，不改变 room option 排序。 |
 
 ## 19. 当前实现对齐补丁
 
@@ -351,4 +351,4 @@ Room remains:
 
 本文档按已确认版本收口。
 
-当前不存在阻塞开发的核心未决项；后续若补充 Room 标题、背景图、音频素材与弱映射表，只属于内容资产完善，不改变本 PRD 的产品骨架。
+当前不存在阻塞开发的核心未决项；后续若补充 Room 标题、背景图、音频素材与 onboarding → room 承接文案 / entry context mapping，只属于内容资产完善，不改变本 PRD 的产品骨架。
