@@ -1,52 +1,74 @@
 # Technical Review Writing Rules
 
-## Purpose
+## 1. Purpose
 
-This document defines how technical review findings must be written for the AI Sleep Companion repository so review output stays actionable, evidence-based, and within scope.
+This document defines how to write technical review output for the AI Sleep Companion repository.
 
-## Review Is Not Product Redesign
+Reviews must be evidence-based, source-traceable, and scoped to the current task.
 
-Technical review checks compliance against the current source of truth. It does not invent new product behavior, rewrite the PRD, or block merge for personal preference.
+## 2. Required Verdict
 
-If the implementation conflicts with source-of-truth docs, call that out directly. If the source docs themselves conflict, mark `Needs Product Decision`.
+Every technical review must start with one status:
 
-## Evidence Is Required
+- `pass`
+- `pass-with-notes`
+- `blocked`
 
-Every issue must include evidence. Evidence may come from:
+Use `blocked` only when merge should not proceed.
 
-- a file path and code snippet summary
-- a command result
-- a failing type, lint, or build check
-- a documented mismatch against an explicit source-of-truth rule
+## 3. Review Is Not Product Redesign
 
-Do not write unsupported claims like "this feels wrong" or "this might break" without concrete evidence.
+A review checks whether a change follows current source-of-truth documents.
 
-## Severity Levels
+Do not block for:
+
+- personal visual preference
+- speculative backend needs
+- future-stage work not required by the task
+- product behavior you would have designed differently
+
+If sources conflict, mark the conflict:
+
+- `Needs Product Decision`
+- `Needs Data Contract Alignment`
+- `Needs Engineering Decision`
+- `Needs Branch Verification`
+
+## 4. Evidence Requirement
+
+Every finding must include evidence.
+
+Valid evidence includes:
+
+- file path and line or narrow section reference
+- summarized code snippet
+- failing command output
+- cited source-of-truth rule
+- changed-file scope mismatch
+
+Do not write unsupported claims.
+
+## 5. Severity Levels
 
 ### P1 Blocker
 
-Use for issues that must be fixed before merge because they create a clear correctness, contract, architecture, or scope violation.
+Must be fixed before merge.
+
+Use for clear correctness, contract, architecture, verification, or scope violations.
 
 ### P2 Concern
 
-Use for meaningful risks that should be addressed soon but do not automatically block merge on their own.
+Should be fixed soon but does not block by itself.
+
+Use for maintainability, partial event coverage, weak mock labeling, or non-blocking validation gaps.
 
 ### P3 Note
 
-Use for informational notes, follow-ups, or polish items.
+Informational note or follow-up.
 
-## P1 Must Be Used Carefully
+## 6. Required Finding Format
 
-P1 blockers should be rare and well-supported. Do not use P1 for:
-
-- future-stage work that is not part of the current task
-- personal style preferences
-- speculative backend needs
-- requests to redesign the product beyond the approved source documents
-
-## Required Issue Format
-
-Every review issue should include:
+Each finding should include:
 
 - `Title`
 - `File`
@@ -56,38 +78,76 @@ Every review issue should include:
 - `Required fix`
 - `Validation`
 
-For P1 blockers, all fields above are mandatory.
+For P1 blockers, all fields are mandatory.
 
-## Required Review Output Format
+## 7. Required Review Output
 
-Every technical review must include:
+Use this structure:
 
-- `Status: pass / pass-with-notes / blocked`
-- `Scope reviewed`
-- `Summary`
-- `P1 blockers`
-- `P2 concerns`
-- `P3 notes`
-- `Architecture compliance`
-- `Merge recommendation`
-- `Open questions`
+```text
+Status: pass | pass-with-notes | blocked
 
-Recommended additions when relevant:
+Scope reviewed:
 
-- `Contract compliance`
-- `Mock vs real behavior check`
-- `Commands run`
+P1 blockers:
 
-## Future-Stage Blocking Rule
+P2 concerns:
 
-Reviewers must not block merge for future-stage requirements unless the current task explicitly requires them.
+P3 notes:
 
-Examples of non-blocking future-stage gaps when out of scope:
+Architecture compliance:
 
-- real Go Gin backend integration
-- real database wiring
-- production authentication
-- real analytics provider hookup
-- real LLM provider integration
+Contract compliance:
 
-If such a gap matters later, record it as a P2 concern or open question rather than a P1 blocker unless the current task explicitly requires that capability.
+Mock vs real behavior:
+
+Commands run:
+
+Merge recommendation:
+
+Open questions:
+```
+
+If a section has no findings, write `None`.
+
+## 8. P1 Discipline
+
+P1 should be rare and concrete.
+
+Appropriate P1 examples:
+
+- Home implemented as dashboard/feed despite Stage 3 guardrail
+- Room options reordered based on onboarding
+- hidden memory used in Talk/Sleep/Home personalization
+- `RoomView` and `RoomSession` collapsed into one object
+- TypeScript contract field renamed without source approval
+- runtime code changed during a documentation-only task
+- required validation not run and task reported as complete
+
+Not P1 by default:
+
+- missing future Go Gin backend
+- missing real database
+- missing auth
+- missing production analytics provider
+- future visual polish
+
+## 9. Review Boundaries
+
+When reviewing architecture docs:
+
+- do not perform runtime implementation review unless asked
+- check source mapping, branch safety, and rule completeness
+
+When reviewing UI implementation:
+
+- check page specs and Stage 3 behavior
+- do not demand new product features
+
+When reviewing data wiring:
+
+- check contracts, mocks, source trace, fallback, and mock-vs-real labeling
+
+When reviewing technical reviews:
+
+- check evidence, severity, source trace, and actionable fixes

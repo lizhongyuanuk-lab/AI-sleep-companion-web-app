@@ -1,14 +1,29 @@
 # AI Sleep Companion Coding Architecture Rules
 
-## Purpose
+## 1. Purpose
 
-This document defines the coding architecture baseline for the AI Sleep Companion web product. The current frontend stack is Next.js, React, and TypeScript. The future backend target is a Go Gin API. The goal is to keep first launch, Room, Talk, Memory, and Sleep Monitoring work reviewable, typed, and ready for later backend integration without letting business logic leak into pages or components.
+These rules keep Stage 5 implementation aligned with the locked Stage 3 product model.
 
-## 1. Architecture Principle
+The frontend stack is Next.js, React, and TypeScript. Stage 4 does not add backend, database, auth, deployment, or real AI memory implementation.
 
-Use Clean Architecture-lite for this React product.
+## 2. Task Classification
 
-Required flow:
+Every worker must classify the task before coding:
+
+- `ui-only`
+- `data-wiring`
+- `api-contract`
+- `architecture-docs`
+- `technical-review`
+- `bugfix`
+- `content-only`
+- `approved-refactor`
+
+Stay inside the chosen class. Cross-scope work needs explicit approval.
+
+## 3. Required Dependency Flow
+
+All implementation must follow:
 
 ```text
 contracts -> domain -> policies/config -> experience -> app/components
@@ -16,93 +31,101 @@ contracts -> domain -> policies/config -> experience -> app/components
 
 Rules:
 
-1. UI must not control business rules.
-2. Business rules must not depend on React or page layout.
-3. Backend details must not leak into page components.
-4. Mock behavior must be easy to replace behind stable contracts.
+1. Contracts may be imported by all frontend layers.
+2. Domain may import contracts only.
+3. Policies may import contracts, domain, and config.
+4. Config should be stable and non-secret.
+5. Experience may import contracts, domain, policies, config, events, and mocks.
+6. Routes may import experience and components.
+7. Components should import contracts or view-model types, not product-rule modules.
 
-Current repository note:
+## 4. Folder Responsibilities
 
-The repository still uses root-level `app/`, `components/`, and `lib/`. Until a later migration is approved, apply the same layer boundaries to the current root folders and to any future `src/` structure.
+### `src/contracts`
 
-## 2. Folder Responsibility Rules
+Contains shared TypeScript contracts and primitives derived from Stage 3.
 
-Target responsibility map:
+Allowed:
 
-```text
-contracts/
-domain/
-policies/
-config/
-experience/
-api/
-events/
-mocks/
-app/
-components/
-lib/
-```
+- entity types
+- ID and date aliases
+- lifecycle state unions
+- event payload types
+- fallback reason unions
+- trace/source types
 
-### `contracts`
+Forbidden:
 
-Canonical TypeScript shapes for:
+- product algorithms
+- mock data
+- runtime storage
+- React components
 
-- entities
-- IDs
-- lifecycle states
-- event payloads
-- fallback reasons
-- source trace objects
+### `src/domain`
 
-Rules:
+Contains pure business entities and rules.
 
-1. Contracts define canonical field names.
-2. Mock data must satisfy contracts.
-3. Lifecycle states and fallback reasons must not be magic strings scattered across the UI.
+Allowed:
 
-### `domain`
+- route decision helpers
+- memory eligibility predicates
+- sleep suggestion eligibility predicates
+- Room handoff invariants
+- Talk extraction eligibility predicates
 
-Pure product logic such as:
+Forbidden:
 
-- recommendation eligibility
-- memory influence logic
-- conversation state rules
-- room selection meaning
-- sleep insight rules
+- React imports
+- Next.js imports
+- browser storage
+- API clients
+- UI copy
+- component imports
 
-Rules:
+### `src/policies`
 
-1. Domain may import contracts only.
-2. Domain must not import React, page files, components, API clients, or UI copy.
-3. Domain functions should be pure whenever possible.
+Contains product decision logic derived from Stage 3 rules.
 
-### `policies` and `config`
+Allowed:
 
-Use `policies` for adjustable product decisions.
-Use `config` for static, non-secret configuration.
+- Home recommendation priority policy
+- Sleep suggestion priority policy
+- Memory exclusion policy
+- Room option stability policy
+- fallback reason selection
 
-Examples:
+Forbidden:
 
-- fallback priority
-- recommendation windows
-- room ordering policy
-- CTA labels
-- copy variants
-- feature flags
+- UI rendering
+- product behavior not traceable to Stage 3
+- API calls
 
-Rules:
+### `src/config`
 
-1. Policy files explain why the rule exists.
-2. Config files do not contain secrets.
-3. Product decisions must not be hard-coded across multiple pages.
+Contains stable local configuration and catalogs.
 
-### `experience`
+Allowed:
 
-Typed experience builders convert contracts, domain results, policies, and config into page view models.
+- fixed Room option catalog
+- onboarding answer option keys
+- local copy keys
+- non-secret defaults
 
-Examples:
+Forbidden:
+
+- secrets
+- user data
+- business events
+- hidden backend assumptions
+
+### `src/experience`
+
+Contains page-facing orchestration and view-model preparation.
+
+Allowed:
 
 - `buildHomeExperience`
+- `buildOnboardingExperience`
 - `buildRoomExperience`
 - `buildTalkExperience`
 - `buildMemoryExperience`
@@ -110,261 +133,158 @@ Examples:
 
 Rules:
 
-1. Experience returns typed view models, not React elements.
-2. Experience must not render UI.
-3. Experience must not directly fetch backend APIs.
+1. Experience returns typed data, not React elements.
+2. Experience does not fetch backend APIs directly.
+3. Experience must preserve source trace and fallback reason when it derives display data.
 
-### `app`
+### `src/mocks`
 
-Route and page entry files may:
-
-- gather route params
-- call experience builders
-- render loading, empty, and error states
-- pass typed props into components
-
-Page files must stay thin. They must not become the home for business rules, fallback priority, or product decision logic.
-
-### `components`
-
-Components are presentational surfaces with typed props.
-
-Rules:
-
-1. Components may contain local UI state.
-2. Components must not decide product rules.
-3. Components must not fetch backend APIs directly.
-4. Components must not invent analytics event names inline.
-
-### `api`
-
-This is the future frontend boundary for Go Gin communication.
-
-Rules:
-
-1. All future backend communication must go through `src/api` or the equivalent approved frontend API layer.
-2. DTOs must be mapped into canonical frontend contracts.
-3. Backend field changes must not leak directly into components.
-
-### `events`
-
-Centralize product event names and payload types.
-
-Rules:
-
-1. Key user actions must have typed payloads.
-2. Event names must not be invented inline in pages or components.
-
-### `mocks`
-
-Typed mock data only.
+Contains clearly labeled local mock data only.
 
 Rules:
 
 1. Mock data must satisfy contracts.
 2. Mock data must not be reported as production wiring.
-3. Mock data must preserve fallback reason and source trace when applicable.
+3. Mock data must preserve source trace and fallback reason where relevant.
+4. Undefined real data sources must be documented as unresolved dependencies.
 
-### `lib`
+### `app`
 
-Generic helpers only.
+Next.js routes and route setup only.
 
 Allowed:
 
-- formatting helpers
-- string helpers
-- generic validation helpers
+- route params
+- top-level render state
+- calling experience builders
+- passing typed props
 
 Forbidden:
 
-- product recommendation rules
-- sleep insight rules
-- memory influence rules
+- business rules
+- fallback priority
+- contract invention
+- direct backend calls from route UI code unless an approved API boundary exists
 
-If logic has product meaning, it belongs in domain, policies, or experience, not `lib`.
+### `components`
 
-## 3. Dependency Direction
+Presentational UI components.
 
-Allowed dependency direction:
+Allowed:
 
-```text
-contracts
-  -> domain
-  -> policies/config
-  -> experience
-  -> app/components
-```
+- local UI state
+- typed props
+- visual state rendering
 
-More precise rules:
+Forbidden:
 
-1. `contracts` may be imported by all layers.
-2. `domain` may import contracts only.
-3. `policies` may import contracts, domain, and config.
-4. `config` should stay mostly independent.
-5. `experience` may import contracts, domain, policies, config, and events.
-6. `app` may import experience, components, events, and approved API adapters.
-7. `components` may import contracts and shared UI helpers only.
-8. `api` may import contracts and mapping helpers.
+- API calls
+- product decision logic
+- recommendation priority
+- hidden memory eligibility decisions
+- onboarding-to-room product rules
 
-Explicitly forbidden:
+### `lib`
 
-1. domain importing React
-2. domain importing components
-3. domain importing app
-4. domain calling APIs directly
-5. components containing business-rule branching
-6. page files containing hidden product state machines that belong in domain or experience
+Legacy or generic helper area.
 
-## 4. React Page and Component Rules
+Allowed:
 
-Page rules:
+- generic formatting
+- simple storage compatibility helpers until migrated
+- string/date helpers
 
-1. Keep page files thin.
-2. Pages may handle route setup and top-level rendering states.
-3. Pages may call experience builders.
-4. Pages must not contain recommendation logic, memory influence logic, sleep policy logic, or contract-shape invention.
+Forbidden:
 
-Component rules:
+- new product logic
+- recommendation policy
+- memory personalization logic
+- sleep suggestion logic
 
-1. Components must receive typed props.
-2. Components should remain presentational.
-3. Separate UI state from product state.
-4. Do not place backend or provider details inside UI components.
+## 5. Stage 3 Product Guardrails
 
-State distinction:
+Implementation must preserve:
 
-- UI state: `isOpen`, `isHovered`, `isSelected`, `isLoading`
-- Product state: lifecycle states, recommendation status, sleep check-in status, fallback reason, room selection meaning
+1. Onboarding creates `OnboardingPreset`; it does not create a long-term profile.
+2. Onboarding does not start Talk directly.
+3. Onboarding does not rank, reorder, highlight, or recommend Room options.
+4. Room separates `RoomView` from `RoomSession`.
+5. Room-to-Talk carries `roomId`, `roomSessionId`, and full active onboarding preset when present.
+6. Talk uses `TalkEntryContext`.
+7. Talk session, message, memory, and memory extraction are separate concepts.
+8. Memory supports Agree, Disagree, and Hide, not user-facing Delete in V1.
+9. Hidden memory does not influence Talk, Sleep, or Home.
+10. Sleep suggestion does not directly read onboarding answers.
+11. Sleep is reflective and non-medical.
+12. Home is not a dashboard, feed, transcript, or manager page.
+13. Home has one main recommendation and one CTA.
 
-Product state must come from contracts, domain, or experience.
-
-## 5. Domain, Policy, Config, and Experience Rules
-
-Domain rules:
-
-1. Typed input and output.
-2. No React dependency.
-3. No DOM dependency.
-4. No API dependency.
-5. No UI copy.
-
-Policy rules:
-
-1. Use policies for adjustable product decisions.
-2. Name policies clearly.
-3. Document the reason for non-obvious decisions.
-
-Config rules:
-
-1. Store non-secret defaults, copy, thresholds, and flags here.
-2. Do not scatter CTA text and fallback copy across pages.
-
-Experience rules:
-
-1. Experience builders convert raw app data into stable page view models.
-2. Experience builders do not return React elements.
-3. Experience builders do not fetch APIs directly.
-
-Recommended view models:
-
-- `HomeViewModel`
-- `OnboardingViewModel`
-- `RoomViewModel`
-- `TalkViewModel`
-- `MemoryViewModel`
-- `SleepViewModel`
-
-## 6. TypeScript Writing Rules
+## 6. TypeScript Rules
 
 1. Do not use `any` unless the reason is documented inline.
-2. Do not use magic strings for lifecycle states, recommendation types, fallback reasons, or event names.
-3. Prefer explicit unions or enums defined by contracts.
-4. Avoid broad `Record<string, unknown>` except at external boundaries.
-5. Optional fields must have clear absence semantics.
-6. If a field is core to the entity, it should not be optional.
+2. Use contract unions for lifecycle states, route targets, event names, and fallback kinds.
+3. Do not scatter magic strings.
+4. Optional fields need clear absence semantics.
+5. Prefer domain names over vague names such as `data`, `item`, `result`, or `payload`.
+6. Do not rename Stage 3 contract fields to match temporary runtime storage keys.
 
-Prefer product-specific names over vague names like `data`, `item`, `result`, or `payload`.
+## 7. Fallback and Source Trace Rules
 
-## 7. Fallback, Source Trace, and Event Rules
+Fallback must be explicit.
 
-Fallback rules:
+Every product fallback needs:
 
-1. Product fallback must not be silent.
-2. Every product fallback needs a typed fallback reason.
-3. Fallback behavior must be traceable and testable.
+- typed reason or fallback kind
+- source trace when available
+- mock-vs-real status when data is local
+- no technical user-facing error copy
 
-Source trace rules:
+Recommendations, suggestions, and derived page data must preserve enough trace to answer:
 
-Recommendations and other key derived objects must preserve source trace. They should be able to answer:
-
-1. why the object appeared
-2. which data source produced it
+1. why it appeared
+2. what source object produced it
 3. whether it is fallback
-4. when it expires, if applicable
-5. which page or flow it affects
+4. what user action it supports
 
-Event rules:
+## 8. Event Rules
 
-1. Key user actions need typed event payloads.
-2. Event names must be centralized.
-3. The current stage does not require a real analytics provider, but event shapes must still be defined.
+Key user actions need typed payloads or a documented omission reason.
 
-Representative event coverage for this product includes:
+Event names must not be invented inline. Stage 3 event names live in the contract layer.
 
-- onboarding started and completed
-- room selected
-- talk started
-- talk message sent
-- memory created or confirmed
+Representative actions:
+
+- onboarding viewed, answered, completed
+- room viewed and selected
+- Talk started, user message sent, Talk ended
+- memory created, viewed, feedback submitted
 - sleep check-in started and completed
-- recommendation shown or clicked
-- fallback shown
+- sleep insight or tonight suggestion viewed/clicked
+- Home recommendation viewed/clicked
 
-## 8. Future Go Gin API Boundary Rules
+## 9. Mock and Future Backend Rules
 
-The current frontend must prepare for a future Go Gin backend without implementing it here.
+Stage 4 and Stage 5 frontend work may use local mocks when Stage 3 has not defined a real source.
 
 Rules:
 
-1. Do not add direct LLM provider calls in the frontend.
-2. Do not expose secret API keys in the frontend.
-3. Future backend communication must go through `src/api`.
-4. Future Go Gin services should own backend business logic, persistence, safety, and provider integration.
+1. Label mock data clearly.
+2. Do not imply real backend, database, auth, or real AI memory.
+3. Do not call LLM providers from the frontend.
+4. Do not expose secrets in frontend code.
+5. Future backend communication must go through an approved `src/api` layer or equivalent task-specific boundary.
 
-Suggested future backend structure:
+## 10. Reviewable Completion
 
-```text
-backend/
-  cmd/api/
-  internal/handler/
-  internal/service/
-  internal/repository/
-  internal/model/
-  internal/middleware/
-```
+A code change is architecture-compliant when:
 
-## 9. Forbidden GPT or Codex Code Patterns
-
-Do not generate or accept these patterns in implementation work:
-
-1. business logic embedded in JSX conditionals
-2. untyped mock objects passed as de facto contracts
-3. page files that invent new contract fields without documentation
-4. silent fallback through `||` or `??` when product meaning changes
-5. presentational components choosing recommendation priority or lifecycle behavior
-6. inline string literals for event names, fallback reasons, or lifecycle states
-7. direct frontend calls to future backend endpoints from components
-8. documentation claiming mock behavior is production-ready
-
-## 10. Acceptance Criteria
-
-An implementation is architecture-compliant when:
-
-1. contract names are stable and typed
-2. domain logic is outside pages and presentational components
-3. adjustable product decisions live in policies or config
-4. page UI is driven by typed experience outputs
-5. fallbacks are typed and explicit
-6. recommendations preserve source trace
-7. key user actions have typed event payloads or a documented omission reason
-8. future backend integration can be added through `src/api` without rewriting page structure
+1. changed files match task classification
+2. Stage 3 source files were consulted
+3. contract names remain stable
+4. domain logic is outside routes and components
+5. product decisions live in policies/config/domain/experience
+6. routes are thin
+7. components are presentational
+8. mocks are labeled
+9. fallbacks are explicit
+10. validation results are reported

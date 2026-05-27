@@ -1,67 +1,86 @@
 # Worktree and Branch Map
 
-## Purpose
+## 1. Purpose
 
-This document helps workers determine whether they are on the correct worktree before starting implementation, documentation, or review work. It exists to prevent false blockers, missing-file confusion, and implementation starting from the wrong baseline.
+This document prevents workers from starting implementation on the wrong branch or treating branch-local missing files as global product blockers.
 
-## Required Pre-flight Commands
+## 2. Required Pre-Flight Commands
 
-Run these commands before escalating a branch or missing-file concern:
+Run before coding or escalating missing files:
 
 1. `pwd`
-2. `git branch --show-current`
-3. `git status`
-4. `git worktree list`
-5. `ls src/contracts`
-6. `ls src/mocks`
+2. `git rev-parse --show-toplevel`
+3. `git branch --show-current`
+4. `git status`
+5. `git worktree list`
 
-If `ls src/contracts` or `ls src/mocks` fails, do not assume the project is missing them globally. First classify the current branch.
+For contract or data work, also check:
 
-## How to Identify Branch Types
+1. `find docs/stage-3 -maxdepth 3 -type f`
+2. `find src/contracts src/mocks -maxdepth 2 -type f`
 
-- `audit-only`: branch names or worktrees focused on audit, completeness audit, data-flow audit, or review-only work
-- `spec-only`: branch names focused on specs, acceptance docs, product logic docs, or documentation baselines
-- `contract skeleton`: branch names focused on contract skeletons or typed placeholders without local data wiring
-- `local data foundation`: branch names focused on local data or mock-driven data foundations
-- `integration baseline`: the branch that combines the intended Stage 3 contract, product logic, skeleton, and local data baseline for implementation
-- `coding rules documentation branch`: a Stage 4 branch focused on engineering architecture, coding rules, review rules, or documentation consolidation
+If these paths are missing, classify the current branch before calling the project blocked.
 
-## Current Known Worktree and Branch Map
+## 3. Branch Classifications
 
-Observed from `git worktree list` on 2026-05-15:
+| Classification | Meaning | Implementation allowed? |
+| --- | --- | --- |
+| `audit-only` | audit or review branch | no, unless task is review-only |
+| `spec-only` | product/spec/acceptance docs branch | docs only |
+| `contract skeleton` | typed contract and mock baseline | contract/mocks only |
+| `local data foundation` | local persistence or mock data wiring | data-wiring only |
+| `integration baseline` | combined Stage 3 source for implementation | yes, after verification |
+| `coding rules documentation branch` | Stage 4 architecture/rules docs | architecture docs and requested scaffold only |
+| `needs verification` | classification unclear | stop before coding |
 
-| Worktree | Branch | Likely classification | Verification state | Notes |
+## 4. Observed Worktrees
+
+Observed from `git worktree list` on this Stage 4 task:
+
+| Worktree | Branch | Classification | Verification state | Notes |
 | --- | --- | --- | --- | --- |
-| `/Users/zhongyuanli/Documents/Playground/ai-companion-web` | `stage3/completeness-audit-v2` | audit-only | inferred from branch name | Do not start implementation here without verifying a separate integration baseline |
-| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-acceptance` | `stage3/acceptance-checklist` | spec-only | inferred from branch name | Likely acceptance documentation worktree |
-| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-audit` | `stage3/audit-data-flow` | audit-only | inferred from branch name | Missing contracts here would not prove they are missing globally |
-| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-contract-spec` | `stage3/data-contract-spec` | spec-only | inferred from branch name | Likely contract documentation source |
-| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-local-data` | `stage3/local-data-foundation` | local data foundation | inferred from branch name | Candidate source for mock or local data wiring patterns |
-| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-product-logic` | `stage3/product-logic-baseline` | spec-only | inferred from branch name | Candidate source for cross-flow product behavior docs |
-| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-skeleton` | `stage3/contracts-skeleton` | contract skeleton | inferred from branch name | Candidate source for skeleton contract structure |
-| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage4-coding-rules` | `stage4/engineering-docs-consolidation` | coding rules documentation branch | verified current branch | Documentation-only branch for consolidation work |
+| `/Users/zhongyuanli/Documents/Playground/ai-companion-web` | `stage3/core-data-integration-v04` | integration baseline | observed | Contains required Stage 3 docs and contract/mocks in Git |
+| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-acceptance` | `stage3/acceptance-checklist` | spec-only | observed | Acceptance documentation |
+| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-audit` | `stage3/audit-data-flow` | audit-only | observed | Data-flow audit |
+| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-contract-spec` | `stage3/data-contract-spec` | spec-only | observed | Data contract spec branch |
+| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-local-data` | `stage3/local-data-foundation` | local data foundation | observed | Local data foundation work |
+| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-product-logic` | `stage3/product-logic-baseline` | spec-only | observed | Product logic branch |
+| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage3-skeleton` | `stage3/contracts-skeleton` | contract skeleton | observed | Contract skeleton branch |
+| `/Users/zhongyuanli/Documents/Playground/ai-companion-stage4-coding-rules` | `stage4/engineering-docs-consolidation` | coding rules documentation branch | current | Stage 4 architecture docs and scaffold |
 
-Current integration baseline:
+## 5. Current Stage 4 Branch Finding
 
-- `needs verification`
-- No worktree in the observed list is explicitly named as the Stage 3 integration baseline
-- Do not assume the current documentation branch or any audit branch is the implementation starting point
+Current branch:
 
-## Branch Safety Rules
+- `stage4/engineering-docs-consolidation`
 
-1. Stage 4 implementation should not start from audit-only branches.
-2. Stage 4 implementation should start from the verified Stage 3 integration baseline.
-3. Missing `src/contracts` or `src/mocks` in an audit-only branch does not automatically mean the full project lacks them.
-4. Missing Stage 3 documents on a documentation branch does not automatically mean the project lacks them.
-5. If branch classification is unclear, mark `needs verification` rather than guessing.
+Current branch classification:
 
-## Branch Mismatch Handling
+- `coding rules documentation branch`
 
-If the current branch does not match the intended task:
+Important note:
 
-1. stop before coding
-2. record the current `pwd`, branch, and `git worktree list`
-3. classify the current branch using this document
-4. if the branch is audit-only, spec-only, or documentation-only, do not declare the product blocked
-5. locate or request the verified integration baseline for implementation work
-6. note the mismatch in the final report if the correct baseline could not be verified
+- `docs/stage-3/` is not present as working-tree files on this branch.
+- The Stage 3 integration branch `stage3/core-data-integration-v04` contains the expected Stage 3 docs and `src/contracts`/`src/mocks` files.
+- Stage 4 docs may cite those Git-ref sources, but Stage 5 implementation should start from or merge with the verified integration baseline.
+
+## 6. Branch Safety Rules
+
+1. Do not start Stage 4 or Stage 5 implementation from audit-only branches.
+2. Do not assume missing `src/contracts`, `src/mocks`, or `docs/stage-3` on a documentation branch means the project lacks them globally.
+3. Do not copy implementation truth from sibling worktrees.
+4. Use Git refs inside the current repository to verify branch contents.
+5. If classification is unclear, mark `needs verification`.
+6. Automatic merge is forbidden.
+
+## 7. Missing-File Handling
+
+When a required file is missing:
+
+1. record current `pwd`, root, branch, status, and worktree list
+2. classify current branch
+3. check whether the file exists on the verified integration branch
+4. record whether the current task can proceed without the file
+5. if product behavior cannot be verified, stop and mark `Needs Branch Verification`
+
+Do not fill gaps by inventing product behavior.
