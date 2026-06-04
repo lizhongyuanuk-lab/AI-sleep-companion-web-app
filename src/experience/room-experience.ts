@@ -4,6 +4,7 @@ import type {
   OnboardingPreset,
   RoomEntrySource,
   RoomOption,
+  RoomSession,
   RoomState,
   RoomView,
   TalkEntryContext,
@@ -11,6 +12,7 @@ import type {
 import { fixedRoomOptions } from "../config";
 import {
   buildRoomTalkEntryContext,
+  buildRoomSession,
   buildRoomView,
   getOnboardingPresetRouteState,
 } from "../domain";
@@ -22,6 +24,12 @@ export type RoomExperience = {
   roomView: RoomView;
   state: RoomState;
   activePresetState: RoomState["onboardingPresetStatus"] | "none";
+  localDataBoundaryLabel: string;
+};
+
+export type RoomSelectionExperience = {
+  roomSession: RoomSession;
+  talkEntryContext: TalkEntryContext;
   localDataBoundaryLabel: string;
 };
 
@@ -85,4 +93,35 @@ export function buildRoomSelectionTalkEntry(input: {
     roomViewId: input.roomViewId,
     onboardingPreset: input.activeOnboardingPreset ?? undefined,
   });
+}
+
+export function buildRoomSelectionExperience(input: {
+  roomId: EntityId;
+  roomSessionId: EntityId;
+  now: ISODateTimeString;
+  source?: RoomEntrySource;
+  roomViewId?: EntityId;
+  activeOnboardingPreset?: OnboardingPreset | null;
+}): RoomSelectionExperience {
+  const activeOnboardingPreset = input.activeOnboardingPreset ?? undefined;
+  const roomSession = buildRoomSession({
+    id: input.roomSessionId,
+    roomId: input.roomId,
+    source: input.source ?? "manual",
+    now: input.now,
+    roomViewId: input.roomViewId,
+    onboardingPresetId: activeOnboardingPreset?.id,
+  });
+
+  return {
+    roomSession,
+    talkEntryContext: buildRoomSelectionTalkEntry({
+      roomId: input.roomId,
+      roomSessionId: roomSession.id,
+      now: input.now,
+      roomViewId: input.roomViewId,
+      activeOnboardingPreset,
+    }),
+    localDataBoundaryLabel: stage5LocalDataNotice,
+  };
 }

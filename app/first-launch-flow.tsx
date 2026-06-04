@@ -3,6 +3,15 @@
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./first-launch-flow.module.css";
+import { buildFirstLaunchCompatibilityExperience } from "@/src/experience";
+import {
+  clearLocalOnboardingDraft,
+  readLocalActiveOnboardingPreset,
+  readLocalOnboardingCompleted,
+  readLocalOnboardingDraft,
+  writeLocalActiveOnboardingPreset,
+  writeLocalOnboardingCompleted,
+} from "@/src/local-data";
 import {
   FIRST_LAUNCH_ONBOARDING_OPTIONS_V1,
   PERSONAL_ROOM_THEME_OPTIONS_V1,
@@ -131,6 +140,8 @@ export function FirstLaunchFlow() {
       if (searchParams.get("reset-first-launch") === "1") {
         clearFirstLaunchFlowStorage();
         writeHasCompletedFirstLaunchFlow(false);
+        writeLocalOnboardingCompleted(false);
+        clearLocalOnboardingDraft();
         window.history.replaceState({}, "", window.location.pathname);
       }
 
@@ -141,7 +152,21 @@ export function FirstLaunchFlow() {
       setPreset(readPostOnboardingSessionPreset());
       readGeneratedPersonalRoomRecord();
       readPersonalRoomGenerationDraft();
-      setHasCompletedFlow(readHasCompletedFirstLaunchFlow());
+      const hasCompletedOnboarding =
+        readLocalOnboardingCompleted() || readHasCompletedFirstLaunchFlow();
+      const activeOnboardingPreset = readLocalActiveOnboardingPreset();
+      const nextExperience = buildFirstLaunchCompatibilityExperience({
+        id: `route_decision_root_${Date.now()}`,
+        hasCompletedOnboarding,
+        activeOnboardingPreset,
+        draft: readLocalOnboardingDraft(),
+        now: new Date().toISOString(),
+        runtimeObservedPath: "/",
+      });
+
+      setHasCompletedFlow(
+        nextExperience.routeDecision.canonicalRoute === "/room",
+      );
       setIsHydrated(true);
     }, 0);
 
@@ -260,6 +285,52 @@ export function FirstLaunchFlow() {
     });
 
     writePostOnboardingSessionPreset(nextPreset);
+    writeLocalActiveOnboardingPreset({
+      id: nextPreset.preset_id,
+      presetId: nextPreset.preset_id,
+      q1State:
+        draft.q1_state === "mind_racing"
+          ? "overthinking"
+          : draft.q1_state === "anxious_or_irritated"
+          ? "anxious_irritated"
+          : draft.q1_state === "lonely_needing_company"
+          ? "lonely_need_presence"
+          : "sleep_blocked",
+      q2SupportStyle:
+        value === "soothe_and_chat"
+          ? "comfort_talk"
+          : value === "meditation_practice"
+          ? "mindfulness_guide"
+          : value === "quiet_company"
+          ? "quiet_presence"
+          : "sleep_guide",
+      baseMode:
+        nextPreset.base_mode === "gentle_grounding"
+          ? "comfort_talk"
+          : nextPreset.base_mode === "meditative"
+          ? "mindfulness_guide"
+          : nextPreset.base_mode === "quiet_presence"
+          ? "quiet_presence"
+          : "sleep_guide",
+      stateModifier:
+        nextPreset.state_modifier === "overthinking"
+          ? "overthinking"
+          : nextPreset.state_modifier === "emotionally_full"
+          ? "anxious_irritated"
+          : nextPreset.state_modifier === "needs_company"
+          ? "lonely_need_presence"
+          : "sleep_blocked",
+      openingCopyId: nextPreset.opening_copy_id,
+      replyLengthDefault: nextPreset.reply_length_default,
+      questionBudgetFirst3Turns: nextPreset.question_budget_first_3_turns,
+      sleepTransitionEnabled: nextPreset.sleep_transition_enabled,
+      fallbackChain: nextPreset.fallback_chain,
+      status: nextPreset.status,
+      createdAt: nextPreset.created_at,
+      expiresAt: new Date(
+        new Date(nextPreset.created_at).getTime() + 30 * 60 * 1000,
+      ).toISOString(),
+    });
     setPreset(nextPreset);
     updateDraft({
       q2_support_style: value,
@@ -281,7 +352,9 @@ export function FirstLaunchFlow() {
 
   const completeAndEnterRoom = () => {
     writeHasCompletedFirstLaunchFlow(true);
+    writeLocalOnboardingCompleted(true);
     clearFirstLaunchDraft();
+    clearLocalOnboardingDraft();
     clearPersonalRoomGenerationDraft();
     setHasCompletedFlow(true);
     updateDraft({

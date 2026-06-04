@@ -1,4 +1,11 @@
-import type { SleepInsight, SleepLog, SuggestionRuleResult } from "../contracts";
+import type {
+  EntityId,
+  ISODateTimeString,
+  SleepInsight,
+  SleepLog,
+  SuggestionRuleResult,
+  TalkEntryContext,
+} from "../contracts";
 import {
   getSleepLocalMockEligibility,
   type SleepLocalMockEligibility,
@@ -13,6 +20,14 @@ export type SleepExperience = {
   localMockEligibility: SleepLocalMockEligibility;
   localDataBoundaryLabel: string;
   passiveMonitoringStatus: "not_wired_stage5";
+};
+
+export type SleepSuggestionAction = {
+  targetRoute: "/room" | "/talk";
+  recommendedRoomId?: EntityId;
+  sleepInsightId?: EntityId;
+  talkEntryContext?: TalkEntryContext;
+  localDataBoundaryLabel: string;
 };
 
 export function buildSleepExperience(input: {
@@ -31,5 +46,33 @@ export function buildSleepExperience(input: {
     localMockEligibility: getSleepLocalMockEligibility({ logs, insights }),
     localDataBoundaryLabel: stage5LocalDataNotice,
     passiveMonitoringStatus: "not_wired_stage5",
+  };
+}
+
+export function buildSleepSuggestionAction(input: {
+  now: ISODateTimeString;
+  targetRoute: "/room" | "/talk";
+  recommendedRoomId?: EntityId;
+  sleepInsightId?: EntityId;
+  intent?: Extract<
+    TalkEntryContext["intent"],
+    "tonight_suggestion" | "sleep_reflection"
+  >;
+}): SleepSuggestionAction {
+  return {
+    targetRoute: input.targetRoute,
+    recommendedRoomId: input.recommendedRoomId,
+    sleepInsightId: input.sleepInsightId,
+    talkEntryContext:
+      input.targetRoute === "/talk"
+        ? {
+            source: "sleep",
+            sourceId: input.sleepInsightId,
+            intent: input.intent ?? "sleep_reflection",
+            sleepInsightId: input.sleepInsightId,
+            createdAt: input.now,
+          }
+        : undefined,
+    localDataBoundaryLabel: stage5LocalDataNotice,
   };
 }

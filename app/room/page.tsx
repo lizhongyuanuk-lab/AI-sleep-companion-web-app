@@ -13,12 +13,25 @@ import { sceneQueryParam, writeStoredSceneId } from "@/lib/scene-selection";
 import {
   getWeakLandingRoomIdFromPreset,
   getWeakLandingRoomIdFromTheme,
-  clearFirstLaunchTalkEntryContext,
   markPostOnboardingSessionPresetConsumed,
   readGeneratedPersonalRoomRecord,
   readPostOnboardingSessionPreset,
-  writeFirstLaunchTalkEntryContext,
 } from "@/lib/first-launch";
+import type { OnboardingPreset } from "@/src/contracts";
+import {
+  buildRoomExperience,
+  buildRoomSelectionExperience,
+  type RoomExperience,
+} from "@/src/experience";
+import {
+  markLocalActiveOnboardingPresetConsumed,
+  readLocalActiveOnboardingPreset,
+  readLocalRoomSessions,
+  readLocalRoomViews,
+  writeLocalRoomSessions,
+  writeLocalRoomViews,
+  writeLocalTalkEntryContext,
+} from "@/src/local-data";
 import {
   getInitialRoomId,
   readLastEnteredRoomId,
@@ -107,6 +120,11 @@ export default function RoomPage() {
   const [isSwitching, setIsSwitching] = useState(false);
   const [swipeHintDismissed, setSwipeHintDismissed] = useState(false);
   const [visualFailed, setVisualFailed] = useState(false);
+  const [roomExperience, setRoomExperience] = useState<RoomExperience | null>(
+    null,
+  );
+  const [activeOnboardingPreset, setActiveOnboardingPreset] =
+    useState<OnboardingPreset | null>(null);
 
   const activeRoom = roomConfigMap[activeRoomId];
   const showSwipeHint =
@@ -197,6 +215,15 @@ export default function RoomPage() {
       const lastEnteredRoomId = readLastEnteredRoomId();
       const storedRoomId = readStoredRoomId();
       const activePreset = readPostOnboardingSessionPreset();
+      const localActivePreset = readLocalActiveOnboardingPreset();
+      const now = new Date().toISOString();
+      const nextRoomExperience = buildRoomExperience({
+        id: `room_state_local_${Date.now()}`,
+        roomViewId: `room_view_local_${Date.now()}`,
+        now,
+        source: localActivePreset?.status === "active" ? "onboarding" : "manual",
+        activeOnboardingPreset: localActivePreset,
+      });
       const generatedRoom = readGeneratedPersonalRoomRecord();
       const weakLandingRoomId =
         getWeakLandingRoomIdFromTheme(generatedRoom?.visual_theme) ??
@@ -218,6 +245,13 @@ export default function RoomPage() {
           !lastEnteredRoomId && !storedRoomId,
           readSwipeHintDismissed(),
         ),
+      );
+      writeLocalRoomViews([...readLocalRoomViews(), nextRoomExperience.roomView]);
+      setRoomExperience(nextRoomExperience);
+      setActiveOnboardingPreset(
+        nextRoomExperience.activePresetState === "active"
+          ? localActivePreset
+          : null,
       );
       setIsHydrated(true);
     }, 0);
@@ -412,30 +446,22 @@ export default function RoomPage() {
     writeLastEnteredRoomId(roomId);
     writeStoredSceneId(room.talkSceneId);
 
-    const activePreset = readPostOnboardingSessionPreset();
+    const now = new Date().toISOString();
+    const roomSelection = buildRoomSelectionExperience({
+      roomId,
+      roomSessionId: `room_session_local_${Date.now()}`,
+      now,
+      source: activeOnboardingPreset ? "onboarding" : "manual",
+      roomViewId: roomExperience?.roomView.id,
+      activeOnboardingPreset,
+    });
 
-    if (activePreset?.status === "active") {
-      writeFirstLaunchTalkEntryContext({
-        preset_id: activePreset.preset_id,
-        q1_state: activePreset.q1_state,
-        q2_support_style: activePreset.q2_support_style,
-        base_mode: activePreset.base_mode,
-        state_modifier: activePreset.state_modifier,
-        opening_copy_id: activePreset.opening_copy_id,
-        reply_length_default: activePreset.reply_length_default,
-        question_budget_first_3_turns:
-          activePreset.question_budget_first_3_turns,
-        sleep_transition_enabled: activePreset.sleep_transition_enabled,
-        fallback_chain: activePreset.fallback_chain,
-        room_id: room.id,
-        room_source: "library",
-        background_asset_id: room.backgroundAsset,
-        room_theme: room.visualTone,
-        room_entry_action: "room_surface_tap",
-      });
+    writeLocalRoomSessions([...readLocalRoomSessions(), roomSelection.roomSession]);
+    writeLocalTalkEntryContext(roomSelection.talkEntryContext);
+
+    if (activeOnboardingPreset) {
+      markLocalActiveOnboardingPresetConsumed(now);
       markPostOnboardingSessionPresetConsumed();
-    } else {
-      clearFirstLaunchTalkEntryContext();
     }
 
     enterTimerRef.current = window.setTimeout(() => {

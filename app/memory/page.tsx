@@ -1,13 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ShellTopNav } from "@/components/shell-top-nav";
-import type { MemoryFeedback, MemoryFeedbackAction } from "@/src/contracts";
+import type { MemoryFeedbackAction } from "@/src/contracts";
 import {
   applyMemoryExperienceFeedback,
   buildMemoryExperience,
 } from "@/src/experience";
+import {
+  appendLocalMemoryFeedback,
+  readLocalMemoryFeedback,
+  readLocalMemoryItems,
+  writeLocalMemoryItems,
+} from "@/src/local-data";
 import { memoryPageMockData, type MemoryPageData } from "./memory-page-data";
 import styles from "./memory-page.module.css";
 
@@ -183,7 +189,6 @@ export default function MemoryPage() {
   const [feedbackByTopic, setFeedbackByTopic] = useState<
     Record<string, MemoryFeedbackAction>
   >({});
-  const latestLocalFeedbackRef = useRef<MemoryFeedback | null>(null);
   const memoryExperience = buildMemoryExperience({ memories: topics });
   const visibleThemeIds = new Set(
     memoryExperience.visibleMemories.map((memory) => memory.id),
@@ -200,32 +205,57 @@ export default function MemoryPage() {
     })
     .slice(0, 3);
 
+  useEffect(() => {
+    const persistedMemories =
+      readLocalMemoryItems() as MemoryPageData["recurring_topics"];
+    const persistedFeedback = readLocalMemoryFeedback();
+
+    if (persistedMemories.length > 0) {
+      setTopics(persistedMemories);
+    }
+
+    if (persistedFeedback.length > 0) {
+      setFeedbackByTopic(
+        persistedFeedback.reduce<Record<string, MemoryFeedbackAction>>(
+          (feedbackMap, feedback) => ({
+            ...feedbackMap,
+            [feedback.memoryItemId]: feedback.action,
+          }),
+          {},
+        ),
+      );
+    }
+  }, []);
+
   const handleFeedback = (
     memoryId: string,
     action: MemoryFeedbackAction,
   ) => {
     const now = new Date().toISOString();
+    const selectedTopic = topics.find((topic) => topic.id === memoryId);
 
-    setTopics((current) =>
-      current.map((topic) => {
-        if (topic.id !== memoryId) {
-          return topic;
-        }
+    if (!selectedTopic) {
+      return;
+    }
 
-        const result = applyMemoryExperienceFeedback({
-          memory: topic,
-          action,
-          now,
-          feedbackId: `memory_feedback_local_${memoryId}_${Date.now()}`,
-        });
-
-        latestLocalFeedbackRef.current = result.feedback;
-        return {
-          ...topic,
-          ...result.memory,
-        };
-      }),
+    const result = applyMemoryExperienceFeedback({
+      memory: selectedTopic,
+      action,
+      now,
+      feedbackId: `memory_feedback_local_${memoryId}_${Date.now()}`,
+    });
+    const nextTopics = topics.map((topic) =>
+      topic.id === memoryId
+        ? {
+            ...topic,
+            ...result.memory,
+          }
+        : topic,
     );
+
+    setTopics(nextTopics);
+    writeLocalMemoryItems(nextTopics);
+    appendLocalMemoryFeedback(result.feedback);
     setFeedbackByTopic((current) => ({
       ...current,
       [memoryId]: action,
