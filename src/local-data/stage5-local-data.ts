@@ -1,4 +1,5 @@
 import type {
+  EntityId,
   MemoryFeedback,
   MemoryItem,
   OnboardingDraft,
@@ -26,8 +27,18 @@ export const stage5LocalDataKeys = {
   sleepInsights: `${stage5Namespace}.sleep-insights`,
   roomViews: `${stage5Namespace}.room-views`,
   roomSessions: `${stage5Namespace}.room-sessions`,
+  sleepToRoomHandoff: `${stage5Namespace}.sleep-to-room-handoff`,
   talkSoundSettings: `${stage5Namespace}.talk-sound-settings`,
 } as const;
+
+export type SleepToRoomLocalHandoff = {
+  source: "sleep_suggestion";
+  sourceRoute: "/sleep-monitoring";
+  recommendedRoomId: EntityId;
+  sleepInsightId: EntityId;
+  localDataBoundaryLabel: string;
+  createdAt: string;
+};
 
 export const legacyCompatibilityKeys = {
   firstLaunchCompleted: "ai-companion-web.first-launch.completed",
@@ -371,6 +382,22 @@ export function readLocalRoomSessions(): RoomSession[] {
 
 export function writeLocalRoomSessions(roomSessions: RoomSession[]): boolean {
   return writeJson(stage5LocalDataKeys.roomSessions, roomSessions);
+}
+
+export function readLocalSleepToRoomHandoff(): SleepToRoomLocalHandoff | null {
+  return readJson<SleepToRoomLocalHandoff>(
+    stage5LocalDataKeys.sleepToRoomHandoff,
+  );
+}
+
+export function writeLocalSleepToRoomHandoff(
+  handoff: SleepToRoomLocalHandoff,
+): boolean {
+  return writeJson(stage5LocalDataKeys.sleepToRoomHandoff, handoff);
+}
+
+export function clearLocalSleepToRoomHandoff(): boolean {
+  return removeItem(stage5LocalDataKeys.sleepToRoomHandoff);
 }
 
 export function readLocalTalkSoundSettings<T>(

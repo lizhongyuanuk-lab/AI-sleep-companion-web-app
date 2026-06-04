@@ -17,17 +17,20 @@ import {
   readGeneratedPersonalRoomRecord,
   readPostOnboardingSessionPreset,
 } from "@/lib/first-launch";
-import type { OnboardingPreset } from "@/src/contracts";
+import type { OnboardingPreset, RoomEntrySource } from "@/src/contracts";
 import {
   buildRoomExperience,
   buildRoomSelectionExperience,
   type RoomExperience,
 } from "@/src/experience";
 import {
+  clearLocalSleepToRoomHandoff,
   markLocalActiveOnboardingPresetConsumed,
   readLocalActiveOnboardingPreset,
   readLocalRoomSessions,
   readLocalRoomViews,
+  readLocalSleepToRoomHandoff,
+  type SleepToRoomLocalHandoff,
   writeLocalRoomSessions,
   writeLocalRoomViews,
   writeLocalTalkEntryContext,
@@ -37,6 +40,7 @@ import {
   readLastEnteredRoomId,
   readStoredRoomId,
   readSwipeHintDismissed,
+  resolveRoomId,
   writeLastEnteredRoomId,
   writeStoredRoomId,
   writeSwipeHintDismissed,
@@ -125,6 +129,8 @@ export default function RoomPage() {
   );
   const [activeOnboardingPreset, setActiveOnboardingPreset] =
     useState<OnboardingPreset | null>(null);
+  const [sleepToRoomHandoff, setSleepToRoomHandoff] =
+    useState<SleepToRoomLocalHandoff | null>(null);
 
   const activeRoom = roomConfigMap[activeRoomId];
   const showSwipeHint =
@@ -216,13 +222,30 @@ export default function RoomPage() {
       const storedRoomId = readStoredRoomId();
       const activePreset = readPostOnboardingSessionPreset();
       const localActivePreset = readLocalActiveOnboardingPreset();
+      const localSleepToRoomHandoff = readLocalSleepToRoomHandoff();
+      const localSleepRoomId = resolveRoomId(
+        localSleepToRoomHandoff?.recommendedRoomId,
+      );
+      const activeSleepToRoomHandoff =
+        localSleepToRoomHandoff &&
+        localSleepRoomId &&
+        localActivePreset?.status !== "active"
+          ? localSleepToRoomHandoff
+          : null;
+      const roomEntrySource: RoomEntrySource =
+        localActivePreset?.status === "active"
+          ? "onboarding"
+          : activeSleepToRoomHandoff
+          ? "sleep_suggestion"
+          : "manual";
       const now = new Date().toISOString();
       const nextRoomExperience = buildRoomExperience({
         id: `room_state_local_${Date.now()}`,
         roomViewId: `room_view_local_${Date.now()}`,
         now,
-        source: localActivePreset?.status === "active" ? "onboarding" : "manual",
+        source: roomEntrySource,
         activeOnboardingPreset: localActivePreset,
+        sleepInsightId: activeSleepToRoomHandoff?.sleepInsightId,
       });
       const generatedRoom = readGeneratedPersonalRoomRecord();
       const weakLandingRoomId =
@@ -247,12 +270,16 @@ export default function RoomPage() {
         ),
       );
       writeLocalRoomViews([...readLocalRoomViews(), nextRoomExperience.roomView]);
+      if (localSleepToRoomHandoff) {
+        clearLocalSleepToRoomHandoff();
+      }
       setRoomExperience(nextRoomExperience);
       setActiveOnboardingPreset(
         nextRoomExperience.activePresetState === "active"
           ? localActivePreset
           : null,
       );
+      setSleepToRoomHandoff(activeSleepToRoomHandoff);
       setIsHydrated(true);
     }, 0);
 
@@ -447,17 +474,29 @@ export default function RoomPage() {
     writeStoredSceneId(room.talkSceneId);
 
     const now = new Date().toISOString();
+    const sleepInsightId =
+      roomExperience?.roomView.source === "sleep_suggestion"
+        ? roomExperience.roomView.sleepInsightId ??
+          sleepToRoomHandoff?.sleepInsightId
+        : undefined;
+    const roomSelectionSource: RoomEntrySource = activeOnboardingPreset
+      ? "onboarding"
+      : sleepInsightId
+      ? "sleep_suggestion"
+      : "manual";
     const roomSelection = buildRoomSelectionExperience({
       roomId,
       roomSessionId: `room_session_local_${Date.now()}`,
       now,
-      source: activeOnboardingPreset ? "onboarding" : "manual",
+      source: roomSelectionSource,
       roomViewId: roomExperience?.roomView.id,
       activeOnboardingPreset,
+      sleepInsightId,
     });
 
     writeLocalRoomSessions([...readLocalRoomSessions(), roomSelection.roomSession]);
     writeLocalTalkEntryContext(roomSelection.talkEntryContext);
+    setSleepToRoomHandoff(null);
 
     if (activeOnboardingPreset) {
       markLocalActiveOnboardingPresetConsumed(now);

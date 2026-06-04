@@ -58,6 +58,7 @@ export function buildRoomTalkEntryContext(input: {
   now: ISODateTimeString;
   roomViewId?: EntityId;
   onboardingPreset?: OnboardingPreset;
+  sleepInsightId?: EntityId;
 }): TalkEntryContext {
   return {
     source: "room",
@@ -70,6 +71,7 @@ export function buildRoomTalkEntryContext(input: {
     roomSessionId: input.roomSessionId,
     onboardingPresetId: input.onboardingPreset?.id,
     onboardingPreset: input.onboardingPreset,
+    sleepInsightId: input.sleepInsightId,
     createdAt: input.now,
   };
 }

@@ -10,7 +10,12 @@ import {
   buildSleepExperience,
   buildSleepSuggestionAction,
 } from "@/src/experience";
-import { writeLocalTalkEntryContext } from "@/src/local-data";
+import {
+  clearLocalSleepToRoomHandoff,
+  stage5LocalDataNotice,
+  writeLocalSleepToRoomHandoff,
+  writeLocalTalkEntryContext,
+} from "@/src/local-data";
 import {
   defaultSleepMockCase,
   sleepLoadingState,
@@ -549,6 +554,19 @@ export function SleepShell() {
     }
 
     if (suggestionAction.targetRoute === "/room") {
+      if (roomId && suggestionAction.sleepInsightId) {
+        writeLocalSleepToRoomHandoff({
+          source: "sleep_suggestion",
+          sourceRoute: "/sleep-monitoring",
+          recommendedRoomId: roomId,
+          sleepInsightId: suggestionAction.sleepInsightId,
+          localDataBoundaryLabel: stage5LocalDataNotice,
+          createdAt: new Date().toISOString(),
+        });
+      } else {
+        clearLocalSleepToRoomHandoff();
+      }
+
       startTransition(() => {
         router.push("/room");
       });
@@ -556,6 +574,8 @@ export function SleepShell() {
     }
 
     if (suggestionAction.targetRoute === "/talk") {
+      clearLocalSleepToRoomHandoff();
+
       if (suggestionAction.talkEntryContext) {
         writeLocalTalkEntryContext(suggestionAction.talkEntryContext);
       }
@@ -577,6 +597,7 @@ export function SleepShell() {
     }
 
     startTransition(() => {
+      clearLocalSleepToRoomHandoff();
       router.push("/room");
     });
   };

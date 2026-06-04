@@ -39,6 +39,7 @@ export function buildRoomExperience(input: {
   now: ISODateTimeString;
   source?: RoomEntrySource;
   activeOnboardingPreset?: OnboardingPreset | null;
+  sleepInsightId?: EntityId;
 }): RoomExperience {
   const source = input.source ?? "manual";
   const activePresetState = getOnboardingPresetRouteState(
@@ -51,6 +52,8 @@ export function buildRoomExperience(input: {
     now: input.now,
     onboardingPresetId:
       activePresetState === "active" ? input.activeOnboardingPreset?.id : undefined,
+    sleepInsightId:
+      source === "sleep_suggestion" ? input.sleepInsightId : undefined,
   });
 
   return {
@@ -85,6 +88,7 @@ export function buildRoomSelectionTalkEntry(input: {
   now: ISODateTimeString;
   roomViewId?: EntityId;
   activeOnboardingPreset?: OnboardingPreset | null;
+  sleepInsightId?: EntityId;
 }): TalkEntryContext {
   return buildRoomTalkEntryContext({
     roomId: input.roomId,
@@ -92,6 +96,7 @@ export function buildRoomSelectionTalkEntry(input: {
     now: input.now,
     roomViewId: input.roomViewId,
     onboardingPreset: input.activeOnboardingPreset ?? undefined,
+    sleepInsightId: input.sleepInsightId,
   });
 }
 
@@ -102,6 +107,7 @@ export function buildRoomSelectionExperience(input: {
   source?: RoomEntrySource;
   roomViewId?: EntityId;
   activeOnboardingPreset?: OnboardingPreset | null;
+  sleepInsightId?: EntityId;
 }): RoomSelectionExperience {
   const activeOnboardingPreset = input.activeOnboardingPreset ?? undefined;
   const roomSession = buildRoomSession({
@@ -111,6 +117,8 @@ export function buildRoomSelectionExperience(input: {
     now: input.now,
     roomViewId: input.roomViewId,
     onboardingPresetId: activeOnboardingPreset?.id,
+    sleepInsightId:
+      input.source === "sleep_suggestion" ? input.sleepInsightId : undefined,
   });
 
   return {
@@ -121,6 +129,7 @@ export function buildRoomSelectionExperience(input: {
       now: input.now,
       roomViewId: input.roomViewId,
       activeOnboardingPreset,
+      sleepInsightId: roomSession.sleepInsightId,
     }),
     localDataBoundaryLabel: stage5LocalDataNotice,
   };
