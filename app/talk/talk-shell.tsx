@@ -24,7 +24,6 @@ import {
 } from "@/lib/scene-selection";
 import {
   clearFirstLaunchTalkEntryContext,
-  readFirstLaunchTalkEntryContext,
   type FirstLaunchTalkEntryContext,
 } from "@/lib/first-launch";
 import type { TalkEntryContext } from "@/src/contracts";
@@ -244,7 +243,7 @@ function getHint(
   uiState: TalkUiState,
   imageAttached: boolean,
   settingsOpen: boolean,
-  firstLaunchHint: string | null,
+  entryContextHint: string | null,
 ) {
   if (uiState === "error_permission") {
     return "Microphone access is unavailable";
@@ -263,12 +262,12 @@ function getHint(
   }
 
   if (
-    firstLaunchHint &&
+    entryContextHint &&
     (uiState === "idle_default" ||
       uiState === "standby_for_voice" ||
       uiState === "quiet_mode")
   ) {
-    return firstLaunchHint;
+    return entryContextHint;
   }
 
   return null;
@@ -367,6 +366,8 @@ export function TalkShell({
   );
   const [firstLaunchContext, setFirstLaunchContext] =
     useState<FirstLaunchTalkEntryContext | null>(null);
+  const [canonicalEntryContextHint, setCanonicalEntryContextHint] =
+    useState<string | null>(null);
   const [voiceTurnCount, setVoiceTurnCount] = useState(0);
   const [firstLaunchIntroDismissed, setFirstLaunchIntroDismissed] =
     useState(false);
@@ -380,6 +381,7 @@ export function TalkShell({
         : null,
     [firstLaunchContext, firstLaunchIntroDismissed],
   );
+  const entryContextHint = firstLaunchHint ?? canonicalEntryContextHint;
   const firstLaunchTiming = useMemo(
     () => getFirstLaunchTiming(firstLaunchContext),
     [firstLaunchContext],
@@ -393,7 +395,7 @@ export function TalkShell({
     uiState,
     imageAttached,
     settingsOpen,
-    firstLaunchHint,
+    entryContextHint,
   );
   const hintTone = getHintTone(uiState);
   const primaryLabel = getPrimaryLabel(uiState);
@@ -472,6 +474,7 @@ export function TalkShell({
     setSettingsOpen(false);
     setUiState("voice_recording");
     setFirstLaunchIntroDismissed(true);
+    setCanonicalEntryContextHint(null);
     setVoiceTurnCount((currentCount) => currentCount + 1);
     queueTransition(() => {
       beginProcessingFlow();
@@ -558,19 +561,30 @@ export function TalkShell({
       entryContext: canonicalContext,
       memories: readLocalMemoryItems(),
     });
-    const context =
-      mapTalkEntryContextToFirstLaunchContext(talkExperience.entryContext) ??
-      readFirstLaunchTalkEntryContext();
+    const context = mapTalkEntryContextToFirstLaunchContext(
+      talkExperience.entryContext,
+    );
+    const canonicalHint =
+      canonicalContext && talkExperience.entryContextValidation.valid
+        ? talkExperience.entryContextUiSupport.initialHint
+        : null;
 
-    if (!context) {
+    if (!context && !canonicalHint) {
       if (canonicalContext) {
         clearLocalTalkEntryContext();
       }
+      // The legacy first-launch Talk handoff lacks canonical roomSessionId, so
+      // it remains unsupported instead of being treated as TalkEntryContext.
+      clearFirstLaunchTalkEntryContext();
       return;
     }
 
     const hydrationTimer = window.setTimeout(() => {
-      setFirstLaunchContext(context);
+      if (context) {
+        setFirstLaunchContext(context);
+      } else {
+        setCanonicalEntryContextHint(canonicalHint);
+      }
       clearLocalTalkEntryContext();
       clearFirstLaunchTalkEntryContext();
     }, 0);

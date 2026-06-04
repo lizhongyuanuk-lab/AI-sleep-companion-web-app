@@ -535,6 +535,8 @@ export function SleepShell() {
       now: new Date().toISOString(),
       targetRoute: nextSuggestion.target_route,
       recommendedRoomId: nextSuggestion.target_payload?.recommended_room_id,
+      sleepInsightId:
+        nextSuggestion.target_payload?.local_mock_sleep_insight_id,
       intent:
         nextSuggestion.target_payload?.recommendation_type === "talk"
           ? "sleep_reflection"
