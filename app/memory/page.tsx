@@ -1,8 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ShellTopNav } from "@/components/shell-top-nav";
+import type { MemoryFeedback, MemoryFeedbackAction } from "@/src/contracts";
+import {
+  applyMemoryExperienceFeedback,
+  buildMemoryExperience,
+} from "@/src/experience";
 import { memoryPageMockData, type MemoryPageData } from "./memory-page-data";
 import styles from "./memory-page.module.css";
 
@@ -51,20 +56,16 @@ function ExpandableRecurringItem({
   topic,
   detail,
   expanded,
-  agreed,
-  canDelete,
+  selectedFeedback,
   onToggle,
-  onAgree,
-  onDelete,
+  onFeedback,
 }: {
   topic: RecurringTopic;
   detail: RecurringMemoryDetail;
   expanded: boolean;
-  agreed?: boolean;
-  canDelete?: boolean;
+  selectedFeedback?: MemoryFeedbackAction;
   onToggle: () => void;
-  onAgree: (id: string) => void;
-  onDelete: (id: string) => void;
+  onFeedback: (id: string, action: MemoryFeedbackAction) => void;
 }) {
   return (
     <article className={styles.recurringMemoryItem}>
@@ -88,9 +89,9 @@ function ExpandableRecurringItem({
       >
         <div className={styles.recurringMemoryContent}>
           <div className={styles.recurringMemorySummary}>
-            <h2 className={styles.recurringTitle}>{topic.display_text}</h2>
-            {topic.continuation_hint ? (
-              <p className={styles.recurringSupport}>{topic.continuation_hint}</p>
+            <h2 className={styles.recurringTitle}>{topic.title}</h2>
+            {topic.continuationHint ? (
+              <p className={styles.recurringSupport}>{topic.continuationHint}</p>
             ) : null}
           </div>
 
@@ -120,34 +121,51 @@ function ExpandableRecurringItem({
                   type="button"
                   className={[
                     styles.recurringMemoryAction,
-                    agreed ? styles.recurringMemoryActionSelected : "",
+                    selectedFeedback === "agree"
+                      ? styles.recurringMemoryActionSelected
+                      : "",
                   ]
                     .filter(Boolean)
                     .join(" ")}
                   onClick={(event) => {
                     event.stopPropagation();
-                    onAgree(topic.memory_id);
+                    onFeedback(topic.id, "agree");
                   }}
                 >
-                  {agreed ? "Agreed" : "Agree"}
+                  {selectedFeedback === "agree" ? "Agreed" : "Agree"}
                 </button>
-                {canDelete ? (
-                  <button
-                    type="button"
-                    className={[
-                      styles.recurringMemoryAction,
-                      styles.recurringMemoryActionDestructive,
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onDelete(topic.memory_id);
-                    }}
-                  >
-                    Delete
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  className={[
+                    styles.recurringMemoryAction,
+                    selectedFeedback === "disagree"
+                      ? styles.recurringMemoryActionSelected
+                      : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onFeedback(topic.id, "disagree");
+                  }}
+                >
+                  {selectedFeedback === "disagree" ? "Disagreed" : "Disagree"}
+                </button>
+                <button
+                  type="button"
+                  className={[
+                    styles.recurringMemoryAction,
+                    styles.recurringMemoryActionQuiet,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onFeedback(topic.id, "hide");
+                  }}
+                >
+                  Hide
+                </button>
               </div>
             </div>
           ) : null}
@@ -162,13 +180,61 @@ export default function MemoryPage() {
   const [topics, setTopics] = useState(data.recurring_topics);
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
   const [showAllMemories, setShowAllMemories] = useState(false);
-  const [agreedTopics, setAgreedTopics] = useState<Record<string, boolean>>({});
-  const displayedThemes = topics.filter((topic) => !topic.is_deleted);
+  const [feedbackByTopic, setFeedbackByTopic] = useState<
+    Record<string, MemoryFeedbackAction>
+  >({});
+  const latestLocalFeedbackRef = useRef<MemoryFeedback | null>(null);
+  const memoryExperience = buildMemoryExperience({ memories: topics });
+  const visibleThemeIds = new Set(
+    memoryExperience.visibleMemories.map((memory) => memory.id),
+  );
+  const displayedThemes = topics.filter((topic) => visibleThemeIds.has(topic.id));
   const visibleThemes = showAllMemories
     ? displayedThemes
     : displayedThemes.slice(0, 3);
   const hasMoreThemes = displayedThemes.length > 3;
-  const displayedActions = data.continue_actions.slice(0, 3);
+  const displayedActions = data.continue_actions
+    .filter((action) => {
+      const memoryId = action.target_payload?.selected_memory_item_id;
+      return !memoryId || visibleThemeIds.has(memoryId);
+    })
+    .slice(0, 3);
+
+  const handleFeedback = (
+    memoryId: string,
+    action: MemoryFeedbackAction,
+  ) => {
+    const now = new Date().toISOString();
+
+    setTopics((current) =>
+      current.map((topic) => {
+        if (topic.id !== memoryId) {
+          return topic;
+        }
+
+        const result = applyMemoryExperienceFeedback({
+          memory: topic,
+          action,
+          now,
+          feedbackId: `memory_feedback_local_${memoryId}_${Date.now()}`,
+        });
+
+        latestLocalFeedbackRef.current = result.feedback;
+        return {
+          ...topic,
+          ...result.memory,
+        };
+      }),
+    );
+    setFeedbackByTopic((current) => ({
+      ...current,
+      [memoryId]: action,
+    }));
+
+    if (action === "hide") {
+      setExpandedTopicId((current) => (current === memoryId ? null : current));
+    }
+  };
 
   return (
     <section className={styles.page}>
@@ -204,43 +270,25 @@ export default function MemoryPage() {
                   <section className={styles.recurringList}>
                     {visibleThemes.map((topic) => {
                       const detail =
-                        recurringMemoryDetails[topic.memory_id] ?? {
+                        recurringMemoryDetails[topic.id] ?? {
                           seenWhen: "Seen in a recent evening check-in",
-                          appearedIn: `Seen in ${topic.supporting_session_count} recent sessions`,
+                          appearedIn: `Seen in ${topic.supportingSessionCount} recent sessions`,
                           patternNote: "This memory keeps returning gently over time",
                         };
 
                       return (
                         <ExpandableRecurringItem
-                          key={topic.memory_id}
+                          key={topic.id}
                           topic={topic}
                           detail={detail}
-                          expanded={expandedTopicId === topic.memory_id}
-                          agreed={Boolean(agreedTopics[topic.memory_id])}
-                          canDelete={data.memory_delete_capability}
+                          expanded={expandedTopicId === topic.id}
+                          selectedFeedback={feedbackByTopic[topic.id]}
                           onToggle={() => {
                             setExpandedTopicId((current) =>
-                              current === topic.memory_id ? null : topic.memory_id,
+                              current === topic.id ? null : topic.id,
                             );
                           }}
-                          onAgree={(memoryId) => {
-                            setAgreedTopics((current) => ({
-                              ...current,
-                              [memoryId]: !current[memoryId],
-                            }));
-                          }}
-                          onDelete={(memoryId) => {
-                            setTopics((current) =>
-                              current.map((currentTopic) =>
-                                currentTopic.memory_id === memoryId
-                                  ? { ...currentTopic, is_deleted: true }
-                                  : currentTopic,
-                              ),
-                            );
-                            setExpandedTopicId((current) =>
-                              current === memoryId ? null : current,
-                            );
-                          }}
+                          onFeedback={handleFeedback}
                         />
                       );
                     })}
@@ -257,7 +305,7 @@ export default function MemoryPage() {
                               if (!next) {
                                 const firstVisibleIds = displayedThemes
                                   .slice(0, 3)
-                                  .map((topic) => topic.memory_id);
+                                  .map((topic) => topic.id);
 
                                 setExpandedTopicId((expandedId) =>
                                   expandedId && !firstVisibleIds.includes(expandedId)

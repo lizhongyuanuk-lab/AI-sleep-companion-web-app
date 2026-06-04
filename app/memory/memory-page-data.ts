@@ -1,5 +1,14 @@
+import type { MemoryFeedbackAction, MemoryItem } from "@/src/contracts";
+
+export type MemoryPageTopic = MemoryItem & {
+  supportingSessionCount: number;
+  timeWindowLabel: string;
+  continuationHint?: string | null;
+};
+
 export type MemoryPageData = {
   user_id: string;
+  mock_boundary_label: string;
   memory_page_available: boolean;
   recent_memory_summary: {
     headline_summary: string;
@@ -8,14 +17,7 @@ export type MemoryPageData = {
     source_session_count: number;
     supporting_line?: string | null;
   } | null;
-  recurring_topics: Array<{
-    memory_id: string;
-    display_text: string;
-    supporting_session_count: number;
-    time_window_label: string;
-    is_deleted: boolean;
-    continuation_hint?: string | null;
-  }>;
+  recurring_topics: MemoryPageTopic[];
   helpful_patterns: Array<{
     pattern_id: string;
     display_text: string;
@@ -43,13 +45,15 @@ export type MemoryPageData = {
   }>;
   memory_items_version: string;
   deep_history_available: boolean;
-  memory_delete_capability: boolean;
+  supported_feedback_actions: MemoryFeedbackAction[];
   last_memory_refresh_at: string;
 };
 
-// Mock contract mirrors the approved Memory spec until backend wiring exists.
+// Local mock contract mirrors the approved Memory spec until real data wiring exists.
 export const memoryPageMockData: MemoryPageData = {
   user_id: "user_demo_night_01",
+  mock_boundary_label:
+    "Memory data on this page is local mock data, not backend or real AI memory wiring.",
   memory_page_available: true,
   recent_memory_summary: {
     headline_summary: "Lately, your nights have been asking for a gentler pace.",
@@ -60,58 +64,118 @@ export const memoryPageMockData: MemoryPageData = {
   },
   recurring_topics: [
     {
-      memory_id: "memory_topic_unfinished_evenings",
-      display_text: "Mentally busy evenings",
-      supporting_session_count: 3,
-      time_window_label: "This week",
-      continuation_hint:
+      id: "memory_topic_unfinished_evenings",
+      source: "talk_session",
+      sourceId: "talk_mock_recent_01",
+      type: "emotional_pattern",
+      title: "Mentally busy evenings",
+      body:
         "You settle more easily when the conversation starts softly.",
-      is_deleted: false,
+      confidence: "medium",
+      influenceWeight: 0.54,
+      status: "active",
+      excludeFromPersonalization: false,
+      supportingSessionCount: 3,
+      timeWindowLabel: "This week",
+      continuationHint:
+        "You settle more easily when the conversation starts softly.",
+      createdAt: "2026-04-24T22:15:00+08:00",
+      updatedAt: "2026-04-28T10:30:00+08:00",
     },
     {
-      memory_id: "memory_topic_sleep_entry_pressure",
-      display_text: "Gentler evening starts",
-      supporting_session_count: 4,
-      time_window_label: "This week",
-      continuation_hint:
+      id: "memory_topic_sleep_entry_pressure",
+      source: "talk_session",
+      sourceId: "talk_mock_recent_02",
+      type: "support_style",
+      title: "Gentler evening starts",
+      body:
         "A softer opening works better than trying to solve everything first.",
-      is_deleted: false,
+      confidence: "medium",
+      influenceWeight: 0.62,
+      status: "active",
+      excludeFromPersonalization: false,
+      supportingSessionCount: 4,
+      timeWindowLabel: "This week",
+      continuationHint:
+        "A softer opening works better than trying to solve everything first.",
+      createdAt: "2026-04-25T22:20:00+08:00",
+      updatedAt: "2026-04-28T10:30:00+08:00",
     },
     {
-      memory_id: "memory_topic_quiet_company",
-      display_text: "Quiet company first",
-      supporting_session_count: 2,
-      time_window_label: "Last few sessions",
-      continuation_hint:
+      id: "memory_topic_quiet_company",
+      source: "talk_session",
+      sourceId: "talk_mock_recent_03",
+      type: "support_style",
+      title: "Quiet company first",
+      body:
         "You often stay longer when the tone feels calm and unhurried.",
-      is_deleted: false,
+      confidence: "low",
+      influenceWeight: 0.44,
+      status: "active",
+      excludeFromPersonalization: false,
+      supportingSessionCount: 2,
+      timeWindowLabel: "Last few sessions",
+      continuationHint:
+        "You often stay longer when the tone feels calm and unhurried.",
+      createdAt: "2026-04-25T22:40:00+08:00",
+      updatedAt: "2026-04-28T10:30:00+08:00",
     },
     {
-      memory_id: "memory_topic_softer_openings",
-      display_text: "Softer openings help",
-      supporting_session_count: 3,
-      time_window_label: "This week",
-      continuation_hint:
+      id: "memory_topic_softer_openings",
+      source: "talk_session",
+      sourceId: "talk_mock_recent_04",
+      type: "routine",
+      title: "Softer openings help",
+      body:
         "Gentle first minutes seem to lower the pressure to explain everything at once.",
-      is_deleted: false,
+      confidence: "medium",
+      influenceWeight: 0.5,
+      status: "active",
+      excludeFromPersonalization: false,
+      supportingSessionCount: 3,
+      timeWindowLabel: "This week",
+      continuationHint:
+        "Gentle first minutes seem to lower the pressure to explain everything at once.",
+      createdAt: "2026-04-26T21:50:00+08:00",
+      updatedAt: "2026-04-28T10:30:00+08:00",
     },
     {
-      memory_id: "memory_topic_quieter_room_returns",
-      display_text: "Quieter rooms help",
-      supporting_session_count: 2,
-      time_window_label: "Recent nights",
-      continuation_hint:
+      id: "memory_topic_quieter_room_returns",
+      source: "room_session",
+      sourceId: "room_session_mock_recent_01",
+      type: "preference",
+      title: "Quieter rooms help",
+      body:
         "Lower stimulation seems to make it easier to stay present and come back again.",
-      is_deleted: false,
+      confidence: "low",
+      influenceWeight: 0.42,
+      status: "active",
+      excludeFromPersonalization: false,
+      supportingSessionCount: 2,
+      timeWindowLabel: "Recent nights",
+      continuationHint:
+        "Lower stimulation seems to make it easier to stay present and come back again.",
+      createdAt: "2026-04-27T22:05:00+08:00",
+      updatedAt: "2026-04-28T10:30:00+08:00",
     },
     {
-      memory_id: "memory_topic_briefer_loops",
-      display_text: "Brief check-ins help",
-      supporting_session_count: 3,
-      time_window_label: "Recent nights",
-      continuation_hint:
+      id: "memory_topic_briefer_loops",
+      source: "talk_session",
+      sourceId: "talk_mock_recent_05",
+      type: "routine",
+      title: "Brief check-ins help",
+      body:
         "Shorter conversations have felt easier to carry into the following night.",
-      is_deleted: false,
+      confidence: "medium",
+      influenceWeight: 0.48,
+      status: "active",
+      excludeFromPersonalization: false,
+      supportingSessionCount: 3,
+      timeWindowLabel: "Recent nights",
+      continuationHint:
+        "Shorter conversations have felt easier to carry into the following night.",
+      createdAt: "2026-04-28T07:40:00+08:00",
+      updatedAt: "2026-04-28T10:30:00+08:00",
     },
   ],
   helpful_patterns: [
@@ -178,6 +242,6 @@ export const memoryPageMockData: MemoryPageData = {
   ],
   memory_items_version: "mock-v1",
   deep_history_available: true,
-  memory_delete_capability: true,
+  supported_feedback_actions: ["agree", "disagree", "hide"],
   last_memory_refresh_at: "2026-04-28T10:30:00+08:00",
 };
