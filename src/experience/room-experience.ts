@@ -134,3 +134,21 @@ export function buildRoomSelectionExperience(input: {
     localDataBoundaryLabel: stage5LocalDataNotice,
   };
 }
+
+function createLocalRoomSessionId(): EntityId {
+  return `room_session_local_${Date.now()}`;
+}
+
+export function buildLocalRoomSelectionExperience(input: {
+  roomId: EntityId;
+  source?: RoomEntrySource;
+  roomViewId?: EntityId;
+  activeOnboardingPreset?: OnboardingPreset | null;
+  sleepInsightId?: EntityId;
+}): RoomSelectionExperience {
+  return buildRoomSelectionExperience({
+    ...input,
+    roomSessionId: createLocalRoomSessionId(),
+    now: new Date().toISOString(),
+  });
+}

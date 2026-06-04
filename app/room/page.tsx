@@ -19,8 +19,8 @@ import {
 } from "@/lib/first-launch";
 import type { OnboardingPreset, RoomEntrySource } from "@/src/contracts";
 import {
+  buildLocalRoomSelectionExperience,
   buildRoomExperience,
-  buildRoomSelectionExperience,
   type RoomExperience,
 } from "@/src/experience";
 import {
@@ -473,7 +473,6 @@ export default function RoomPage() {
     writeLastEnteredRoomId(roomId);
     writeStoredSceneId(room.talkSceneId);
 
-    const now = new Date().toISOString();
     const sleepInsightId =
       roomExperience?.roomView.source === "sleep_suggestion"
         ? roomExperience.roomView.sleepInsightId ??
@@ -484,10 +483,8 @@ export default function RoomPage() {
       : sleepInsightId
       ? "sleep_suggestion"
       : "manual";
-    const roomSelection = buildRoomSelectionExperience({
+    const roomSelection = buildLocalRoomSelectionExperience({
       roomId,
-      roomSessionId: `room_session_local_${Date.now()}`,
-      now,
       source: roomSelectionSource,
       roomViewId: roomExperience?.roomView.id,
       activeOnboardingPreset,
@@ -499,7 +496,7 @@ export default function RoomPage() {
     setSleepToRoomHandoff(null);
 
     if (activeOnboardingPreset) {
-      markLocalActiveOnboardingPresetConsumed(now);
+      markLocalActiveOnboardingPresetConsumed(roomSelection.roomSession.startedAt);
       markPostOnboardingSessionPresetConsumed();
     }
 

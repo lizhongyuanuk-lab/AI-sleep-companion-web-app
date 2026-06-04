@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ShellTopNav } from "@/components/shell-top-nav";
 import type { MemoryFeedbackAction } from "@/src/contracts";
 import {
@@ -57,6 +57,25 @@ const recurringMemoryDetails: Record<string, RecurringMemoryDetail> = {
     patternNote: "Brief loops seem easier to carry into the following night",
   },
 };
+
+function getInitialMemoryTopics(): MemoryPageData["recurring_topics"] {
+  const persistedMemories =
+    readLocalMemoryItems() as MemoryPageData["recurring_topics"];
+
+  return persistedMemories.length > 0
+    ? persistedMemories
+    : memoryPageMockData.recurring_topics;
+}
+
+function getInitialMemoryFeedback(): Record<string, MemoryFeedbackAction> {
+  return readLocalMemoryFeedback().reduce<Record<string, MemoryFeedbackAction>>(
+    (feedbackMap, feedback) => ({
+      ...feedbackMap,
+      [feedback.memoryItemId]: feedback.action,
+    }),
+    {},
+  );
+}
 
 function ExpandableRecurringItem({
   topic,
@@ -183,12 +202,12 @@ function ExpandableRecurringItem({
 
 export default function MemoryPage() {
   const data = memoryPageMockData;
-  const [topics, setTopics] = useState(data.recurring_topics);
+  const [topics, setTopics] = useState(getInitialMemoryTopics);
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
   const [showAllMemories, setShowAllMemories] = useState(false);
   const [feedbackByTopic, setFeedbackByTopic] = useState<
     Record<string, MemoryFeedbackAction>
-  >({});
+  >(getInitialMemoryFeedback);
   const memoryExperience = buildMemoryExperience({ memories: topics });
   const visibleThemeIds = new Set(
     memoryExperience.visibleMemories.map((memory) => memory.id),
@@ -204,28 +223,6 @@ export default function MemoryPage() {
       return !memoryId || visibleThemeIds.has(memoryId);
     })
     .slice(0, 3);
-
-  useEffect(() => {
-    const persistedMemories =
-      readLocalMemoryItems() as MemoryPageData["recurring_topics"];
-    const persistedFeedback = readLocalMemoryFeedback();
-
-    if (persistedMemories.length > 0) {
-      setTopics(persistedMemories);
-    }
-
-    if (persistedFeedback.length > 0) {
-      setFeedbackByTopic(
-        persistedFeedback.reduce<Record<string, MemoryFeedbackAction>>(
-          (feedbackMap, feedback) => ({
-            ...feedbackMap,
-            [feedback.memoryItemId]: feedback.action,
-          }),
-          {},
-        ),
-      );
-    }
-  }, []);
 
   const handleFeedback = (
     memoryId: string,
