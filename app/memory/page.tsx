@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { ShellTopNav } from "@/components/shell-top-nav";
 import type { MemoryFeedbackAction } from "@/src/contracts";
 import {
@@ -12,6 +12,7 @@ import {
   appendLocalMemoryFeedback,
   readLocalMemoryFeedback,
   readLocalMemoryItems,
+  stage5LocalDataKeys,
   writeLocalMemoryItems,
 } from "@/src/local-data";
 import { memoryPageMockData, type MemoryPageData } from "./memory-page-data";
@@ -58,23 +59,110 @@ const recurringMemoryDetails: Record<string, RecurringMemoryDetail> = {
   },
 };
 
-function getInitialMemoryTopics(): MemoryPageData["recurring_topics"] {
+const memoryStoreListeners = new Set<() => void>();
+const emptyMemoryFeedbackByTopic: Record<string, MemoryFeedbackAction> = {};
+
+let memoryTopicsSnapshotCache: {
+  serialized: string;
+  topics: MemoryPageData["recurring_topics"];
+} | null = null;
+
+let memoryFeedbackSnapshotCache: {
+  serialized: string;
+  feedbackByTopic: Record<string, MemoryFeedbackAction>;
+} | null = null;
+
+function notifyMemoryStoreListeners() {
+  memoryStoreListeners.forEach((listener) => {
+    listener();
+  });
+}
+
+function handleMemoryStorage(event: StorageEvent) {
+  if (
+    event.key === stage5LocalDataKeys.memoryItems ||
+    event.key === stage5LocalDataKeys.memoryFeedback
+  ) {
+    notifyMemoryStoreListeners();
+  }
+}
+
+function subscribeToMemoryStore(listener: () => void) {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  memoryStoreListeners.add(listener);
+  window.addEventListener("storage", handleMemoryStorage);
+
+  return () => {
+    memoryStoreListeners.delete(listener);
+
+    if (memoryStoreListeners.size === 0) {
+      window.removeEventListener("storage", handleMemoryStorage);
+    }
+  };
+}
+
+function getMemoryTopicsServerSnapshot(): MemoryPageData["recurring_topics"] {
+  return memoryPageMockData.recurring_topics;
+}
+
+function getMemoryTopicsSnapshot(): MemoryPageData["recurring_topics"] {
   const persistedMemories =
     readLocalMemoryItems() as MemoryPageData["recurring_topics"];
 
-  return persistedMemories.length > 0
-    ? persistedMemories
-    : memoryPageMockData.recurring_topics;
+  if (persistedMemories.length === 0) {
+    return memoryPageMockData.recurring_topics;
+  }
+
+  const serialized = JSON.stringify(persistedMemories);
+
+  if (memoryTopicsSnapshotCache?.serialized === serialized) {
+    return memoryTopicsSnapshotCache.topics;
+  }
+
+  memoryTopicsSnapshotCache = {
+    serialized,
+    topics: persistedMemories,
+  };
+
+  return persistedMemories;
 }
 
-function getInitialMemoryFeedback(): Record<string, MemoryFeedbackAction> {
-  return readLocalMemoryFeedback().reduce<Record<string, MemoryFeedbackAction>>(
+function getMemoryFeedbackServerSnapshot(): Record<string, MemoryFeedbackAction> {
+  return emptyMemoryFeedbackByTopic;
+}
+
+function getMemoryFeedbackSnapshot(): Record<string, MemoryFeedbackAction> {
+  const persistedFeedback = readLocalMemoryFeedback();
+
+  if (persistedFeedback.length === 0) {
+    return emptyMemoryFeedbackByTopic;
+  }
+
+  const serialized = JSON.stringify(persistedFeedback);
+
+  if (memoryFeedbackSnapshotCache?.serialized === serialized) {
+    return memoryFeedbackSnapshotCache.feedbackByTopic;
+  }
+
+  const feedbackByTopic = persistedFeedback.reduce<
+    Record<string, MemoryFeedbackAction>
+  >(
     (feedbackMap, feedback) => ({
       ...feedbackMap,
       [feedback.memoryItemId]: feedback.action,
     }),
     {},
   );
+
+  memoryFeedbackSnapshotCache = {
+    serialized,
+    feedbackByTopic,
+  };
+
+  return feedbackByTopic;
 }
 
 function ExpandableRecurringItem({
@@ -202,12 +290,18 @@ function ExpandableRecurringItem({
 
 export default function MemoryPage() {
   const data = memoryPageMockData;
-  const [topics, setTopics] = useState(getInitialMemoryTopics);
+  const topics = useSyncExternalStore(
+    subscribeToMemoryStore,
+    getMemoryTopicsSnapshot,
+    getMemoryTopicsServerSnapshot,
+  );
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
   const [showAllMemories, setShowAllMemories] = useState(false);
-  const [feedbackByTopic, setFeedbackByTopic] = useState<
-    Record<string, MemoryFeedbackAction>
-  >(getInitialMemoryFeedback);
+  const feedbackByTopic = useSyncExternalStore(
+    subscribeToMemoryStore,
+    getMemoryFeedbackSnapshot,
+    getMemoryFeedbackServerSnapshot,
+  );
   const memoryExperience = buildMemoryExperience({ memories: topics });
   const visibleThemeIds = new Set(
     memoryExperience.visibleMemories.map((memory) => memory.id),
@@ -250,13 +344,9 @@ export default function MemoryPage() {
         : topic,
     );
 
-    setTopics(nextTopics);
     writeLocalMemoryItems(nextTopics);
     appendLocalMemoryFeedback(result.feedback);
-    setFeedbackByTopic((current) => ({
-      ...current,
-      [memoryId]: action,
-    }));
+    notifyMemoryStoreListeners();
 
     if (action === "hide") {
       setExpandedTopicId((current) => (current === memoryId ? null : current));

@@ -129,6 +129,9 @@ export function FirstLaunchFlow() {
   const hydrationTimerRef = useRef<number | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [hasCompletedFlow, setHasCompletedFlow] = useState(false);
+  const [completedCanonicalRoute, setCompletedCanonicalRoute] = useState<
+    "/room" | "/home" | null
+  >(null);
   const [authStatus, setAuthStatus] = useState<"guest" | "authenticated">("guest");
   const [draft, setDraft] = useState<FirstLaunchDraft>(createEmptyFirstLaunchDraft());
   const [preset, setPreset] = useState<PostOnboardingSessionPreset | null>(null);
@@ -164,8 +167,12 @@ export function FirstLaunchFlow() {
         runtimeObservedPath: "/",
       });
 
-      setHasCompletedFlow(
-        nextExperience.routeDecision.canonicalRoute === "/room",
+      setHasCompletedFlow(nextExperience.routeDecision.hasCompletedOnboarding);
+      setCompletedCanonicalRoute(
+        nextExperience.routeDecision.hasCompletedOnboarding &&
+          nextExperience.routeDecision.canonicalRoute !== "/onboarding"
+          ? nextExperience.routeDecision.canonicalRoute
+          : null,
       );
       setIsHydrated(true);
     }, 0);
@@ -178,15 +185,19 @@ export function FirstLaunchFlow() {
     };
   }, []);
 
+  const shouldRedirectToRoom = isHydrated && completedCanonicalRoute === "/room";
+  const shouldShowCompletedFallback =
+    isHydrated && hasCompletedFlow && completedCanonicalRoute === "/home";
+
   useEffect(() => {
-    if (!isHydrated || !hasCompletedFlow) {
+    if (!shouldRedirectToRoom) {
       return;
     }
 
     startTransition(() => {
       router.replace("/room");
     });
-  }, [hasCompletedFlow, isHydrated, router]);
+  }, [router, shouldRedirectToRoom]);
 
   useEffect(() => {
     if (!isHydrated || draft.current_step !== "room_generating") {
@@ -255,7 +266,6 @@ export function FirstLaunchFlow() {
     [draft.selected_visual_theme],
   );
   const progressIndex = getProgressIndex(draft.current_step);
-  const shouldRedirectToRoom = isHydrated && hasCompletedFlow;
 
   const updateDraft = (patch: Partial<FirstLaunchDraft>) => {
     setDraft((currentDraft) => getNextDraftState(currentDraft, patch));
@@ -357,6 +367,7 @@ export function FirstLaunchFlow() {
     clearLocalOnboardingDraft();
     clearPersonalRoomGenerationDraft();
     setHasCompletedFlow(true);
+    setCompletedCanonicalRoute("/room");
     updateDraft({
       current_step: "room_page",
     });
@@ -418,6 +429,34 @@ export function FirstLaunchFlow() {
           <div className={styles.redirectCard}>
             <h1 className={styles.redirectTitle}>Heading back to Room</h1>
             <p className={styles.redirectCopy}>Your first entry is already set.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (shouldShowCompletedFallback) {
+    return (
+      <section className={styles.shell}>
+        <div className={styles.backgroundGlow} />
+        <div className={styles.backgroundGlowSecondary} />
+        <div className={styles.redirectState}>
+          <div className={styles.redirectCard}>
+            <h1 className={styles.redirectTitle}>Your first entry is complete</h1>
+            <p className={styles.redirectCopy}>
+              You can keep going from Room whenever you are ready.
+            </p>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() => {
+                startTransition(() => {
+                  router.replace("/room");
+                });
+              }}
+            >
+              Open Room
+            </button>
           </div>
         </div>
       </section>
