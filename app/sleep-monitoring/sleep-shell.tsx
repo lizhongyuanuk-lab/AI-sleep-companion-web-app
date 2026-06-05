@@ -7,6 +7,16 @@ import { ShellTopNav } from "@/components/shell-top-nav";
 import { sceneQueryParam, writeStoredSceneId } from "@/lib/scene-selection";
 import { resolveRoomId, writeStoredRoomId } from "@/lib/room-selection";
 import {
+  buildSleepExperience,
+  buildSleepSuggestionAction,
+} from "@/src/experience";
+import {
+  clearLocalSleepToRoomHandoff,
+  stage5LocalDataNotice,
+  writeLocalSleepToRoomHandoff,
+  writeLocalTalkEntryContext,
+} from "@/src/local-data";
+import {
   defaultSleepMockCase,
   sleepLoadingState,
   sleepMockCases,
@@ -491,6 +501,7 @@ export function SleepShell() {
     useState<RhythmFilterKey | null>(null);
 
   const pageData = isLoading ? sleepLoadingState : sleepMockCases[activeMockKey];
+  const sleepExperience = buildSleepExperience({});
   const activeFilter =
     activeFilterOverride ?? pageData.rhythm_card?.active_filter ?? "light";
   const suggestion = pageData.suggestion_card;
@@ -525,20 +536,50 @@ export function SleepShell() {
   const handleSuggestionAction = (
     nextSuggestion: NonNullable<SleepPageData["suggestion_card"]>,
   ) => {
-    const roomId = resolveRoomId(nextSuggestion.target_payload?.recommended_room_id);
+    const suggestionAction = buildSleepSuggestionAction({
+      now: new Date().toISOString(),
+      targetRoute: nextSuggestion.target_route,
+      recommendedRoomId: nextSuggestion.target_payload?.recommended_room_id,
+      sleepInsightId:
+        nextSuggestion.target_payload?.local_mock_sleep_insight_id,
+      intent:
+        nextSuggestion.target_payload?.recommendation_type === "talk"
+          ? "sleep_reflection"
+          : "tonight_suggestion",
+    });
+    const roomId = resolveRoomId(suggestionAction.recommendedRoomId);
 
     if (roomId) {
       writeStoredRoomId(roomId);
     }
 
-    if (nextSuggestion.target_route === "/room") {
+    if (suggestionAction.targetRoute === "/room") {
+      if (roomId && suggestionAction.sleepInsightId) {
+        writeLocalSleepToRoomHandoff({
+          source: "sleep_suggestion",
+          sourceRoute: "/sleep-monitoring",
+          recommendedRoomId: roomId,
+          sleepInsightId: suggestionAction.sleepInsightId,
+          localDataBoundaryLabel: stage5LocalDataNotice,
+          createdAt: new Date().toISOString(),
+        });
+      } else {
+        clearLocalSleepToRoomHandoff();
+      }
+
       startTransition(() => {
         router.push("/room");
       });
       return;
     }
 
-    if (nextSuggestion.target_route === "/talk") {
+    if (suggestionAction.targetRoute === "/talk") {
+      clearLocalSleepToRoomHandoff();
+
+      if (suggestionAction.talkEntryContext) {
+        writeLocalTalkEntryContext(suggestionAction.talkEntryContext);
+      }
+
       const room = roomId ? roomConfigMap[roomId] : null;
 
       if (room) {
@@ -556,6 +597,7 @@ export function SleepShell() {
     }
 
     startTransition(() => {
+      clearLocalSleepToRoomHandoff();
       router.push("/room");
     });
   };
@@ -612,6 +654,12 @@ export function SleepShell() {
                       {pageData.hero_insight.supporting_line}
                     </p>
                   ) : null}
+                  <span className={styles.inlinePill}>
+                    {sleepExperience.passiveMonitoringStatus ===
+                    "not_wired_stage5"
+                      ? "Local reflection"
+                      : "Sleep reflection"}
+                  </span>
                 </section>
               ) : null}
 

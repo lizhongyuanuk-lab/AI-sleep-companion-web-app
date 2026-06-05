@@ -3,6 +3,15 @@
 import { startTransition, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./first-launch-flow.module.css";
+import { buildFirstLaunchCompatibilityExperience } from "@/src/experience";
+import {
+  clearLocalOnboardingDraft,
+  readLocalActiveOnboardingPreset,
+  readLocalOnboardingCompleted,
+  readLocalOnboardingDraft,
+  writeLocalActiveOnboardingPreset,
+  writeLocalOnboardingCompleted,
+} from "@/src/local-data";
 import {
   FIRST_LAUNCH_ONBOARDING_OPTIONS_V1,
   PERSONAL_ROOM_THEME_OPTIONS_V1,
@@ -120,6 +129,9 @@ export function FirstLaunchFlow() {
   const hydrationTimerRef = useRef<number | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
   const [hasCompletedFlow, setHasCompletedFlow] = useState(false);
+  const [completedCanonicalRoute, setCompletedCanonicalRoute] = useState<
+    "/room" | "/home" | null
+  >(null);
   const [authStatus, setAuthStatus] = useState<"guest" | "authenticated">("guest");
   const [draft, setDraft] = useState<FirstLaunchDraft>(createEmptyFirstLaunchDraft());
   const [preset, setPreset] = useState<PostOnboardingSessionPreset | null>(null);
@@ -131,6 +143,8 @@ export function FirstLaunchFlow() {
       if (searchParams.get("reset-first-launch") === "1") {
         clearFirstLaunchFlowStorage();
         writeHasCompletedFirstLaunchFlow(false);
+        writeLocalOnboardingCompleted(false);
+        clearLocalOnboardingDraft();
         window.history.replaceState({}, "", window.location.pathname);
       }
 
@@ -141,7 +155,25 @@ export function FirstLaunchFlow() {
       setPreset(readPostOnboardingSessionPreset());
       readGeneratedPersonalRoomRecord();
       readPersonalRoomGenerationDraft();
-      setHasCompletedFlow(readHasCompletedFirstLaunchFlow());
+      const hasCompletedOnboarding =
+        readLocalOnboardingCompleted() || readHasCompletedFirstLaunchFlow();
+      const activeOnboardingPreset = readLocalActiveOnboardingPreset();
+      const nextExperience = buildFirstLaunchCompatibilityExperience({
+        id: `route_decision_root_${Date.now()}`,
+        hasCompletedOnboarding,
+        activeOnboardingPreset,
+        draft: readLocalOnboardingDraft(),
+        now: new Date().toISOString(),
+        runtimeObservedPath: "/",
+      });
+
+      setHasCompletedFlow(nextExperience.routeDecision.hasCompletedOnboarding);
+      setCompletedCanonicalRoute(
+        nextExperience.routeDecision.hasCompletedOnboarding &&
+          nextExperience.routeDecision.canonicalRoute !== "/onboarding"
+          ? nextExperience.routeDecision.canonicalRoute
+          : null,
+      );
       setIsHydrated(true);
     }, 0);
 
@@ -153,15 +185,19 @@ export function FirstLaunchFlow() {
     };
   }, []);
 
+  const shouldRedirectToRoom = isHydrated && completedCanonicalRoute === "/room";
+  const shouldShowCompletedFallback =
+    isHydrated && hasCompletedFlow && completedCanonicalRoute === "/home";
+
   useEffect(() => {
-    if (!isHydrated || !hasCompletedFlow) {
+    if (!shouldRedirectToRoom) {
       return;
     }
 
     startTransition(() => {
       router.replace("/room");
     });
-  }, [hasCompletedFlow, isHydrated, router]);
+  }, [router, shouldRedirectToRoom]);
 
   useEffect(() => {
     if (!isHydrated || draft.current_step !== "room_generating") {
@@ -230,7 +266,6 @@ export function FirstLaunchFlow() {
     [draft.selected_visual_theme],
   );
   const progressIndex = getProgressIndex(draft.current_step);
-  const shouldRedirectToRoom = isHydrated && hasCompletedFlow;
 
   const updateDraft = (patch: Partial<FirstLaunchDraft>) => {
     setDraft((currentDraft) => getNextDraftState(currentDraft, patch));
@@ -260,6 +295,52 @@ export function FirstLaunchFlow() {
     });
 
     writePostOnboardingSessionPreset(nextPreset);
+    writeLocalActiveOnboardingPreset({
+      id: nextPreset.preset_id,
+      presetId: nextPreset.preset_id,
+      q1State:
+        draft.q1_state === "mind_racing"
+          ? "overthinking"
+          : draft.q1_state === "anxious_or_irritated"
+          ? "anxious_irritated"
+          : draft.q1_state === "lonely_needing_company"
+          ? "lonely_need_presence"
+          : "sleep_blocked",
+      q2SupportStyle:
+        value === "soothe_and_chat"
+          ? "comfort_talk"
+          : value === "meditation_practice"
+          ? "mindfulness_guide"
+          : value === "quiet_company"
+          ? "quiet_presence"
+          : "sleep_guide",
+      baseMode:
+        nextPreset.base_mode === "gentle_grounding"
+          ? "comfort_talk"
+          : nextPreset.base_mode === "meditative"
+          ? "mindfulness_guide"
+          : nextPreset.base_mode === "quiet_presence"
+          ? "quiet_presence"
+          : "sleep_guide",
+      stateModifier:
+        nextPreset.state_modifier === "overthinking"
+          ? "overthinking"
+          : nextPreset.state_modifier === "emotionally_full"
+          ? "anxious_irritated"
+          : nextPreset.state_modifier === "needs_company"
+          ? "lonely_need_presence"
+          : "sleep_blocked",
+      openingCopyId: nextPreset.opening_copy_id,
+      replyLengthDefault: nextPreset.reply_length_default,
+      questionBudgetFirst3Turns: nextPreset.question_budget_first_3_turns,
+      sleepTransitionEnabled: nextPreset.sleep_transition_enabled,
+      fallbackChain: nextPreset.fallback_chain,
+      status: nextPreset.status,
+      createdAt: nextPreset.created_at,
+      expiresAt: new Date(
+        new Date(nextPreset.created_at).getTime() + 30 * 60 * 1000,
+      ).toISOString(),
+    });
     setPreset(nextPreset);
     updateDraft({
       q2_support_style: value,
@@ -281,9 +362,12 @@ export function FirstLaunchFlow() {
 
   const completeAndEnterRoom = () => {
     writeHasCompletedFirstLaunchFlow(true);
+    writeLocalOnboardingCompleted(true);
     clearFirstLaunchDraft();
+    clearLocalOnboardingDraft();
     clearPersonalRoomGenerationDraft();
     setHasCompletedFlow(true);
+    setCompletedCanonicalRoute("/room");
     updateDraft({
       current_step: "room_page",
     });
@@ -345,6 +429,34 @@ export function FirstLaunchFlow() {
           <div className={styles.redirectCard}>
             <h1 className={styles.redirectTitle}>Heading back to Room</h1>
             <p className={styles.redirectCopy}>Your first entry is already set.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (shouldShowCompletedFallback) {
+    return (
+      <section className={styles.shell}>
+        <div className={styles.backgroundGlow} />
+        <div className={styles.backgroundGlowSecondary} />
+        <div className={styles.redirectState}>
+          <div className={styles.redirectCard}>
+            <h1 className={styles.redirectTitle}>Your first entry is complete</h1>
+            <p className={styles.redirectCopy}>
+              You can keep going from Room whenever you are ready.
+            </p>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={() => {
+                startTransition(() => {
+                  router.replace("/room");
+                });
+              }}
+            >
+              Open Room
+            </button>
           </div>
         </div>
       </section>

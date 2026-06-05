@@ -5,6 +5,7 @@ import type {
   ISODateTimeString,
 } from "../contracts";
 import { selectPrimaryHomeRecommendation } from "../policies";
+import { stage5LocalDataNotice } from "../local-data";
 
 export type BuildHomeExperienceInput = {
   id: string;
@@ -16,6 +17,7 @@ export type BuildHomeExperienceInput = {
 export type HomeExperience = {
   state: HomeState;
   recommendation: HomeRecommendation;
+  localDataBoundaryLabel: string;
 };
 
 export function buildHomeExperience(
@@ -47,5 +49,6 @@ export function buildHomeExperience(
       createdAt: input.now,
     },
     recommendation,
+    localDataBoundaryLabel: stage5LocalDataNotice,
   };
 }

@@ -24,9 +24,17 @@ import {
 } from "@/lib/scene-selection";
 import {
   clearFirstLaunchTalkEntryContext,
-  readFirstLaunchTalkEntryContext,
   type FirstLaunchTalkEntryContext,
 } from "@/lib/first-launch";
+import type { TalkEntryContext } from "@/src/contracts";
+import { buildTalkExperience } from "@/src/experience";
+import {
+  clearLocalTalkEntryContext,
+  readLocalMemoryItems,
+  readLocalTalkEntryContext,
+  readLocalTalkSoundSettings,
+  writeLocalTalkSoundSettings,
+} from "@/src/local-data";
 
 type TalkUiState =
   | "idle_default"
@@ -39,8 +47,6 @@ type TalkUiState =
   | "quiet_mode";
 
 type HintTone = "normal" | "error";
-
-const soundSettingsStorageKey = "ai-companion-web.talk-sound-settings";
 
 const whiteNoiseOptions: { value: WhiteNoiseType; label: string }[] = [
   { value: "room_default", label: "Room default" },
@@ -197,24 +203,9 @@ function normalizeSoundSettings(
 }
 
 function readStoredSoundSettings(defaults: SoundDefaults) {
-  if (typeof window === "undefined") {
-    return defaults;
-  }
-
-  const rawSettings = window.localStorage.getItem(soundSettingsStorageKey);
-
-  if (!rawSettings) {
-    return defaults;
-  }
-
-  try {
-    return normalizeSoundSettings(
-      JSON.parse(rawSettings) as Partial<SoundDefaults>,
-      defaults,
-    );
-  } catch {
-    return defaults;
-  }
+  return readLocalTalkSoundSettings(defaults, (candidate, fallback) =>
+    normalizeSoundSettings(candidate as Partial<SoundDefaults>, fallback),
+  );
 }
 
 function formatVoiceProfileLabel(voiceProfileId: string) {
@@ -252,7 +243,7 @@ function getHint(
   uiState: TalkUiState,
   imageAttached: boolean,
   settingsOpen: boolean,
-  firstLaunchHint: string | null,
+  entryContextHint: string | null,
 ) {
   if (uiState === "error_permission") {
     return "Microphone access is unavailable";
@@ -271,12 +262,12 @@ function getHint(
   }
 
   if (
-    firstLaunchHint &&
+    entryContextHint &&
     (uiState === "idle_default" ||
       uiState === "standby_for_voice" ||
       uiState === "quiet_mode")
   ) {
-    return firstLaunchHint;
+    return entryContextHint;
   }
 
   return null;
@@ -288,6 +279,68 @@ function getHintTone(uiState: TalkUiState): HintTone {
   }
 
   return "normal";
+}
+
+function mapTalkEntryContextToFirstLaunchContext(
+  context: TalkEntryContext | null,
+): FirstLaunchTalkEntryContext | null {
+  const preset = context?.onboardingPreset;
+
+  if (!context || context.source !== "room" || !preset || !context.roomId) {
+    return null;
+  }
+
+  return {
+    preset_id: preset.presetId,
+    q1_state:
+      preset.q1State === "overthinking"
+        ? "mind_racing"
+        : preset.q1State === "anxious_irritated"
+        ? "anxious_or_irritated"
+        : preset.q1State === "lonely_need_presence"
+        ? "lonely_needing_company"
+        : "tired_but_awake",
+    q2_support_style:
+      preset.q2SupportStyle === "comfort_talk"
+        ? "soothe_and_chat"
+        : preset.q2SupportStyle === "mindfulness_guide"
+        ? "meditation_practice"
+        : preset.q2SupportStyle === "quiet_presence"
+        ? "quiet_company"
+        : "help_me_sleep_fast",
+    base_mode:
+      preset.baseMode === "comfort_talk"
+        ? "gentle_grounding"
+        : preset.baseMode === "mindfulness_guide"
+        ? "meditative"
+        : preset.baseMode === "quiet_presence"
+        ? "quiet_presence"
+        : "sleep_settling",
+    state_modifier:
+      preset.stateModifier === "overthinking"
+        ? "overthinking"
+        : preset.stateModifier === "anxious_irritated"
+        ? "emotionally_full"
+        : preset.stateModifier === "lonely_need_presence"
+        ? "needs_company"
+        : "low_energy",
+    opening_copy_id:
+      preset.openingCopyId === "slow_the_room" ||
+      preset.openingCopyId === "steady_the_breath" ||
+      preset.openingCopyId === "stay_with_you"
+        ? preset.openingCopyId
+        : "sleep_soft_landing",
+    reply_length_default: preset.replyLengthDefault,
+    question_budget_first_3_turns:
+      preset.questionBudgetFirst3Turns === 1 ? 1 : 0,
+    sleep_transition_enabled: preset.sleepTransitionEnabled,
+    fallback_chain: preset.fallbackChain,
+    room_id: context.roomId,
+    room_source: "library",
+    background_asset_id: "",
+    room_theme: "",
+    room_entry_action: "room_surface_tap",
+  };
 }
 
 export function TalkShell({
@@ -313,6 +366,8 @@ export function TalkShell({
   );
   const [firstLaunchContext, setFirstLaunchContext] =
     useState<FirstLaunchTalkEntryContext | null>(null);
+  const [canonicalEntryContextHint, setCanonicalEntryContextHint] =
+    useState<string | null>(null);
   const [voiceTurnCount, setVoiceTurnCount] = useState(0);
   const [firstLaunchIntroDismissed, setFirstLaunchIntroDismissed] =
     useState(false);
@@ -326,6 +381,7 @@ export function TalkShell({
         : null,
     [firstLaunchContext, firstLaunchIntroDismissed],
   );
+  const entryContextHint = firstLaunchHint ?? canonicalEntryContextHint;
   const firstLaunchTiming = useMemo(
     () => getFirstLaunchTiming(firstLaunchContext),
     [firstLaunchContext],
@@ -339,7 +395,7 @@ export function TalkShell({
     uiState,
     imageAttached,
     settingsOpen,
-    firstLaunchHint,
+    entryContextHint,
   );
   const hintTone = getHintTone(uiState);
   const primaryLabel = getPrimaryLabel(uiState);
@@ -418,6 +474,7 @@ export function TalkShell({
     setSettingsOpen(false);
     setUiState("voice_recording");
     setFirstLaunchIntroDismissed(true);
+    setCanonicalEntryContextHint(null);
     setVoiceTurnCount((currentCount) => currentCount + 1);
     queueTransition(() => {
       beginProcessingFlow();
@@ -498,14 +555,37 @@ export function TalkShell({
   };
 
   useEffect(() => {
-    const context = readFirstLaunchTalkEntryContext();
+    const canonicalContext = readLocalTalkEntryContext();
+    const talkExperience = buildTalkExperience({
+      now: new Date().toISOString(),
+      entryContext: canonicalContext,
+      memories: readLocalMemoryItems(),
+    });
+    const context = mapTalkEntryContextToFirstLaunchContext(
+      talkExperience.entryContext,
+    );
+    const canonicalHint =
+      canonicalContext && talkExperience.entryContextValidation.valid
+        ? talkExperience.entryContextUiSupport.initialHint
+        : null;
 
-    if (!context) {
+    if (!context && !canonicalHint) {
+      if (canonicalContext) {
+        clearLocalTalkEntryContext();
+      }
+      // The legacy first-launch Talk handoff lacks canonical roomSessionId, so
+      // it remains unsupported instead of being treated as TalkEntryContext.
+      clearFirstLaunchTalkEntryContext();
       return;
     }
 
     const hydrationTimer = window.setTimeout(() => {
-      setFirstLaunchContext(context);
+      if (context) {
+        setFirstLaunchContext(context);
+      } else {
+        setCanonicalEntryContextHint(canonicalHint);
+      }
+      clearLocalTalkEntryContext();
       clearFirstLaunchTalkEntryContext();
     }, 0);
 
@@ -617,10 +697,7 @@ export function TalkShell({
       return;
     }
 
-    window.localStorage.setItem(
-      soundSettingsStorageKey,
-      JSON.stringify(soundSettings),
-    );
+    writeLocalTalkSoundSettings(soundSettings);
   }, [soundSettings]);
 
   useEffect(() => {

@@ -55,6 +55,8 @@ export type SleepPageData = {
     target_route: "/room" | "/talk";
     target_payload?: {
       continuation_source: "sleep";
+      local_mock_sleep_insight_id?: string;
+      local_mock_sleep_log_ids?: string[];
       recommended_room_id?: string;
       recommended_room_name?: string;
       recommendation_type?: "room" | "talk";
@@ -151,6 +153,16 @@ export const sleepMockCases: Record<SleepMockCaseKey, SleepPageData> = {
       target_route: "/room",
       target_payload: {
         continuation_source: "sleep",
+        local_mock_sleep_insight_id: "mock_sleep_insight_full_record_2026_04_30",
+        local_mock_sleep_log_ids: [
+          "mock_sleep_log_2026_04_23",
+          "mock_sleep_log_2026_04_24",
+          "mock_sleep_log_2026_04_25",
+          "mock_sleep_log_2026_04_26",
+          "mock_sleep_log_2026_04_27",
+          "mock_sleep_log_2026_04_28",
+          "mock_sleep_log_2026_04_29",
+        ],
         recommended_room_id: "moon_tide",
         recommended_room_name: "Moon Tide",
         recommendation_type: "room",
@@ -195,6 +207,12 @@ export const sleepMockCases: Record<SleepMockCaseKey, SleepPageData> = {
       target_route: "/room",
       target_payload: {
         continuation_source: "sleep",
+        local_mock_sleep_insight_id: "mock_sleep_insight_partial_record_2026_04_30",
+        local_mock_sleep_log_ids: [
+          "mock_sleep_log_2026_04_28",
+          "mock_sleep_log_2026_04_29",
+          "mock_sleep_log_partial_2026_04_30",
+        ],
         recommended_room_id: "alpine_quiet",
         recommended_room_name: "Alpine Quiet",
         recommendation_type: "room",
@@ -230,6 +248,8 @@ export const sleepMockCases: Record<SleepMockCaseKey, SleepPageData> = {
       target_route: "/talk",
       target_payload: {
         continuation_source: "sleep",
+        local_mock_sleep_insight_id: "mock_sleep_insight_companion_only_2026_04_30",
+        local_mock_sleep_log_ids: [],
         recommended_room_id: "harbor_hush",
         recommended_room_name: "Harbor Hush",
         recommendation_type: "talk",
@@ -257,6 +277,7 @@ export const sleepMockCases: Record<SleepMockCaseKey, SleepPageData> = {
       target_route: "/room",
       target_payload: {
         continuation_source: "sleep",
+        local_mock_sleep_log_ids: [],
         recommended_room_id: "alpine_quiet",
         recommended_room_name: "Alpine Quiet",
         recommendation_type: "room",
