@@ -27,6 +27,18 @@ import {
   readFirstLaunchTalkEntryContext,
   type FirstLaunchTalkEntryContext,
 } from "@/lib/first-launch";
+import type {
+  CompanionProfile,
+  MockTalkMessage,
+  UserSleepProfile,
+} from "@/src/contracts/sleep";
+import { createDefaultSleepCompanionSeed } from "@/src/mocks/createDefaultSleepCompanionSeed";
+import {
+  getCompanionProfile,
+  getRoomState as getLocalRoomState,
+  getUserProfile,
+  setRoomState as setLocalRoomState,
+} from "@/src/mocks/localSleepStore";
 
 type TalkUiState =
   | "idle_default"
@@ -253,6 +265,9 @@ function getHint(
   imageAttached: boolean,
   settingsOpen: boolean,
   firstLaunchHint: string | null,
+  latestCompanionReply: string | null,
+  companionGreeting: string | null,
+  sessionHasConversation: boolean,
 ) {
   if (uiState === "error_permission") {
     return "Microphone access is unavailable";
@@ -279,6 +294,23 @@ function getHint(
     return firstLaunchHint;
   }
 
+  if (
+    latestCompanionReply &&
+    (uiState === "idle_default" ||
+      uiState === "standby_for_voice" ||
+      uiState === "quiet_mode")
+  ) {
+    return latestCompanionReply;
+  }
+
+  if (
+    companionGreeting &&
+    !sessionHasConversation &&
+    (uiState === "idle_default" || uiState === "standby_for_voice")
+  ) {
+    return companionGreeting;
+  }
+
   return null;
 }
 
@@ -288,6 +320,88 @@ function getHintTone(uiState: TalkUiState): HintTone {
   }
 
   return "normal";
+}
+
+function buildMockUserMessage(
+  profile: UserSleepProfile,
+  turnIndex: number,
+  imageAttached: boolean,
+): MockTalkMessage {
+  const variants = {
+    fall_asleep: [
+      "I want the night to feel easier to fall into.",
+      "Can we keep this light and help me drift off?",
+      "I mostly need less effort tonight.",
+    ],
+    reduce_anxiety: [
+      "My body still feels a little keyed up.",
+      "I need the room to feel calmer first.",
+      "Can we slow this down a little more?",
+    ],
+    build_routine: [
+      "I want tonight to feel a little steadier.",
+      "Help me return to the same softer rhythm.",
+      "Can we keep the routine simple tonight?",
+    ],
+    companionship: [
+      "I don't want to feel alone with the night.",
+      "Just stay close while I settle in.",
+      "Quiet company would help tonight.",
+    ],
+  } as const;
+
+  const options = variants[profile.sleepGoal];
+  const content = options[turnIndex % options.length];
+
+  return {
+    id: `user_message_${turnIndex + 1}`,
+    role: "user",
+    content: imageAttached ? `${content} I attached an image too.` : content,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+function buildMockCompanionMessage(
+  companion: CompanionProfile,
+  profile: UserSleepProfile,
+  roomName: string,
+  turnIndex: number,
+): MockTalkMessage {
+  const variants = {
+    gentle: [
+      `We can let ${roomName} hold some of the weight while you soften.`,
+      "You do not need to force the next step. We can make it quieter first.",
+      "Stay here with me for a moment. The night can narrow on its own.",
+    ],
+    quiet: [
+      "We can keep this simple and let the room do more of the work.",
+      "Nothing extra is needed right now. Just one softer breath at a time.",
+      "We can make the next minutes smaller and steadier.",
+    ],
+    warm: [
+      `I'm still with you here in ${roomName}, and we can keep this gentle.`,
+      "You don't have to solve the whole night. We can just steady this part.",
+      "Let's keep the pace easy and stay with what feels manageable.",
+    ],
+    playful: [
+      "We can make this feel a little lighter tonight.",
+      "Let's keep the next few minutes soft and easy.",
+      "We can stay close to sleep without making it a task.",
+    ],
+  } as const;
+  const options = variants[companion.tone];
+  const baseContent = options[turnIndex % options.length];
+  const ending =
+    profile.sleepGoal === "fall_asleep"
+      ? " When you're ready, we can let sleep take over."
+      : "";
+
+  return {
+    id: `companion_message_${turnIndex + 1}`,
+    role: "companion",
+    content: `${baseContent}${ending}`,
+    createdAt: new Date().toISOString(),
+  };
 }
 
 export function TalkShell({
@@ -302,6 +416,7 @@ export function TalkShell({
   const settingsPanelRef = useRef<HTMLDivElement>(null);
   const settingsButtonRef = useRef<HTMLButtonElement>(null);
   const skipNextSoundPersistRef = useRef(true);
+  const pendingCompanionMessageRef = useRef<MockTalkMessage | null>(null);
 
   const [activeSceneId, setActiveSceneId] = useState<SceneId>(initialSceneId);
   const activeScene = sceneConfigMap[activeSceneId];
@@ -319,6 +434,14 @@ export function TalkShell({
   const [soundSettings, setSoundSettings] = useState<SoundDefaults>(
     sceneConfigMap[initialSceneId].soundDefaults,
   );
+  const [userProfile, setUserProfileState] = useState<UserSleepProfile | null>(
+    null,
+  );
+  const [companionProfile, setCompanionProfileState] =
+    useState<CompanionProfile | null>(null);
+  const [messages, setMessages] = useState<MockTalkMessage[]>([]);
+  const [latestCompanionReply, setLatestCompanionReply] =
+    useState<string | null>(null);
   const firstLaunchHint = useMemo(
     () =>
       firstLaunchContext && !firstLaunchIntroDismissed
@@ -334,12 +457,16 @@ export function TalkShell({
     () => getVoiceFlowTiming(firstLaunchContext, voiceTurnCount),
     [firstLaunchContext, voiceTurnCount],
   );
+  const sessionHasConversation = messages.length > 0;
 
   const stateHint = getHint(
     uiState,
     imageAttached,
     settingsOpen,
     firstLaunchHint,
+    latestCompanionReply,
+    companionProfile?.greeting ?? null,
+    sessionHasConversation,
   );
   const hintTone = getHintTone(uiState);
   const primaryLabel = getPrimaryLabel(uiState);
@@ -403,6 +530,28 @@ export function TalkShell({
     setUiState("processing");
     queueTransition(() => {
       setUiState("ai_speaking");
+      if (pendingCompanionMessageRef.current) {
+        const nextCompanionMessage = pendingCompanionMessageRef.current;
+
+        setMessages((current) => [...current, nextCompanionMessage]);
+        setLatestCompanionReply(nextCompanionMessage.content);
+        pendingCompanionMessageRef.current = null;
+
+        const storedRoomState = getLocalRoomState();
+
+        if (storedRoomState) {
+          setLocalRoomState({
+            ...storedRoomState,
+            companionMood:
+              userProfile?.sleepGoal === "fall_asleep" ? "sleepy" : "calm",
+            suggestedAction:
+              userProfile?.sleepGoal === "fall_asleep"
+                ? "start_sleep"
+                : "review_memory",
+            lastUpdatedAt: new Date().toISOString(),
+          });
+        }
+      }
     }, voiceFlowTiming.processingDurationMs);
     queueTransition(() => {
       enterStandby(voiceFlowTiming.postResponseQuietDelayMs);
@@ -418,7 +567,37 @@ export function TalkShell({
     setSettingsOpen(false);
     setUiState("voice_recording");
     setFirstLaunchIntroDismissed(true);
+    const fallbackSeed = createDefaultSleepCompanionSeed();
+    const activeUserProfile = userProfile ?? fallbackSeed.userProfile;
+    const activeCompanionProfile =
+      companionProfile ?? fallbackSeed.companionProfile;
+    const nextUserMessage = buildMockUserMessage(
+      activeUserProfile,
+      voiceTurnCount,
+      imageAttached,
+    );
+
+    pendingCompanionMessageRef.current = buildMockCompanionMessage(
+      activeCompanionProfile,
+      activeUserProfile,
+      activeScene.roomName,
+      voiceTurnCount,
+    );
+    setMessages((current) => [...current, nextUserMessage]);
+    setLatestCompanionReply(null);
     setVoiceTurnCount((currentCount) => currentCount + 1);
+
+    const storedRoomState = getLocalRoomState();
+
+    if (storedRoomState) {
+      setLocalRoomState({
+        ...storedRoomState,
+        companionMood: "attentive",
+        suggestedAction: "talk",
+        lastUpdatedAt: new Date().toISOString(),
+      });
+    }
+
     queueTransition(() => {
       beginProcessingFlow();
     }, voiceFlowTiming.recordingDurationMs);
@@ -499,14 +678,18 @@ export function TalkShell({
 
   useEffect(() => {
     const context = readFirstLaunchTalkEntryContext();
-
-    if (!context) {
-      return;
-    }
+    const fallbackSeed = createDefaultSleepCompanionSeed();
 
     const hydrationTimer = window.setTimeout(() => {
-      setFirstLaunchContext(context);
-      clearFirstLaunchTalkEntryContext();
+      setUserProfileState(getUserProfile() ?? fallbackSeed.userProfile);
+      setCompanionProfileState(
+        getCompanionProfile() ?? fallbackSeed.companionProfile,
+      );
+
+      if (context) {
+        setFirstLaunchContext(context);
+        clearFirstLaunchTalkEntryContext();
+      }
     }, 0);
 
     return () => {

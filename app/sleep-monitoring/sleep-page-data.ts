@@ -75,7 +75,7 @@ export type SleepMockCaseKey =
 
 export const defaultSleepMockCase: SleepMockCaseKey = "full_record";
 
-const fullRhythmPoints = [
+export const fullRhythmPoints = [
   { x: 0, y: 0.72, emphasis: "base" as const },
   { x: 0.09, y: 0.58, emphasis: "highlight" as const },
   { x: 0.18, y: 0.64, emphasis: "base" as const },
@@ -90,7 +90,7 @@ const fullRhythmPoints = [
   { x: 1, y: 0.47, emphasis: "highlight" as const },
 ];
 
-const partialRhythmPoints = [
+export const partialRhythmPoints = [
   { x: 0, y: 0.78, emphasis: "base" as const },
   { x: 0.11, y: 0.67, emphasis: "highlight" as const },
   { x: 0.22, y: 0.61, emphasis: "base" as const },

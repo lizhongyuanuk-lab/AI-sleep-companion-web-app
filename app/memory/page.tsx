@@ -3,7 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ShellTopNav } from "@/components/shell-top-nav";
-import { memoryPageMockData, type MemoryPageData } from "./memory-page-data";
+import { buildMemoryPageData, type MemoryPageData } from "./memory-page-data";
+import type { MemoryItem } from "@/src/contracts/sleep";
+import { createDefaultSleepCompanionSeed } from "@/src/mocks/createDefaultSleepCompanionSeed";
+import {
+  getCompanionProfile,
+  getMemories,
+  getUserProfile,
+  setMemories,
+} from "@/src/mocks/localSleepStore";
 import styles from "./memory-page.module.css";
 
 type RecurringTopic = MemoryPageData["recurring_topics"][number];
@@ -13,6 +21,37 @@ type RecurringMemoryDetail = {
   appearedIn: string;
   patternNote: string;
 };
+
+function getInitialMemoryView() {
+  const fallbackSeed = createDefaultSleepCompanionSeed();
+  const userProfile =
+    typeof window === "undefined"
+      ? fallbackSeed.userProfile
+      : getUserProfile() ?? fallbackSeed.userProfile;
+  const companionProfile =
+    typeof window === "undefined"
+      ? fallbackSeed.companionProfile
+      : getCompanionProfile() ?? fallbackSeed.companionProfile;
+  const memoryItems =
+    typeof window === "undefined"
+      ? fallbackSeed.memories
+      : (() => {
+          const storedMemories = getMemories();
+
+          return storedMemories.length > 0 ? storedMemories : fallbackSeed.memories;
+        })();
+  const data = buildMemoryPageData({
+    userProfile,
+    companionProfile,
+    memories: memoryItems,
+  });
+
+  return {
+    fallbackSeed,
+    memoryItems,
+    data,
+  };
+}
 
 const recurringMemoryDetails: Record<string, RecurringMemoryDetail> = {
   memory_topic_unfinished_evenings: {
@@ -158,7 +197,12 @@ function ExpandableRecurringItem({
 }
 
 export default function MemoryPage() {
-  const data = memoryPageMockData;
+  const initialView = getInitialMemoryView();
+  const fallbackSeed = initialView.fallbackSeed;
+  const [data, setData] = useState<MemoryPageData>(initialView.data);
+  const [memoryItems, setMemoryItemsState] = useState<MemoryItem[]>(
+    initialView.memoryItems,
+  );
   const [topics, setTopics] = useState(data.recurring_topics);
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
   const [showAllMemories, setShowAllMemories] = useState(false);
@@ -230,6 +274,22 @@ export default function MemoryPage() {
                             }));
                           }}
                           onDelete={(memoryId) => {
+                            const nextMemoryItems = memoryItems.filter(
+                              (memory) => memory.id !== memoryId,
+                            );
+                            const userProfile =
+                              getUserProfile() ?? fallbackSeed.userProfile;
+                            const companionProfile =
+                              getCompanionProfile() ?? fallbackSeed.companionProfile;
+                            const nextData = buildMemoryPageData({
+                              userProfile,
+                              companionProfile,
+                              memories:
+                                nextMemoryItems.length > 0
+                                  ? nextMemoryItems
+                                  : fallbackSeed.memories,
+                            });
+
                             setTopics((current) =>
                               current.map((currentTopic) =>
                                 currentTopic.memory_id === memoryId
@@ -237,6 +297,9 @@ export default function MemoryPage() {
                                   : currentTopic,
                               ),
                             );
+                            setMemoryItemsState(nextMemoryItems);
+                            setData(nextData);
+                            setMemories(nextMemoryItems);
                             setExpandedTopicId((current) =>
                               current === memoryId ? null : current,
                             );

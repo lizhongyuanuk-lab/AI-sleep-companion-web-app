@@ -47,137 +47,137 @@ export type MemoryPageData = {
   last_memory_refresh_at: string;
 };
 
-// Mock contract mirrors the approved Memory spec until backend wiring exists.
-export const memoryPageMockData: MemoryPageData = {
-  user_id: "user_demo_night_01",
-  memory_page_available: true,
-  recent_memory_summary: {
-    headline_summary: "Lately, your nights have been asking for a gentler pace.",
-    time_window_label: "From the last 7 nights",
-    summary_confidence: "medium",
-    source_session_count: 5,
-    supporting_line: "Shorter check-ins seemed to help.",
-  },
-  recurring_topics: [
-    {
-      memory_id: "memory_topic_unfinished_evenings",
-      display_text: "Mentally busy evenings",
-      supporting_session_count: 3,
-      time_window_label: "This week",
-      continuation_hint:
-        "You settle more easily when the conversation starts softly.",
-      is_deleted: false,
+import type {
+  CompanionProfile,
+  MemoryItem,
+  UserSleepProfile,
+} from "@/src/contracts/sleep";
+
+function getHeroHeadline(profile: UserSleepProfile, companion: CompanionProfile) {
+  switch (profile.sleepGoal) {
+    case "reduce_anxiety":
+      return "Lately, your nights seem to settle more easily with less pressure.";
+    case "build_routine":
+      return "A steadier rhythm has been asking for the same softer return.";
+    case "companionship":
+      return `${companion.name}'s quieter company seems to help the night feel less lonely.`;
+    case "fall_asleep":
+    default:
+      return "Lately, your nights have been asking for a gentler pace.";
+  }
+}
+
+function getSupportingLine(memories: MemoryItem[]) {
+  return memories[0]?.content ?? "The softer openings still seem to matter most.";
+}
+
+function getPatternType(memory: MemoryItem["type"]) {
+  switch (memory) {
+    case "routine":
+      return "pacing" as const;
+    case "companion_note":
+      return "tone" as const;
+    case "preference":
+      return "room_preference" as const;
+    case "emotion_pattern":
+    default:
+      return "general" as const;
+  }
+}
+
+function getContinuationHint(memory: MemoryItem["type"], companionName: string) {
+  switch (memory) {
+    case "routine":
+      return "A steadier nightly return seems easier to stay with.";
+    case "companion_note":
+      return `${companionName} can keep this tone soft again tonight.`;
+    case "emotion_pattern":
+      return "A lower-pressure opening still seems to help most.";
+    case "preference":
+    default:
+      return "This still looks like something worth carrying into tonight.";
+  }
+}
+
+export function buildMemoryPageData({
+  userProfile,
+  companionProfile,
+  memories,
+}: {
+  userProfile: UserSleepProfile;
+  companionProfile: CompanionProfile;
+  memories: MemoryItem[];
+}): MemoryPageData {
+  const recurringTopics = memories.map((memory, index) => ({
+    memory_id: memory.id,
+    display_text: memory.content,
+    supporting_session_count: Math.max(2, 4 - index),
+    time_window_label: index < 2 ? "From onboarding" : "Recent pattern",
+    is_deleted: false,
+    continuation_hint: getContinuationHint(memory.type, companionProfile.name),
+  }));
+
+  return {
+    user_id: userProfile.id,
+    memory_page_available: true,
+    recent_memory_summary: {
+      headline_summary: getHeroHeadline(userProfile, companionProfile),
+      time_window_label: "From your first companion setup",
+      summary_confidence: "medium",
+      source_session_count: Math.max(memories.length, 1),
+      supporting_line: getSupportingLine(memories),
     },
-    {
-      memory_id: "memory_topic_sleep_entry_pressure",
-      display_text: "Gentler evening starts",
-      supporting_session_count: 4,
-      time_window_label: "This week",
-      continuation_hint:
-        "A softer opening works better than trying to solve everything first.",
-      is_deleted: false,
-    },
-    {
-      memory_id: "memory_topic_quiet_company",
-      display_text: "Quiet company first",
-      supporting_session_count: 2,
-      time_window_label: "Last few sessions",
-      continuation_hint:
-        "You often stay longer when the tone feels calm and unhurried.",
-      is_deleted: false,
-    },
-    {
-      memory_id: "memory_topic_softer_openings",
-      display_text: "Softer openings help",
-      supporting_session_count: 3,
-      time_window_label: "This week",
-      continuation_hint:
-        "Gentle first minutes seem to lower the pressure to explain everything at once.",
-      is_deleted: false,
-    },
-    {
-      memory_id: "memory_topic_quieter_room_returns",
-      display_text: "Quieter rooms help",
-      supporting_session_count: 2,
-      time_window_label: "Recent nights",
-      continuation_hint:
-        "Lower stimulation seems to make it easier to stay present and come back again.",
-      is_deleted: false,
-    },
-    {
-      memory_id: "memory_topic_briefer_loops",
-      display_text: "Brief check-ins help",
-      supporting_session_count: 3,
-      time_window_label: "Recent nights",
-      continuation_hint:
-        "Shorter conversations have felt easier to carry into the following night.",
-      is_deleted: false,
-    },
-  ],
-  helpful_patterns: [
-    {
-      pattern_id: "pattern_slower_openings",
-      display_text: "Slower openings seem to help more than jumping straight into problem-solving.",
-      pattern_type: "pacing",
-      evidence_strength: "strong",
-      supporting_line: "You tended to stay longer when the first minutes felt unhurried.",
-    },
-    {
-      pattern_id: "pattern_quieter_rooms",
-      display_text: "Quieter room settings seem to fit better on the nights you want less stimulation.",
-      pattern_type: "room_preference",
-      evidence_strength: "medium",
-      supporting_line: "The softer scenes showed up repeatedly alongside longer sessions.",
-    },
-    {
-      pattern_id: "pattern_shorter_loops",
-      display_text: "Shorter unwinding conversations seem easier to return to consistently.",
-      pattern_type: "conversation_shape",
-      evidence_strength: "light",
-      supporting_line: "Brief check-ins were easier to restart on the following night.",
-    },
-  ],
-  continue_actions: [
-    {
-      action_id: "continue_general_tonight",
-      action_type: "general",
-      label: "Talk about this",
-      target_route: "/talk",
-      target_payload: {
-        continuation_source: "memory",
-        continuation_mode: "general",
-        soft_prefill_context: "Talk about what has been staying with me lately.",
+    recurring_topics: recurringTopics,
+    helpful_patterns: memories.slice(0, 3).map((memory, index) => ({
+      pattern_id: `pattern_${memory.id}`,
+      display_text: memory.content,
+      pattern_type: getPatternType(memory.type),
+      evidence_strength: index === 0 ? "strong" : index === 1 ? "medium" : "light",
+      supporting_line: getContinuationHint(memory.type, companionProfile.name),
+    })),
+    continue_actions: [
+      {
+        action_id: "continue_general_tonight",
+        action_type: "general",
+        label: "Talk about this",
+        target_route: "/talk",
+        target_payload: {
+          continuation_source: "memory",
+          continuation_mode: "general",
+          soft_prefill_context: `Talk with ${companionProfile.name} about what has been staying with me lately.`,
+        },
+        visual_priority: "secondary",
       },
-      visual_priority: "secondary",
-    },
-    {
-      action_id: "continue_topic_quiet_company",
-      action_type: "topic",
-      label: "Try a gentler start",
-      target_route: "/talk",
-      target_payload: {
-        continuation_source: "memory",
-        selected_memory_item_id: "memory_topic_sleep_entry_pressure",
-        continuation_mode: "topic",
-        soft_prefill_context: "Begin with a softer opening tonight.",
+      {
+        action_id: "continue_topic_memory",
+        action_type: "topic",
+        label: "Try a gentler start",
+        target_route: "/talk",
+        target_payload: {
+          continuation_source: "memory",
+          selected_memory_item_id: recurringTopics[0]?.memory_id,
+          continuation_mode: "topic",
+          soft_prefill_context: "Begin with a softer opening tonight.",
+        },
+        visual_priority: "secondary",
       },
-      visual_priority: "secondary",
-    },
-    {
-      action_id: "continue_style_slow_pacing",
-      action_type: "style",
-      label: "Stay with quiet company",
-      target_route: "/talk",
-      target_payload: {
-        continuation_source: "memory",
-        continuation_mode: "style",
-        soft_prefill_context: "Keep the tone calm and unhurried.",
+      {
+        action_id: "continue_style_companion",
+        action_type: "style",
+        label: `Stay with ${companionProfile.name}`,
+        target_route: "/talk",
+        target_payload: {
+          continuation_source: "memory",
+          continuation_mode: "style",
+          soft_prefill_context: companionProfile.greeting,
+        },
+        visual_priority: "secondary",
       },
-      visual_priority: "secondary",
-    },
-  ],
-  memory_items_version: "mock-v1",
-  deep_history_available: true,
-  memory_delete_capability: true,
-  last_memory_refresh_at: "2026-04-28T10:30:00+08:00",
-};
+    ],
+    memory_items_version: "stage3-local-v1",
+    deep_history_available: false,
+    memory_delete_capability: true,
+    last_memory_refresh_at:
+      memories[0]?.updatedAt ?? companionProfile.updatedAt ?? userProfile.updatedAt,
+  };
+}

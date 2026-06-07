@@ -35,6 +35,13 @@ import {
   type RoomId,
   type RoomMotionVariant,
 } from "./room-config";
+import { createDefaultSleepCompanionSeed } from "@/src/mocks/createDefaultSleepCompanionSeed";
+import {
+  getCompanionProfile,
+  getRoomState as getLocalRoomState,
+  getUserProfile,
+  setRoomState as setLocalRoomState,
+} from "@/src/mocks/localSleepStore";
 import styles from "./room-page.module.css";
 
 const SCROLL_SETTLE_DELAY_MS = 160;
@@ -89,6 +96,39 @@ function getClosestRoomId(container: HTMLDivElement): RoomId {
   return activeRoomConfigs[nextIndex]?.id ?? defaultRoomId;
 }
 
+function getFallbackRoomIdFromSleepGoal(sleepGoal: string | null | undefined) {
+  switch (sleepGoal) {
+    case "reduce_anxiety":
+      return "harbor_hush";
+    case "build_routine":
+      return "moon_tide";
+    case "companionship":
+      return "sea_light";
+    case "fall_asleep":
+    default:
+      return "alpine_quiet";
+  }
+}
+
+function getTapHintCopy(
+  companionName: string | null,
+  suggestedAction: string | null | undefined,
+) {
+  if (!companionName) {
+    return "Tap to enter";
+  }
+
+  if (suggestedAction === "start_sleep") {
+    return `Settle in with ${companionName}`;
+  }
+
+  if (suggestedAction === "review_memory") {
+    return `Reflect with ${companionName}`;
+  }
+
+  return `Enter with ${companionName}`;
+}
+
 export default function RoomPage() {
   const router = useRouter();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -107,6 +147,7 @@ export default function RoomPage() {
   const [isSwitching, setIsSwitching] = useState(false);
   const [swipeHintDismissed, setSwipeHintDismissed] = useState(false);
   const [visualFailed, setVisualFailed] = useState(false);
+  const [tapHintCopy, setTapHintCopy] = useState("Tap to enter");
 
   const activeRoom = roomConfigMap[activeRoomId];
   const showSwipeHint =
@@ -198,9 +239,15 @@ export default function RoomPage() {
       const storedRoomId = readStoredRoomId();
       const activePreset = readPostOnboardingSessionPreset();
       const generatedRoom = readGeneratedPersonalRoomRecord();
+      const fallbackSeed = createDefaultSleepCompanionSeed();
+      const userProfile = getUserProfile() ?? fallbackSeed.userProfile;
+      const companionProfile = getCompanionProfile() ?? fallbackSeed.companionProfile;
+      const localRoomState = getLocalRoomState() ?? fallbackSeed.roomState;
+      const fallbackRoomId = getFallbackRoomIdFromSleepGoal(userProfile.sleepGoal);
       const weakLandingRoomId =
         getWeakLandingRoomIdFromTheme(generatedRoom?.visual_theme) ??
-        getWeakLandingRoomIdFromPreset(activePreset);
+        getWeakLandingRoomIdFromPreset(activePreset) ??
+        fallbackRoomId;
       const nextInitialRoomId = getInitialRoomId({
         lastEnteredRoomId,
         storedRoomId,
@@ -211,6 +258,9 @@ export default function RoomPage() {
       setSwipeHintDismissed(readSwipeHintDismissed());
       setIsFirstEntry(!lastEnteredRoomId && !storedRoomId);
       setActiveRoomId(nextInitialRoomId);
+      setTapHintCopy(
+        getTapHintCopy(companionProfile.name, localRoomState.suggestedAction),
+      );
       setUiState(
         getPreviewUiState(
           nextInitialRoomId,
@@ -404,6 +454,7 @@ export default function RoomPage() {
     }
 
     const room = roomConfigMap[roomId];
+    const storedRoomState = getLocalRoomState();
 
     clearTimer(settleTimerRef);
     clearTimer(enterTimerRef);
@@ -411,6 +462,15 @@ export default function RoomPage() {
     writeStoredRoomId(roomId);
     writeLastEnteredRoomId(roomId);
     writeStoredSceneId(room.talkSceneId);
+
+    if (storedRoomState) {
+      setLocalRoomState({
+        ...storedRoomState,
+        companionMood: "attentive",
+        suggestedAction: "talk",
+        lastUpdatedAt: new Date().toISOString(),
+      });
+    }
 
     const activePreset = readPostOnboardingSessionPreset();
 
@@ -564,7 +624,7 @@ export default function RoomPage() {
                   <span className={styles.tapHintBarTall} />
                   <span className={styles.tapHintBarMid} />
                 </span>
-                <span>Tap to enter</span>
+                <span>{tapHintCopy}</span>
               </div>
             </div>
           ) : null}
