@@ -370,4 +370,12 @@ After completing any code task, the required final output must include:
 - Known risks
 - Merge status
 
+## 17. Stage 3 Core Data Workflow
+
+1. `stage3/core-data-base` is the shared base branch for Stage 3.
+2. Do not run multiple Codex threads on the same branch.
+3. Each parallel task must use its own worktree and branch.
+4. Documentation tasks must not modify source code.
+5. Contract skeleton task must not modify UI or runtime behavior.
+
 If there is no real PR URL, the task is not delivered.
